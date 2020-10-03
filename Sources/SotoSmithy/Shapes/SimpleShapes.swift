@@ -12,54 +12,54 @@
 //
 //===----------------------------------------------------------------------===//
 
-struct BlobShape: Shape {
-    static let type = "blob"
+public struct BlobShape: Shape {
+    public static let type = "blob"
 }
 
-struct BooleanShape: Shape {
-    static let type = "boolean"
+public struct BooleanShape: Shape {
+    public static let type = "boolean"
 }
 
-struct StringShape: Shape {
-    static let type = "string"
+public struct StringShape: Shape {
+    public static let type = "string"
 }
 
-struct ByteShape: Shape {
-    static let type = "byte"
+public struct ByteShape: Shape {
+    public static let type = "byte"
 }
 
-struct ShortShape: Shape {
-    static let type = "short"
+public struct ShortShape: Shape {
+    public static let type = "short"
 }
 
-struct IntegerShape: Shape {
-    static let type = "integer"
+public struct IntegerShape: Shape {
+    public static let type = "integer"
 }
 
-struct LongShape: Shape {
-    static let type = "long"
+public struct LongShape: Shape {
+    public static let type = "long"
 }
 
-struct FloatShape: Shape {
-    static let type = "float"
+public struct FloatShape: Shape {
+    public static let type = "float"
 }
 
-struct DoubleShape: Shape {
-    static let type = "double"
+public struct DoubleShape: Shape {
+    public static let type = "double"
 }
 
-struct BigIntegerShape: Shape {
-    static let type = "bigInteger"
+public struct BigIntegerShape: Shape {
+    public static let type = "bigInteger"
 }
 
-struct BigDecimalShape: Shape {
-    static let type = "bigDecimal"
+public struct BigDecimalShape: Shape {
+    public static let type = "bigDecimal"
 }
 
-struct TimestampShape: Shape {
-    static let type = "timestamp"
+public struct TimestampShape: Shape {
+    public static let type = "timestamp"
 }
 
-struct DocumentShape: Shape {
-    static let type = "document"
+public struct DocumentShape: Shape {
+    public static let type = "document"
 }

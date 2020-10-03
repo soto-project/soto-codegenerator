@@ -12,49 +12,49 @@
 //
 //===----------------------------------------------------------------------===//
 
-struct ServiceShape: Shape {
-    static let type = "service"
-    let version: String
-    let operations: [OperationMemberShape]?
-    let resources: [ResourceMemberShape]?
+public struct ServiceShape: Shape {
+    public static let type = "service"
+    public let version: String
+    public let operations: [OperationMemberShape]?
+    public let resources: [ResourceMemberShape]?
 }
 
-struct OperationMemberShape: Shape {
-    let target: ShapeId
+public struct OperationMemberShape: Shape {
+    public let target: ShapeId
     
-    func validate(using model: Model) throws {
+    public func validate(using model: Model) throws {
         guard let shape = model.shape(for: target) else { throw Smithy.ValidationError(reason: "Member references non-existent shape \(target)") }
         guard shape is OperationShape else { throw Smithy.ValidationError(reason: "Operation references illegal shape \(target)") }
     }
 }
 
-struct OperationShape: Shape {
-    static let type = "operation"
-    let input: MemberShape?
-    let output: MemberShape?
-    let errors: [MemberShape]?
+public struct OperationShape: Shape {
+    public static let type = "operation"
+    public let input: MemberShape?
+    public let output: MemberShape?
+    public let errors: [MemberShape]?
 }
 
-struct ResourceMemberShape: Shape {
-    let target: ShapeId
+public struct ResourceMemberShape: Shape {
+    public let target: ShapeId
     
-    func validate(using model: Model) throws {
+    public func validate(using model: Model) throws {
         guard let shape = model.shape(for: target) else { throw Smithy.ValidationError(reason: "Member references non-existent shape \(target)") }
         guard shape is ResourceShape else { throw Smithy.ValidationError(reason: "Operation references illegal shape \(target)") }
     }
 }
 
-struct ResourceShape: Shape {
-    static let type = "resource"
-    let identifiers: [String: MemberShape]?
-    let create: MemberShape?
-    let put: MemberShape?
-    let read: MemberShape?
-    let update: MemberShape?
-    let delete: MemberShape?
-    let list: MemberShape?
-    let operations: [MemberShape]?
-    let collectionOperations: [MemberShape]?
-    let resources: [MemberShape]?
+public struct ResourceShape: Shape {
+    public static let type = "resource"
+    public let identifiers: [String: MemberShape]?
+    public let create: MemberShape?
+    public let put: MemberShape?
+    public let read: MemberShape?
+    public let update: MemberShape?
+    public let delete: MemberShape?
+    public let list: MemberShape?
+    public let operations: [MemberShape]?
+    public let collectionOperations: [MemberShape]?
+    public let resources: [MemberShape]?
 
 }

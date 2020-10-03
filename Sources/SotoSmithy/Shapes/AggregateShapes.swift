@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-struct MemberShape: Shape {
-    let target: ShapeId
+public struct MemberShape: Shape {
+    public let target: ShapeId
     
-    func validate(using model: Model) throws {
+    public func validate(using model: Model) throws {
         guard let shape = model.shape(for: target) else { throw Smithy.ValidationError(reason: "Member references non-existent shape \(target)")}
         guard !(shape is OperationShape),
               !(shape is ResourceShape),
@@ -25,44 +25,44 @@ struct MemberShape: Shape {
     }
 }
 
-struct ListShape: Shape {
-    static let type = "list"
-    let member: MemberShape
-    func validate(using model: Model) throws {
+public struct ListShape: Shape {
+    public static let type = "list"
+    public let member: MemberShape
+    public func validate(using model: Model) throws {
         try member.validate(using: model)
     }
 }
 
-struct SetShape: Shape {
-    static let type = "set"
-    let member: MemberShape
-    func validate(using model: Model) throws {
+public struct SetShape: Shape {
+    public static let type = "set"
+    public let member: MemberShape
+    public func validate(using model: Model) throws {
         try member.validate(using: model)
     }
 }
 
-struct MapShape: Shape {
-    static let type = "map"
-    let key: MemberShape
-    let value: MemberShape
-    func validate(using model: Model) throws {
+public struct MapShape: Shape {
+    public static let type = "map"
+    public let key: MemberShape
+    public let value: MemberShape
+    public func validate(using model: Model) throws {
         try key.validate(using: model)
         try value.validate(using: model)
     }
 }
 
-struct StructureShape: Shape {
-    static let type = "structure"
-    let members: [String: MemberShape]
-    func validate(using model: Model) throws {
+public struct StructureShape: Shape {
+    public static let type = "structure"
+    public let members: [String: MemberShape]
+    public func validate(using model: Model) throws {
         try members.forEach { try $0.value.validate(using: model) }
     }
 }
 
-struct UnionShape: Shape {
-    static let type = "union"
-    let members: [String: MemberShape]
-    func validate(using model: Model) throws {
+public struct UnionShape: Shape {
+    public static let type = "union"
+    public let members: [String: MemberShape]
+    public func validate(using model: Model) throws {
         try members.forEach { try $0.value.validate(using: model) }
     }
 }

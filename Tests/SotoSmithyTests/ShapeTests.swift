@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-@testable import SotoSmithy
+import SotoSmithy
 import XCTest
 
 class ShapeTests: XCTestCase {

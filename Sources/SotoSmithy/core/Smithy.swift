@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-struct Smithy {
-    init() {
+public struct Smithy {
+    public init() {
         AnyShape.registerShapeTypes([
             // Simple shapes
             BlobShape.self,
@@ -39,6 +39,21 @@ struct Smithy {
             ServiceShape.self,
             OperationShape.self,
             ResourceShape.self,
+        ])
+        
+        TraitList.registerTraitTypes([
+            // constraint traits
+            EnumTrait.self,
+            IdRefTrait.self,
+            LengthTrait.self,
+            PatternTrait.self,
+            PrivateTrait.self,
+            RangeTrait.self,
+            RequiredTrait.self,
+            UniqueItemsTrait.self,
+            // documentation traits
+            DeprecatedTrait.self,
+            DocumentationTrait.self,
         ])
     }
 }

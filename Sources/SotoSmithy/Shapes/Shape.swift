@@ -26,7 +26,6 @@ public extension Shape {
 
 public struct AnyShape: Shape {
     static var possibleShapes: [String: Shape.Type] = [:]
-    public static var type = "Any"
     public let value: Shape
     
     public var shapeSelf: Shape { return value }

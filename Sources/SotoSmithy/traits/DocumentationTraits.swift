@@ -12,14 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-struct DeprecatedTrait: Trait {
-    static let name = "smithy.api#deprecated"
-    let message: String
-    let since: String
+public struct DeprecatedTrait: Trait {
+    public static let name = "smithy.api#deprecated"
+    public let message: String?
+    public let since: String?
 }
 
-struct Documentation: StringTrait {
-    static let name = "smithy.api#documentation"
-    let string: String
+public struct DocumentationTrait: StringTrait {
+    public init(string: String) {
+        self.string = string
+    }
+    public static let name = "smithy.api#documentation"
+    public let string: String
 }
 

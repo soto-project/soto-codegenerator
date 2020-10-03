@@ -12,50 +12,70 @@
 //
 //===----------------------------------------------------------------------===//
 
-protocol Trait: Codable {
+public protocol Trait: Codable {
     static var name: String { get }
 }
 
-protocol EmptyTrait: Trait {
+extension Trait {
+    static func decode(from decoder: Decoder) throws -> Self {
+        let container = try decoder.container(keyedBy: TraitCodingKeys.self)
+        let value = try container.decode(Self.self, forKey: TraitCodingKeys(stringValue: name)!)
+        return value
+    }
+}
+
+private struct TraitCodingKeys: CodingKey {
+    var stringValue: String
+    var intValue: Int? { return nil }
+
+    init?(stringValue: String) {
+        self.stringValue = stringValue
+    }
+    init?(intValue: Int) {
+        return nil
+    }
+}
+
+public protocol EmptyTrait: Trait {
     init()
 }
 
 extension EmptyTrait {
-    init(from decoder: Decoder) throws { self.init() }
+    public init(from decoder: Decoder) throws { self.init() }
 }
     
-protocol StringTrait: Trait {
+public protocol StringTrait: Trait {
     var string: String { get }
     init(string: String)
 }
 
 extension StringTrait {
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let string = try container.decode(String.self)
         self.init(string: string)
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(string)
     }
 }
 
-protocol ListTrait: Trait {
+public protocol ListTrait: Trait {
     associatedtype Element: Codable
     var list: [Element] { get }
     init(list: [Element])
 }
 
 extension ListTrait {
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let list = try container.decode([Element] .self)
         self.init(list: list)
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(list)
     }

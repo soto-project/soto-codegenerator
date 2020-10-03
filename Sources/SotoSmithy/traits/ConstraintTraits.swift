@@ -12,51 +12,60 @@
 //
 //===----------------------------------------------------------------------===//
 
-struct EnumTrait: ListTrait {
-    static let name = "smithy.api#enum"
-    struct EnumDefinition: Codable {
-        let value: String
-        let name: String
-        let documentation: String
-        let tags: [String]
-        let deprecated: Bool
+public struct EnumTrait: ListTrait {
+    public static let name = "smithy.api#enum"
+    public struct EnumDefinition: Codable {
+        public let value: String
+        public let name: String?
+        public let documentation: String?
+        public let tags: [String]?
+        public let deprecated: Bool?
     }
-    typealias Element = EnumDefinition
-    let list: [EnumDefinition]
+    public typealias Element = EnumDefinition
+    public let list: [EnumDefinition]
+    public init(list: [EnumDefinition]) {
+        self.list = list
+    }
 }
 
-struct IdRefTrait: Trait {
-    static let name = "smithy.api#idRef"
-    let failWhenMissing: Bool
-    let selector: String
-    let errorMessage: String
+public struct IdRefTrait: Trait {
+    public static let name = "smithy.api#idRef"
+    public let failWhenMissing: Bool?
+    public let selector: String?
+    public let errorMessage: String?
 }
 
-struct LengthTrait: Trait {
-    static let name = "smithy.api#length"
-    let min: Int
-    let max: Int
+public struct LengthTrait: Trait {
+    public static let name = "smithy.api#length"
+    public let min: Int?
+    public let max: Int?
 }
 
-struct PatternTrait: StringTrait {
-    static let name = "smithy.api#pattern"
-    let string: String
+public struct PatternTrait: StringTrait {
+    public init(string: String) {
+        self.string = string
+    }
+    public static let name = "smithy.api#pattern"
+    public let string: String
 }
 
-struct PrivateTrait: EmptyTrait {
-    static let name = "smithy.api#private"
+public struct PrivateTrait: EmptyTrait {
+    public static let name = "smithy.api#private"
+    public init() {}
 }
 
-struct RangeTrait: Trait {
-    static let name = "smithy.api#range"
-    let min: Double
-    let max: Double
+public struct RangeTrait: Trait {
+    public static let name = "smithy.api#range"
+    public let min: Double?
+    public let max: Double?
 }
 
-struct RequiredTrait: EmptyTrait {
-    static let name = "smithy.api#required"
+public struct RequiredTrait: EmptyTrait {
+    public static let name = "smithy.api#required"
+    public init() {}
 }
 
-struct UniqueItemsTrait: EmptyTrait {
-    static let name = "smithy.api#uniqueItems"
+public struct UniqueItemsTrait: EmptyTrait {
+    public static let name = "smithy.api#uniqueItems"
+    public init() {}
 }
