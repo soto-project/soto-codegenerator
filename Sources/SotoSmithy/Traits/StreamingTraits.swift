@@ -21,3 +21,13 @@ public struct RequiresLengthTrait: EmptyTrait {
     public static let name = "smithy.api#requiresLength"
     public init() {}
 }
+
+public struct EventHeaderTrait: EmptyTrait {
+    public static let name = "smithy.api#eventHeader"
+    public init() {}
+}
+
+public struct EventPayloadTrait: EmptyTrait {
+    public static let name = "smithy.api#eventPayload"
+    public init() {}
+}
