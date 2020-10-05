@@ -12,16 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct Model: Codable {
+public struct Model: Decodable {
     static let smithy = Smithy()
     let version: String
-    let metadata: [String: String]?
+    let metadata: [String: MetadataValue]?
     let shapes: [ShapeId: AnyShape]
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.version = try container.decode(String.self, forKey: .version)
-        self.metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata)
+        self.metadata = try container.decodeIfPresent([String: MetadataValue].self, forKey: .metadata)
         var shapes = Self.smithy.preludeShapes.mapValues { AnyShape(value: $0) }
         if let decodedShapes = try container.decodeIfPresent([String: AnyShape].self, forKey: .shapes) {
             for shape in decodedShapes {
