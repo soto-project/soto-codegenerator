@@ -93,7 +93,12 @@ struct AwsService {
                 let operationContext = try generateOperationContext(operation, operationName: operationId.target)
                 operationContexts.append(operationContext)
 
-                if operation.trait(type: StreamingTrait.self) != nil {
+                if let output = operation.output,
+                   let outputShape = model.shape(for: output.target) as? StructureShape,
+                   let payloadMember = getPayload(from: outputShape),
+                   let payloadShape = model.shape(for: payloadMember.target),
+                   payloadShape.trait(type: StreamingTrait.self) != nil,
+                   payloadShape is BlobShape {
                     let operationContext = try generateOperationContext(operation, operationName: operationId.target, streaming: true)
                     streamingOperationContexts.append(operationContext)
                 }
@@ -129,6 +134,15 @@ struct AwsService {
             return "\(framework).\(symbol)"
         }
         return symbol
+    }
+
+    static func getPayload(from shape: StructureShape) -> MemberShape? {
+        for member in shape.members.values {
+            if member.trait(type: HttpPayloadTrait.self) != nil {
+                return member
+            }
+        }
+        return nil
     }
 }
 
