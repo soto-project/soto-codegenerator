@@ -14,7 +14,7 @@
 
 public struct EndpointTrait: Trait {
     public static let name = "smithy.api#endpoint"
-    public let endpoint: String
+    public let hostPrefix: String
 }
 
 public struct HostLabelTrait: EmptyTrait {
