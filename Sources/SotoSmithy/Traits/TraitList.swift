@@ -14,17 +14,16 @@
 
 public struct TraitList: Codable {
     
-    static var possibleTraits: [String: Trait.Type] = [:]
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        var traits: [ObjectIdentifier: Trait] = [:]
+        var traits: [String: Trait] = [:]
         for key in container.allKeys {
             guard let traitType = Self.possibleTraits[key.stringValue] else {
                 throw DecodingError.dataCorruptedError(forKey: key, in: container, debugDescription: "Unrecognised trait type")
             }
             let trait = try traitType.decode(from: decoder)
-            traits[ObjectIdentifier(traitType)] = trait
+            traits[traitType.name] = trait
         }
         self.traits = traits
     }
@@ -34,7 +33,7 @@ public struct TraitList: Codable {
     }
     
     public func trait<T: Trait>(type: T.Type) -> T? {
-        return traits[ObjectIdentifier(T.self)].map { $0 as! T }
+        return traits[T.name].map { $0 as! T }
     }
     
     static func registerTraitTypes(_ traitTypes: [Trait.Type]) {
@@ -43,7 +42,8 @@ public struct TraitList: Codable {
         }
     }
     
-    private let traits: [ObjectIdentifier: Trait]
+    private static var possibleTraits: [String: Trait.Type] = [:]
+    private let traits: [String: Trait]
 
     private struct CodingKeys: CodingKey {
         var stringValue: String
@@ -61,9 +61,9 @@ public struct TraitList: Codable {
 extension TraitList: ExpressibleByArrayLiteral {
     public typealias ArrayLiteralElement = Trait
     public init(arrayLiteral elements: Trait...) {
-        var traits: [ObjectIdentifier: Trait] = [:]
+        var traits: [String: Trait] = [:]
         elements.forEach {
-            traits[ObjectIdentifier(type(of: $0))] = $0
+            traits[type(of: $0).name] = $0
         }
         self.traits = traits
     }
