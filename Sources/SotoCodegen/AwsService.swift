@@ -68,12 +68,15 @@ struct AwsService {
     static func generateServiceContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
         var context: [String: Any] = [:]
         guard let serviceEntry = model.shapes(of: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
+        let serviceId = serviceEntry.key
         let service = serviceEntry.value
-        let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: serviceEntry.key)
-        let authSigV4 = try getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceEntry.key)
+        let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: serviceId)
+        let authSigV4 = try getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
 
         context["name"] = serviceName
-        context["description"] = service.trait(type: DocumentationTrait.self)?.value.tagStriped()
+        context["description"] = Array<String>(service.trait(type: DocumentationTrait.self)?.value
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: CharacterSet.whitespaces)} ?? [])
         // TODO: context["amzTarget"]
         context["endpointPrefix"] = awsService.arnNamespace
         context["signingName"] = authSigV4.name
@@ -91,7 +94,7 @@ struct AwsService {
                 operationContexts.append(operationContext)
 
                 if operation.trait(type: StreamingTrait.self) != nil {
-                    let operationContext = try generateOperationContext(operation, operationName: operationId.target)
+                    let operationContext = try generateOperationContext(operation, operationName: operationId.target, streaming: true)
                     streamingOperationContexts.append(operationContext)
                 }
             }
@@ -99,7 +102,7 @@ struct AwsService {
 
         context["operations"] = operationContexts.sorted { $0.funcName < $1.funcName }
         context["streamingOperations"] = streamingOperationContexts.sorted { $0.funcName < $1.funcName }
-        //context["logger"] = self.getSymbol(for: "Logger", from: "Logging", api: self.api)
+        context["logger"] = getSymbol(for: "Logger", from: "Logging", model: model, namespace: serviceId.namespace ?? "")
         return context
     }
 
@@ -108,7 +111,7 @@ struct AwsService {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         return OperationContext(
-            comment: documentationTrait?.tagStriped().split(separator: "\n") ?? [],
+            comment: documentationTrait?.split(separator: "\n").map { $0.trimmingCharacters(in: CharacterSet.whitespaces)} ?? [],
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,
@@ -121,13 +124,12 @@ struct AwsService {
         )
     }
 
-    /*func getSymbol(for symbol: String, from framework: String, api: API) -> String {
-        if api.shapes[symbol] != nil {
+    static func getSymbol(for symbol: String, from framework: String, model: SotoSmithy.Model, namespace: String) -> String {
+        if model.shape(for: ShapeId(rawValue: "\(namespace)#\(symbol)")) != nil {
             return "\(framework).\(symbol)"
         }
         return symbol
-    }*/
-
+    }
 }
 
 
@@ -137,7 +139,7 @@ extension AwsService {
     }
 
     struct OperationContext {
-        let comment: [String.SubSequence]
+        let comment: [String]
         let funcName: String
         let inputShape: String?
         let outputShape: String?
