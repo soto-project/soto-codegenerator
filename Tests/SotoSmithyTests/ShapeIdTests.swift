@@ -22,11 +22,11 @@ class ShapeIdTests: XCTestCase {
     }
     
     func testShape() {
-        XCTAssertEqual(ShapeId(rawValue: "namespace#test").shape, "test")
-        XCTAssertEqual(ShapeId(rawValue: "test").shape, "test")
-        XCTAssertEqual(ShapeId(rawValue: "test$member").shape, "test")
-        XCTAssertEqual(ShapeId(rawValue: "namespace#test$member").shape, "test")
-        XCTAssertEqual(ShapeId(rawValue: "#test$").shape, "test")
+        XCTAssertEqual(ShapeId(rawValue: "namespace#test").shapeName, "test")
+        XCTAssertEqual(ShapeId(rawValue: "test").shapeName, "test")
+        XCTAssertEqual(ShapeId(rawValue: "test$member").shapeName, "test")
+        XCTAssertEqual(ShapeId(rawValue: "namespace#test$member").shapeName, "test")
+        XCTAssertEqual(ShapeId(rawValue: "#test$").shapeName, "test")
     }
     
     func testMember() {

@@ -37,23 +37,23 @@ public struct ShapeId: Codable, Equatable, Hashable, RawRepresentable, CustomStr
     }
     
     /// namespace
-    public var namespace: Substring? {
-        return rawValue.firstIndex(of: "#").map { return rawValue[rawValue.startIndex..<$0]}
+    public var namespace: String? {
+        return rawValue.firstIndex(of: "#").map { return String(rawValue[rawValue.startIndex..<$0])}
     }
     /// shape
-    public var shape: Substring {
+    public var shapeName: String {
         let start = rawValue.firstIndex(of: "#").map { rawValue.index(after: $0) } ?? rawValue.startIndex
         let end = rawValue.firstIndex(of: "$") ?? rawValue.endIndex
-        return rawValue[start..<end]
+        return String(rawValue[start..<end])
     }
     /// member
-    public var member: Substring? {
-        return rawValue.firstIndex(of: "$").map { return rawValue[rawValue.index(after: $0)..<rawValue.endIndex]}
+    public var member: String? {
+        return rawValue.firstIndex(of: "$").map { return String(rawValue[rawValue.index(after: $0)..<rawValue.endIndex])}
     }
     /// root shape id
-    public var rootShapeId: Substring {
+    public var rootShapeId: String {
         let end = rawValue.firstIndex(of: "$") ?? rawValue.endIndex
-        return rawValue[rawValue.startIndex..<end]
+        return String(rawValue[rawValue.startIndex..<end])
     }
     
     public var description: String { return rawValue }

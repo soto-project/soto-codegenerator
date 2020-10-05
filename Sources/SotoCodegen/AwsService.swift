@@ -80,23 +80,54 @@ struct AwsService {
         context["protocol"] = try getServiceProtocol(service, serviceName: serviceName).output
         context["apiVersion"] = service.version
 
+        var operationContexts: [OperationContext] = []
+        var streamingOperationContexts: [OperationContext] = []
+        if let operations = service.operations {
+            for operationId in operations {
+                guard let operation = model.shape(for: operationId.target) as? OperationShape else {
+                    throw Error(reason: "Operation \(operationId.target) does not exist")
+                }
+                let operationContext = try generateOperationContext(operation, operationName: operationId.target)
+                operationContexts.append(operationContext)
+
+                if operation.trait(type: StreamingTrait.self) != nil {
+                    let operationContext = try generateOperationContext(operation, operationName: operationId.target)
+                    streamingOperationContexts.append(operationContext)
+                }
+            }
+        }
+
+        context["operations"] = operationContexts.sorted { $0.funcName < $1.funcName }
+        context["streamingOperations"] = streamingOperationContexts.sorted { $0.funcName < $1.funcName }
+        //context["logger"] = self.getSymbol(for: "Logger", from: "Logging", api: self.api)
         return context
     }
 
-    static func generateOperationContext(_ operation: OperationShape, operationName: String) throws -> OperationContext {
+    static func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool = false) throws -> OperationContext {
+        let documentationTrait = operation.trait(type: DocumentationTrait.self)?.value
+        let httpTrait = operation.trait(type: HttpTrait.self)
+        let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         return OperationContext(
-            comment: [],
-            funcName: "",
-            inputShape: nil,
-            outputShape: nil,
-            name: "",
-            path: "",
-            httpMethod: "",
-            deprecated: nil,
-            streaming: nil,
+            comment: documentationTrait?.tagStriped().split(separator: "\n") ?? [],
+            funcName: operationName.shapeName.toSwiftVariableCase(),
+            inputShape: operation.input?.target.shapeName,
+            outputShape: operation.output?.target.shapeName,
+            name: operationName.shapeName,
+            path: httpTrait?.uri ?? "/",
+            httpMethod: httpTrait?.method ?? "GET",
+            deprecated: deprecatedTrait?.message,
+            streaming: streaming ? "ByteBuffer": nil,
             documentationUrl: nil
         )
     }
+
+    /*func getSymbol(for symbol: String, from framework: String, api: API) -> String {
+        if api.shapes[symbol] != nil {
+            return "\(framework).\(symbol)"
+        }
+        return symbol
+    }*/
+
 }
 
 
