@@ -25,7 +25,9 @@ public extension Shape {
     func validate(using model: Model) throws {
         try traits?.validate(using: model, shape: self)
     }
-}
+    func trait<T: Trait>(type: T.Type) -> T? {
+        return traits?.trait(type: T.self)
+    }}
 
 public struct AnyShape: Shape {
     static var possibleShapes: [String: Shape.Type] = [:]

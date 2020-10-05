@@ -34,7 +34,11 @@ public struct Model: Decodable {
     public func shape(for identifier: ShapeId) -> Shape? {
         return shapes[identifier]?.shapeSelf
     }
-    
+
+    public func shapes<S: Shape>(of shapeType: S.Type) -> [ShapeId: S] {
+        return shapes.compactMapValues { $0.value as? S }
+    }
+
     public func validate() throws {
         try shapes.forEach { try $0.value.validate(using: self) }
     }

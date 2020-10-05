@@ -13,8 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 public struct TraitList: Codable {
-    
-
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         var traits: [String: Trait] = [:]
@@ -72,5 +70,14 @@ extension TraitList: ExpressibleByArrayLiteral {
             traits[type(of: $0).name] = $0
         }
         self.traits = traits
+    }
+}
+
+extension TraitList: Sequence {
+    public typealias Element = Trait
+    public typealias Iterator = Dictionary<String, Trait>.Values.Iterator
+
+    public func makeIterator() -> Iterator {
+        return traits.values.makeIterator()
     }
 }
