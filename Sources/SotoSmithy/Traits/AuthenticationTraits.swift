@@ -43,11 +43,11 @@ public struct OptionalAuthTrait: EmptyTrait {
     public init() {}
 }
 
-public struct AuthTrait: ListTrait {
+public struct AuthTrait: SingleValueTrait {
     public static let name = "smithy.api#auth"
-    public typealias Element = String
-    public let list: [Element]
-    public init(list: [Element]) {
-        self.list = list
+    public typealias Value = [String]
+    public let value: Value
+    public init(value: Value) {
+        self.value = value
     }
 }

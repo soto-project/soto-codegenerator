@@ -17,25 +17,25 @@ public struct NoReplaceTrait: EmptyTrait {
     public init() {}
 }
 
-public struct ReferencesTrait: ListTrait {
+public struct ReferencesTrait: SingleValueTrait {
     public static let name = "smithy.api#references"
     public struct Reference: Codable {
         public let service: ShapeId?
         public let resource: ShapeId
         public let ids: [String: String]?
-        public let rel: String
+        public let rel: String?
     }
-    public typealias Element = Reference
-    public let list: [Element]
-    public init(list: [Element]) {
-        self.list = list
+    public typealias Value = [Reference]
+    public let value: Value
+    public init(value: Value) {
+        self.value = value
     }
 }
 
 public struct ResourceIdentifierTrait: StringTrait {
     public static let name = "smithy.api#resourceIdentifier"
-    public var string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }

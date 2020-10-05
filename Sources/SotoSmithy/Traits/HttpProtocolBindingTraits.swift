@@ -19,19 +19,20 @@ public struct HttpTrait: Trait {
     public let code: Int?
 }
 
-public struct HttpErrorTrait: IntegerTrait {
+public struct HttpErrorTrait: SingleValueTrait {
     public static let name = "smithy.api#httpError"
-    public let integer: Int
-    public init(integer: Int) {
-        self.integer = integer
+    public typealias Value = Int
+    public var value: Int
+    public init(value: Int) {
+        self.value = value
     }
 }
 
 public struct HttpHeaderTrait: StringTrait {
     public static let name = "smithy.api#httpHeader"
-    public let string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }
 
@@ -47,17 +48,17 @@ public struct HttpPayloadTrait: EmptyTrait {
 
 public struct HttpPrefixHeadersTrait: StringTrait {
     public static let name = "smithy.api#httpPrefixHeaders"
-    public let string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }
 
 public struct HttpQueryTrait: StringTrait {
     public static let name = "smithy.api#httpQuery"
-    public let string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }
 

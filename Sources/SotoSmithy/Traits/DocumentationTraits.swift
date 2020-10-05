@@ -19,14 +19,14 @@ public struct DeprecatedTrait: Trait {
 }
 
 public struct DocumentationTrait: StringTrait {
-    public init(string: String) {
-        self.string = string
+    public init(value: String) {
+        self.value = value
     }
     public static let name = "smithy.api#documentation"
-    public let string: String
+    public let value: String
 }
 
-public struct ExamplesTrait: ListTrait {
+public struct ExamplesTrait: SingleValueTrait {
     public static let name = "smithy.api#examples"
     public struct Example: Codable {
         public let title: String
@@ -34,20 +34,19 @@ public struct ExamplesTrait: ListTrait {
         public let input: String
         public let output: String
     }
-    public typealias Element = Example
-    public let list: [Element]
-    public init(list: [Element]) {
-        self.list = list
+    public typealias Value = [Example]
+    public let value: Value
+    public init(value: Value) {
+        self.value = value
     }
 }
 
-public struct ExternalDocumentationTrait: MapTrait {
+public struct ExternalDocumentationTrait: SingleValueTrait {
     public static let name = "smithy.api#externalDocumentation"
-    public typealias Key = String
-    public typealias Value = String
-    public let map: [Key: Value]
-    public init(map: [Key: Value]) {
-        self.map = map
+    public typealias Value = [String: String]
+    public let value: Value
+    public init(value: Value) {
+        self.value = value
     }
 
 }
@@ -64,26 +63,26 @@ public struct SensitiveTrait: EmptyTrait {
 
 public struct SinceTrait: StringTrait {
     public static let name = "smithy.api#since"
-    public var string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }
 
-public struct TagsTrait: ListTrait {
+public struct TagsTrait: SingleValueTrait {
     public static let name = "smithy.api#tags"
-    public typealias Element = String
-    public let list: [Element]
-    public init(list: [Element]) {
-        self.list = list
+    public typealias Value = [String]
+    public let value: Value
+    public init(value: Value) {
+        self.value = value
     }
 }
 
 public struct TitleTrait: StringTrait {
     public static let name = "smithy.api#title"
-    public var string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }
 

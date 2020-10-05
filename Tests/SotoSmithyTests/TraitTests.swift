@@ -43,10 +43,10 @@ class TraitTests: XCTestCase {
         _ = Smithy()
         let traitList = try JSONDecoder().decode(TraitList.self, from: Data(json.utf8))
         let enumTrait = traitList.trait(type: EnumTrait.self)
-        XCTAssertEqual(enumTrait?.list[0].value, "t2.nano")
-        XCTAssertEqual(enumTrait?.list[0].name, "T2_NANO")
-        XCTAssertEqual(enumTrait?.list[0].documentation, "T2 instances are ...")
-        XCTAssertEqual(enumTrait?.list[0].tags?[0], "ebsOnly")
+        XCTAssertEqual(enumTrait?.value[0].value, "t2.nano")
+        XCTAssertEqual(enumTrait?.value[0].name, "T2_NANO")
+        XCTAssertEqual(enumTrait?.value[0].documentation, "T2 instances are ...")
+        XCTAssertEqual(enumTrait?.value[0].tags?[0], "ebsOnly")
     }
 
     func testIdRefTrait() throws {
@@ -90,7 +90,7 @@ class TraitTests: XCTestCase {
         _ = Smithy()
         let traitList = try JSONDecoder().decode(TraitList.self, from: Data(json.utf8))
         let patternTrait = traitList.trait(type: PatternTrait.self)
-        XCTAssertEqual(patternTrait?.string, "$[a-z]*")
+        XCTAssertEqual(patternTrait?.value, "$[a-z]*")
     }
 
     func testPrivateTrait() throws {
@@ -156,7 +156,7 @@ class TraitTests: XCTestCase {
         _ = Smithy()
         let traitList = try JSONDecoder().decode(TraitList.self, from: Data(json.utf8))
         let documentationTrait = traitList.trait(type: DocumentationTrait.self)
-        XCTAssertEqual(documentationTrait?.string, "Testing documentation trait")
+        XCTAssertEqual(documentationTrait?.value, "Testing documentation trait")
     }
 
     func testTimestampFormatTrait() throws {

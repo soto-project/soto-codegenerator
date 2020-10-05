@@ -29,7 +29,7 @@ public struct ReadonlyTrait: EmptyTrait {
 
 public struct RetryableTrait: Trait {
     public static var name = "smithy.api#retryable"
-    public let throttling: Bool
+    public let throttling: Bool?
 }
 
 public struct PaginatedTrait: Trait {

@@ -19,17 +19,17 @@ public struct ProtocolDefinitionTrait: EmptyTrait {
 
 public struct JsonNameTrait: StringTrait {
     public static let name = "smithy.api#jsonName"
-    public let string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }
 
 public struct MediaTypeTrait: StringTrait {
     public static let name = "smithy.api#mediaType"
-    public let string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }
 

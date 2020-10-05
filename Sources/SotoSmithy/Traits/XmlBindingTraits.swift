@@ -24,9 +24,9 @@ public struct XmlFlattenedTrait: EmptyTrait {
 
 public struct XmlNameTrait: StringTrait {
     public static let name = "smithy.api#xmlName"
-    public let string: String
-    public init(string: String) {
-        self.string = string
+    public var value: String
+    public init(value: String) {
+        self.value = value
     }
 }
 

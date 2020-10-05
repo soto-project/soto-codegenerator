@@ -12,18 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct BoxTrait: EmptyTrait {
-    public static let name = "smithy.api#box"
-    public init() {}
-}
-
-public struct ErrorTrait: SingleValueTrait {
-    public static let name = "smithy.api#error"
-    public enum ErrorType: String, Codable {
-        case client
-        case server
-    }
-    public typealias Value = ErrorType
+public struct SuppressTrait: SingleValueTrait {
+    public static let name = "smithy.api#suppress"
+    public typealias Value = [String]
     public let value: Value
     public init(value: Value) {
         self.value = value

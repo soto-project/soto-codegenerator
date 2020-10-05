@@ -43,79 +43,25 @@ public protocol EmptyTrait: Trait {
 extension EmptyTrait {
     public init(from decoder: Decoder) throws { self.init() }
 }
-    
-public protocol StringTrait: Trait {
-    var string: String { get }
-    init(string: String)
-}
 
-extension StringTrait {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let string = try container.decode(String.self)
-        self.init(string: string)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(string)
-    }
-}
-
-public protocol IntegerTrait: Trait {
-    var integer: Int { get }
-    init(integer: Int)
-}
-
-extension IntegerTrait {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let integer = try container.decode(Int.self)
-        self.init(integer: integer)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(integer)
-    }
-}
-
-public protocol ListTrait: Trait {
-    associatedtype Element: Codable
-    var list: [Element] { get }
-    init(list: [Element])
-}
-
-extension ListTrait {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let list = try container.decode([Element] .self)
-        self.init(list: list)
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(list)
-    }
-}
-
-public protocol MapTrait: Trait {
-    associatedtype Key: Codable, Hashable
+public protocol SingleValueTrait: Trait {
     associatedtype Value: Codable
-    var map: [Key: Value] { get }
-    init(map: [Key: Value])
+    var value: Value { get }
+    init(value: Value)
 }
 
-extension MapTrait {
+extension SingleValueTrait {
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        let map = try container.decode([Key: Value] .self)
-        self.init(map: map)
+        let value = try container.decode(Value.self)
+        self.init(value: value)
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        try container.encode(map)
+        try container.encode(value)
     }
 }
 
+public protocol StringTrait: SingleValueTrait where Value == String {
+}

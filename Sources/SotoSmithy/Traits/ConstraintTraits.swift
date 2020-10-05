@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct EnumTrait: ListTrait {
+public struct EnumTrait: SingleValueTrait {
     public static let name = "smithy.api#enum"
     public struct EnumDefinition: Codable {
         public let value: String
@@ -21,10 +21,10 @@ public struct EnumTrait: ListTrait {
         public let tags: [String]?
         public let deprecated: Bool?
     }
-    public typealias Element = EnumDefinition
-    public let list: [Element]
-    public init(list: [Element]) {
-        self.list = list
+    public typealias Value = [EnumDefinition]
+    public let value: Value
+    public init(value: Value) {
+        self.value = value
     }
 }
 
@@ -42,11 +42,11 @@ public struct LengthTrait: Trait {
 }
 
 public struct PatternTrait: StringTrait {
-    public init(string: String) {
-        self.string = string
-    }
     public static let name = "smithy.api#pattern"
-    public let string: String
+    public var value: String
+    public init(value: String) {
+        self.value = value
+    }
 }
 
 public struct PrivateTrait: EmptyTrait {
