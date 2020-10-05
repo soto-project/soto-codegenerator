@@ -14,11 +14,13 @@
 
 public struct NoReplaceTrait: EmptyTrait {
     public static let name = "smithy.api#noReplace"
+    public static var selector: Selector = ShapeSelector<ResourceShape>()
     public init() {}
 }
 
 public struct ReferencesTrait: SingleValueTrait {
     public static let name = "smithy.api#references"
+    public static var selector: Selector = OrSelector(ShapeSelector<StructureShape>(), ShapeSelector<StringShape>())
     public struct Reference: Codable {
         public let service: ShapeId?
         public let resource: ShapeId
@@ -34,6 +36,11 @@ public struct ReferencesTrait: SingleValueTrait {
 
 public struct ResourceIdentifierTrait: StringTrait {
     public static let name = "smithy.api#resourceIdentifier"
+    public static var selector: Selector = AndSelector(
+        ShapeSelector<MemberShape>(),
+        TraitSelector<RequiredTrait>(),
+        TargetSelector(ShapeSelector<StringShape>())
+    )
     public var value: String
     public init(value: String) {
         self.value = value

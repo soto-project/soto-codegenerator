@@ -28,6 +28,7 @@ public struct DocumentationTrait: StringTrait {
 
 public struct ExamplesTrait: SingleValueTrait {
     public static let name = "smithy.api#examples"
+    public static let selector: Selector = ShapeSelector<OperationShape>()
     public struct Example: Codable {
         public let title: String
         public let documentation: String?
@@ -58,6 +59,13 @@ public struct InternalTrait: EmptyTrait {
 
 public struct SensitiveTrait: EmptyTrait {
     public static let name = "smithy.api#sensitive"
+    public static let selector: Selector = NotSelector(
+        OrSelector(
+            ShapeSelector<OperationShape>(),
+            ShapeSelector<ServiceShape>(),
+            ShapeSelector<ResourceShape>()
+        )
+    )
     public init() {}
 }
 
@@ -80,6 +88,7 @@ public struct TagsTrait: SingleValueTrait {
 
 public struct TitleTrait: StringTrait {
     public static let name = "smithy.api#title"
+    public static let selector: Selector = OrSelector(ShapeSelector<ServiceShape>(), ShapeSelector<ResourceShape>())
     public var value: String
     public init(value: String) {
         self.value = value

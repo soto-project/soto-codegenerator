@@ -14,16 +14,32 @@
 
 public struct XmlAttributeTrait: EmptyTrait {
     public static let name = "smithy.api#xmlAttribute"
+    public static let selector: Selector = TargetSelector(OrSelector(
+        ShapeSelector<BooleanShape>(),
+        NumberSelector(),
+        ShapeSelector<StringShape>(),
+        ShapeSelector<TimestampShape>()
+    ))
     public init() { }
 }
 
 public struct XmlFlattenedTrait: EmptyTrait {
     public static let name = "smithy.api#xmlFlattened"
+    public static let selector: Selector = TargetSelector(OrSelector(
+        ShapeSelector<ListShape>(),
+        ShapeSelector<SetShape>(),
+        ShapeSelector<MapShape>()
+    ))
     public init() { }
 }
 
 public struct XmlNameTrait: StringTrait {
     public static let name = "smithy.api#xmlName"
+    public static let selector: Selector = OrSelector(
+        ShapeSelector<StructureShape>(),
+        ShapeSelector<UnionShape>(),
+        ShapeSelector<MemberShape>()
+    )
     public var value: String
     public init(value: String) {
         self.value = value

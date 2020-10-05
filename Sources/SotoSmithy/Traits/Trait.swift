@@ -12,8 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-public protocol Trait: Codable {
+public protocol Trait: Decodable {
     static var name: String { get }
+    static var selector: Selector { get }
     func validate(using model: Model, shape: Shape) throws
 }
 
@@ -23,8 +24,12 @@ extension Trait {
         let value = try container.decode(Self.self, forKey: TraitCodingKeys(stringValue: name)!)
         return value
     }
-
-    public func validate(using model: Model, shape: Shape) throws { }
+    public static var selector: Selector { return AllSelector() }
+    public func validate(using model: Model, shape: Shape) throws {
+        guard Self.selector.select(using: model, shape: shape) else {
+            throw Smithy.ValidationError(reason: "Trait \(Self.name) cannot be applied to \(type(of: shape).type)")
+        }
+    }
 }
 
 private struct TraitCodingKeys: CodingKey {

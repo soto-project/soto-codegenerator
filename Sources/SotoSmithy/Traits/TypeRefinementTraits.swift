@@ -14,11 +14,23 @@
 
 public struct BoxTrait: EmptyTrait {
     public static let name = "smithy.api#box"
+    public static let selector: Selector = OrTargetSelector(
+        OrSelector(
+            ShapeSelector<BooleanShape>(),
+            ShapeSelector<ByteShape>(),
+            ShapeSelector<ShortShape>(),
+            ShapeSelector<IntegerShape>(),
+            ShapeSelector<LongShape>(),
+            ShapeSelector<FloatShape>(),
+            ShapeSelector<DoubleShape>()
+        )
+    )
     public init() {}
 }
 
 public struct ErrorTrait: SingleValueTrait {
     public static let name = "smithy.api#error"
+    public static let selector: Selector = ShapeSelector<StructureShape>()
     public enum ErrorType: String, Codable {
         case client
         case server
