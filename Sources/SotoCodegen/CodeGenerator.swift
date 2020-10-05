@@ -32,11 +32,17 @@ struct CodeGenerator {
 
     func registerAWSTraits() {
         let smithy = Smithy()
+        // register AWS traits
         smithy.registerTraitTypes(
             AwsArnTrait.self,
+            AwsArnReferenceTrait.self,
             AwsServiceTrait.self,
-            AwsArnTrait.self,
-            AwsProtocolsRestJson1Trait.self
+            AwsAuthSigV4Trait.self,
+            AwsProtocolsRestJson1Trait.self,
+            AwsProtocolsAwsJson1_0Trait.self,
+            AwsProtocolsAwsJson1_1Trait.self,
+            AwsProtocolsAwsQueryTrait.self,
+            AwsProtocolsRestXmlTrait.self
         )
     }
 

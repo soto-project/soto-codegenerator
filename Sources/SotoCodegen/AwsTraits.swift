@@ -22,11 +22,17 @@ struct AwsArnTrait: Trait {
     let noRegion: Bool
 }
 
+struct AwsArnReferenceTrait: Trait {
+    static let name = "aws.api#arnReference"
+    let service: String?
+    let resource: String?
+}
+
 struct AwsServiceTrait: Trait {
     static let name = "aws.api#service"
     let sdkId: String
     let arnNamespace: String
-    let cloudFormationName: String
+    let cloudFormationName: String?
     let cloudTrailEventSource: String
 }
 
@@ -37,4 +43,20 @@ struct AwsAuthSigV4Trait: Trait {
 
 struct AwsProtocolsRestJson1Trait: EmptyTrait {
     static let name = "aws.protocols#restJson1"
+}
+
+struct AwsProtocolsAwsJson1_1Trait: EmptyTrait {
+    static let name = "aws.protocols#awsJson1_1"
+}
+
+struct AwsProtocolsAwsJson1_0Trait: EmptyTrait {
+    static let name = "aws.protocols#awsJson1_0"
+}
+
+struct AwsProtocolsAwsQueryTrait: EmptyTrait {
+    static let name = "aws.protocols#awsQuery"
+}
+
+struct AwsProtocolsRestXmlTrait: EmptyTrait {
+    static let name = "aws.protocols#restXml"
 }
