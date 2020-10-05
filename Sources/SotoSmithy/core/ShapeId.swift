@@ -12,12 +12,18 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct ShapeId: Codable, Equatable, Hashable, RawRepresentable, CustomStringConvertible {
+public struct ShapeId: Codable, Equatable, Hashable, RawRepresentable, CustomStringConvertible, ExpressibleByStringLiteral {
+    public typealias StringLiteralType = String
+    
     public typealias RawValue = String
     public let rawValue: String
     
     public init(rawValue: String) {
         self.rawValue = rawValue
+    }
+
+    public init(stringLiteral: String) {
+        self.rawValue = stringLiteral
     }
 
     public init(from decoder: Decoder) throws {

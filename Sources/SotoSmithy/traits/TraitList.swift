@@ -13,10 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 public struct TraitList: Codable {
+    
     static var possibleTraits: [String: Trait.Type] = [:]
 
-    private let traits: [ObjectIdentifier: Trait]
-    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         var traits: [ObjectIdentifier: Trait] = [:]
@@ -38,12 +37,14 @@ public struct TraitList: Codable {
         return traits[ObjectIdentifier(T.self)].map { $0 as! T }
     }
     
-    public static func registerTraitTypes(_ traitTypes: [Trait.Type]) {
+    static func registerTraitTypes(_ traitTypes: [Trait.Type]) {
         for trait in traitTypes {
             possibleTraits[trait.name] = trait
         }
     }
     
+    private let traits: [ObjectIdentifier: Trait]
+
     private struct CodingKeys: CodingKey {
         var stringValue: String
         var intValue: Int? { return nil }
@@ -54,5 +55,16 @@ public struct TraitList: Codable {
         init?(intValue: Int) {
             return nil
         }
+    }
+}
+
+extension TraitList: ExpressibleByArrayLiteral {
+    public typealias ArrayLiteralElement = Trait
+    public init(arrayLiteral elements: Trait...) {
+        var traits: [ObjectIdentifier: Trait] = [:]
+        elements.forEach {
+            traits[ObjectIdentifier(type(of: $0))] = $0
+        }
+        self.traits = traits
     }
 }

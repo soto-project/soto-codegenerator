@@ -16,26 +16,27 @@ public struct Model: Codable {
     static let smithy = Smithy()
     let version: String
     let metadata: [String: String]?
-    let shapes: [ShapeId: AnyShape]?
+    let shapes: [ShapeId: AnyShape]
     
     public init(from decoder: Decoder) throws {
-        _ = Self.smithy
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.version = try container.decode(String.self, forKey: .version)
         self.metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata)
-        if let shapes = try container.decodeIfPresent([String: AnyShape].self, forKey: .shapes) {
-            self.shapes = .init(uniqueKeysWithValues: shapes.map { (ShapeId(rawValue: $0.key), $0.value) } )
-        } else {
-            self.shapes = nil
+        var shapes = Self.smithy.preludeShapes.mapValues { AnyShape(value: $0) }
+        if let decodedShapes = try container.decodeIfPresent([String: AnyShape].self, forKey: .shapes) {
+            for shape in decodedShapes {
+                shapes[ShapeId(rawValue:shape.key)] = shape.value
+            }
         }
+        self.shapes = shapes
     }
     
     public func shape(for identifier: ShapeId) -> Shape? {
-        return shapes?[identifier]?.shapeSelf
+        return shapes[identifier]?.shapeSelf
     }
     
     public func validate() throws {
-        try shapes?.forEach { try $0.value.validate(using: self) }
+        try shapes.forEach { try $0.value.validate(using: self) }
     }
     
     private enum CodingKeys: String, CodingKey {

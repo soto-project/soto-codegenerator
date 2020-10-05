@@ -14,7 +14,8 @@
 
 public struct MemberShape: Shape {
     public let target: ShapeId
-    
+    public let traits: TraitList?
+
     public func validate(using model: Model) throws {
         guard let shape = model.shape(for: target) else { throw Smithy.ValidationError(reason: "Member references non-existent shape \(target)")}
         guard !(shape is OperationShape),
@@ -27,6 +28,7 @@ public struct MemberShape: Shape {
 
 public struct ListShape: Shape {
     public static let type = "list"
+    public let traits: TraitList?
     public let member: MemberShape
     public func validate(using model: Model) throws {
         try member.validate(using: model)
@@ -35,6 +37,7 @@ public struct ListShape: Shape {
 
 public struct SetShape: Shape {
     public static let type = "set"
+    public let traits: TraitList?
     public let member: MemberShape
     public func validate(using model: Model) throws {
         try member.validate(using: model)
@@ -43,6 +46,7 @@ public struct SetShape: Shape {
 
 public struct MapShape: Shape {
     public static let type = "map"
+    public let traits: TraitList?
     public let key: MemberShape
     public let value: MemberShape
     public func validate(using model: Model) throws {
@@ -53,6 +57,7 @@ public struct MapShape: Shape {
 
 public struct StructureShape: Shape {
     public static let type = "structure"
+    public let traits: TraitList?
     public let members: [String: MemberShape]
     public func validate(using model: Model) throws {
         try members.forEach { try $0.value.validate(using: model) }
@@ -61,6 +66,7 @@ public struct StructureShape: Shape {
 
 public struct UnionShape: Shape {
     public static let type = "union"
+    public let traits: TraitList?
     public let members: [String: MemberShape]
     public func validate(using model: Model) throws {
         try members.forEach { try $0.value.validate(using: model) }

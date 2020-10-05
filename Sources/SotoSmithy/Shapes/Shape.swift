@@ -14,6 +14,7 @@
 
 public protocol Shape: Codable {
     static var type: String { get }
+    var traits: TraitList? { get }
     var shapeSelf: Shape { get }
     func validate(using model: Model) throws
 }
@@ -27,8 +28,12 @@ public extension Shape {
 public struct AnyShape: Shape {
     static var possibleShapes: [String: Shape.Type] = [:]
     public let value: Shape
-    
+    public var traits: TraitList? { return shapeSelf.traits }
     public var shapeSelf: Shape { return value }
+    
+    init(value: Shape) {
+        self.value = value
+    }
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

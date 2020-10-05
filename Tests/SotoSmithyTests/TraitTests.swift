@@ -158,4 +158,16 @@ class TraitTests: XCTestCase {
         let documentationTrait = traitList.trait(type: DocumentationTrait.self)
         XCTAssertEqual(documentationTrait?.string, "Testing documentation trait")
     }
+
+    func testTimestampFormatTrait() throws {
+        let json = """
+        {
+            "smithy.api#timestampFormat": "http-date"
+        }
+        """
+        _ = Smithy()
+        let traitList = try JSONDecoder().decode(TraitList.self, from: Data(json.utf8))
+        let documentationTrait = traitList.trait(type: TimestampFormatTrait.self)
+        XCTAssertEqual(documentationTrait?.format, .httpDate)
+    }
 }

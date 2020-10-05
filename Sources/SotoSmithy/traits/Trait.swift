@@ -81,3 +81,23 @@ extension ListTrait {
     }
 }
 
+public protocol MapTrait: Trait {
+    associatedtype Key: Codable, Hashable
+    associatedtype Value: Codable
+    var map: [Key: Value] { get }
+    init(map: [Key: Value])
+}
+
+extension MapTrait {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let map = try container.decode([Key: Value] .self)
+        self.init(map: map)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(map)
+    }
+}
+

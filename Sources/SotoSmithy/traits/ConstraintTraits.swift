@@ -22,8 +22,8 @@ public struct EnumTrait: ListTrait {
         public let deprecated: Bool?
     }
     public typealias Element = EnumDefinition
-    public let list: [EnumDefinition]
-    public init(list: [EnumDefinition]) {
+    public let list: [Element]
+    public init(list: [Element]) {
         self.list = list
     }
 }
