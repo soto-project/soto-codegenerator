@@ -41,7 +41,7 @@ public struct Smithy {
             ResourceShape.self,
         ])
         
-        registerTraitTypes([
+        registerTraitTypes(
             // constraint traits
             EnumTrait.self,
             IdRefTrait.self,
@@ -109,11 +109,11 @@ public struct Smithy {
             XmlNamespaceTrait.self,
             // endpoint traits
             EndpointTrait.self,
-            HostLabelTrait.self,
-        ])
+            HostLabelTrait.self
+        )
     }
     
-    func registerTraitTypes(_ traitTypes: [Trait.Type]) {
+    public func registerTraitTypes(_ traitTypes: Trait.Type ...) {
         TraitList.registerTraitTypes(traitTypes)
     }
     
