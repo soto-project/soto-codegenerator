@@ -14,33 +14,6 @@
 
 import SotoSmithy
 
-struct AwsArnTrait: Trait {
-    static let name = "aws.api#arn"
-    let template: String
-    let absolute: Bool
-    let noAccount: Bool
-    let noRegion: Bool
-}
-
-struct AwsArnReferenceTrait: Trait {
-    static let name = "aws.api#arnReference"
-    let service: String?
-    let resource: String?
-}
-
-struct AwsServiceTrait: Trait {
-    static let name = "aws.api#service"
-    let sdkId: String
-    let arnNamespace: String
-    let cloudFormationName: String?
-    let cloudTrailEventSource: String
-}
-
-struct AwsAuthSigV4Trait: Trait {
-    static let name = "aws.auth#sigv4"
-    let name: String
-}
-
 struct AwsProtocolsRestJson1Trait: EmptyTrait {
     static let name = "aws.protocols#restJson1"
 }
@@ -57,6 +30,52 @@ struct AwsProtocolsAwsQueryTrait: EmptyTrait {
     static let name = "aws.protocols#awsQuery"
 }
 
+struct AwsProtocolsEc2QueryTrait: EmptyTrait {
+    static let name = "aws.protocols#ec2Query"
+}
+
 struct AwsProtocolsRestXmlTrait: EmptyTrait {
     static let name = "aws.protocols#restXml"
+}
+
+struct AwsProtocolsEc2QueryNameTrait: StringTrait {
+    static let name = "aws.protocols#ec2QueryName"
+    var value: String
+}
+
+struct AwsAuthSigV4Trait: Trait {
+    static let name = "aws.auth#sigv4"
+    let name: String
+}
+
+struct AwsAuthUnsignedPayloadTrait: EmptyTrait {
+    static let name = "aws.auth#unsignedPayload"
+}
+
+struct AwsServiceTrait: Trait {
+    static let name = "aws.api#service"
+    let sdkId: String
+    let arnNamespace: String
+    let cloudFormationName: String?
+    let cloudTrailEventSource: String
+}
+
+struct AwsArnTrait: Trait {
+    static let name = "aws.api#arn"
+    let template: String
+    let absolute: Bool
+    let noAccount: Bool
+    let noRegion: Bool
+}
+
+struct AwsArnReferenceTrait: Trait {
+    static let name = "aws.api#arnReference"
+    let service: String?
+    let resource: String?
+}
+
+struct AwsClientEndpointDiscoveryTrait: Trait {
+    static let name = "aws.api#clientEndpointDiscovery"
+    let operation: ShapeId
+    let error: ShapeId
 }
