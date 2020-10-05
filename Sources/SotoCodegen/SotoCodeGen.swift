@@ -15,17 +15,16 @@
 import Dispatch
 import Foundation
 import SotoSmithy
-//import PathKit
-//import Stencil
+import PathKit
+import Stencil
 
-struct CodeGenerator {
-//    let fsLoader: FileSystemLoader
-//    let environment: Environment
-    let command: CodeGeneratorCommand
+struct SotoCodeGen {
+    let environment: Environment
+    let command: SotoCodeGenCommand
 
-    init(command: CodeGeneratorCommand) {
-        //self.fsLoader = FileSystemLoader(paths: [Path("\(CodeGeneratorCommand.rootPath)/CodeGenerator/Templates/")])
-        //self.environment = Environment(loader: self.fsLoader)
+    init(command: SotoCodeGenCommand) {
+        let path = Bundle.module.resourcePath!
+        self.environment = Stencil.Environment(loader: FileSystemLoader(paths: [Path(path)]))
         self.command = command
         self.registerAWSTraits()
     }
@@ -68,23 +67,24 @@ struct CodeGenerator {
         return try modelFiles.map {
             let data = try Data(contentsOf: URL(fileURLWithPath: $0))
             let model = try JSONDecoder().decode(SotoSmithy.Model.self, from: data)
+            try model.validate()
             return model
         }
     }
 
     /// Generate service files from AWSService
     /// - Parameter codeGenerator: service generated from JSON
-/*    func generateFiles(with service: AWSService) throws {
-        let basePath = "\(command.outputFolder)/\(service.api.serviceName)/"
+    func generateFiles(with service: AwsService) throws {
+
+        let basePath = "\(command.outputFolder)/\(service.serviceName)/"
         try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
 
-        let apiContext = service.generateServiceContext()
-        if try self.environment.renderTemplate(name: "api.stencil", context: apiContext).writeIfChanged(
-            toFile: "\(basePath)/\(service.api.serviceName)_API.swift"
+        if try self.environment.renderTemplate(name: "api.stencil", context: service.apiContext).writeIfChanged(
+            toFile: "\(basePath)/\(service.serviceName)_API.swift"
         ) {
-            print("Wrote: \(service.api.serviceName)_API.swift")
+            print("Wrote: \(service.serviceName)_API.swift")
         }
-
+/*
         let shapesContext = service.generateShapesContext()
         if try self.environment.renderTemplate(name: "shapes.stencil", context: shapesContext).writeIfChanged(
             toFile: "\(basePath)/\(service.api.serviceName)_Shapes.swift"
@@ -108,9 +108,9 @@ struct CodeGenerator {
             ) {
                 print("Wrote: \(service.api.serviceName)_Paginator.swift")
             }
-        }
-        print("Succesfully Generated \(service.api.serviceName)")
-    }*/
+        }*/
+            print("Succesfully Generated \(service.serviceName)")
+    }
 
     func generate() throws {
         let startTime = Date()
@@ -118,15 +118,15 @@ struct CodeGenerator {
         // load JSON
         //let endpoints = try loadEndpointJSON()
         let models = try loadModelJSON()
-        /*let group = DispatchGroup()
+        let group = DispatchGroup()
 
         models.forEach { model in
             group.enter()
 
-            DispatchQueue.global().async {
+            DispatchQueue.global().sync {
                 defer { group.leave() }
                 do {
-                    let service = try AWSService(api: model.api, docs: model.docs, paginators: model.paginators, endpoints: endpoints)
+                    let service = try AwsService(model)
                     if self.command.output {
                         try self.generateFiles(with: service)
                     }
@@ -137,7 +137,7 @@ struct CodeGenerator {
             }
         }
 
-        group.wait()*/
+        group.wait()
 
         print("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
         print("Done.")

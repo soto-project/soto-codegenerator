@@ -15,7 +15,7 @@
 import ArgumentParser
 import Foundation
 
-struct CodeGeneratorCommand: ParsableCommand {
+struct SotoCodeGenCommand: ParsableCommand {
     @Option(name: .shortAndLong, help: "Folder to output service files to")
     var outputFolder: String = Self.defaultOutputFolder
 
@@ -31,17 +31,17 @@ struct CodeGeneratorCommand: ParsableCommand {
     static var rootPath: String {
         return #file
             .split(separator: "/", omittingEmptySubsequences: false)
-            .dropLast(4)
+            .dropLast(3)
             .map { String(describing: $0) }
             .joined(separator: "/")
     }
 
-    static var defaultOutputFolder: String { return "\(rootPath)/Sources/Soto/Services" }
+    static var defaultOutputFolder: String { return "\(rootPath)/services" }
     static var defaultInputFolder: String { return "\(rootPath)/models" }
 
     func run() throws {
-        try CodeGenerator(command: self).generate()
+        try SotoCodeGen(command: self).generate()
     }
 }
 
-CodeGeneratorCommand.main()
+SotoCodeGenCommand.main()
