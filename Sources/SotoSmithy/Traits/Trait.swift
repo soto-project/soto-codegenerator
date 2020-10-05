@@ -14,6 +14,7 @@
 
 public protocol Trait: Codable {
     static var name: String { get }
+    func validate(using model: Model, shape: Shape) throws
 }
 
 extension Trait {
@@ -22,6 +23,8 @@ extension Trait {
         let value = try container.decode(Self.self, forKey: TraitCodingKeys(stringValue: name)!)
         return value
     }
+
+    public func validate(using model: Model, shape: Shape) throws { }
 }
 
 private struct TraitCodingKeys: CodingKey {

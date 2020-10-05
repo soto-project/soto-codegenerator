@@ -27,6 +27,7 @@ public struct OperationMemberShape: Shape {
     public func validate(using model: Model) throws {
         guard let shape = model.shape(for: target) else { throw Smithy.ValidationError(reason: "Member references non-existent shape \(target)") }
         guard shape is OperationShape else { throw Smithy.ValidationError(reason: "Operation references illegal shape \(target)") }
+        try traits?.validate(using: model, shape: self)
     }
 }
 
@@ -45,6 +46,7 @@ public struct ResourceMemberShape: Shape {
     public func validate(using model: Model) throws {
         guard let shape = model.shape(for: target) else { throw Smithy.ValidationError(reason: "Member references non-existent shape \(target)") }
         guard shape is ResourceShape else { throw Smithy.ValidationError(reason: "Operation references illegal shape \(target)") }
+        try traits?.validate(using: model, shape: self)
     }
 }
 

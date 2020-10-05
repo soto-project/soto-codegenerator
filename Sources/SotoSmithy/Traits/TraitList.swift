@@ -42,6 +42,12 @@ public struct TraitList: Codable {
         }
     }
     
+    func validate(using model: Model, shape: Shape) throws {
+        try traits.forEach {
+            try $0.value.validate(using: model, shape: shape)
+        }
+    }
+
     private static var possibleTraits: [String: Trait.Type] = [:]
     private let traits: [String: Trait]
 

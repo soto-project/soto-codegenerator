@@ -23,7 +23,8 @@ public struct MemberShape: Shape {
               !(shape is ServiceShape) else {
             throw Smithy.ValidationError(reason: "Member references illegal shape \(target)")
         }
-    }
+        try traits?.validate(using: model, shape: self)
+   }
 }
 
 public struct ListShape: Shape {
@@ -32,6 +33,7 @@ public struct ListShape: Shape {
     public let member: MemberShape
     public func validate(using model: Model) throws {
         try member.validate(using: model)
+        try traits?.validate(using: model, shape: self)
     }
 }
 
@@ -41,6 +43,7 @@ public struct SetShape: Shape {
     public let member: MemberShape
     public func validate(using model: Model) throws {
         try member.validate(using: model)
+        try traits?.validate(using: model, shape: self)
     }
 }
 
@@ -52,6 +55,7 @@ public struct MapShape: Shape {
     public func validate(using model: Model) throws {
         try key.validate(using: model)
         try value.validate(using: model)
+        try traits?.validate(using: model, shape: self)
     }
 }
 
@@ -61,6 +65,7 @@ public struct StructureShape: Shape {
     public let members: [String: MemberShape]
     public func validate(using model: Model) throws {
         try members.forEach { try $0.value.validate(using: model) }
+        try traits?.validate(using: model, shape: self)
     }
 }
 
@@ -70,5 +75,6 @@ public struct UnionShape: Shape {
     public let members: [String: MemberShape]
     public func validate(using model: Model) throws {
         try members.forEach { try $0.value.validate(using: model) }
+        try traits?.validate(using: model, shape: self)
     }
 }

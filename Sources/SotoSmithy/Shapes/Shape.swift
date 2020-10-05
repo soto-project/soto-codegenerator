@@ -22,7 +22,9 @@ public protocol Shape: Codable {
 public extension Shape {
     static var type: String { return "_undefined_" }
     var shapeSelf: Shape { return self }
-    func validate(using model: Model) throws { }
+    func validate(using model: Model) throws {
+        try traits?.validate(using: model, shape: self)
+    }
 }
 
 public struct AnyShape: Shape {
