@@ -107,6 +107,9 @@ public struct Smithy {
             XmlFlattenedTrait.self,
             XmlNameTrait.self,
             XmlNamespaceTrait.self,
+            // endpoint traits
+            EndpointTrait.self,
+            HostLabelTrait.self,
         ])
     }
     
