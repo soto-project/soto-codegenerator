@@ -92,6 +92,16 @@ public struct Smithy {
             // streaming traits
             StreamingTrait.self,
             RequiresLengthTrait.self,
+            // http protocol binding traits
+            HttpTrait.self,
+            HttpErrorTrait.self,
+            HttpHeaderTrait.self,
+            HttpLabelTrait.self,
+            HttpPayloadTrait.self,
+            HttpPrefixHeadersTrait.self,
+            HttpQueryTrait.self,
+            HttpResponseCodeTrait.self,
+            HttpCorsTrait.self,
         ])
     }
     

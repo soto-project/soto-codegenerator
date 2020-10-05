@@ -55,10 +55,28 @@ extension StringTrait {
         let string = try container.decode(String.self)
         self.init(string: string)
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(string)
+    }
+}
+
+public protocol IntegerTrait: Trait {
+    var integer: Int { get }
+    init(integer: Int)
+}
+
+extension IntegerTrait {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let integer = try container.decode(Int.self)
+        self.init(integer: integer)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(integer)
     }
 }
 
