@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// traits required for loading AWS models and generating service files
+
 import SotoSmithy
 
 struct AwsProtocolsRestJson1Trait: EmptyTrait {
