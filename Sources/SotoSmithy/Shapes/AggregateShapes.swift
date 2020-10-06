@@ -67,8 +67,15 @@ public struct StructureShape: Shape {
         try members.forEach { try $0.value.validate(using: model) }
         try traits?.validate(using: model, shape: self)
     }
-    public mutating func add(trait: Trait, to member: String) {
-        members[member]?.add(trait: trait)
+    public mutating func add(trait: Trait, to member: String) throws {
+        guard members[member]?.add(trait: trait) != nil else {
+            throw Smithy.MemberDoesNotExistError(name: member)
+        }
+    }
+    public mutating func remove(trait: Trait.Type, from member: String) throws {
+        guard members[member]?.remove(trait: trait) != nil else {
+            throw Smithy.MemberDoesNotExistError(name: member)
+        }
     }
 }
 

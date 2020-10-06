@@ -40,6 +40,10 @@ public struct TraitList: Codable {
         traits[type(of: trait).name] = trait
     }
 
+    public mutating func remove(trait: Trait.Type) {
+        traits[trait.name] = nil
+    }
+
     static func registerTraitTypes(_ traitTypes: [Trait.Type]) {
         for trait in traitTypes {
             possibleTraits[trait.name] = trait

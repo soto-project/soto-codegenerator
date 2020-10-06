@@ -18,6 +18,7 @@ public protocol Shape: Codable {
     var shapeSelf: Shape { get }
     func validate(using model: Model) throws
     mutating func add(trait: Trait, to member: String) throws
+    mutating func remove(trait: Trait.Type, from member: String) throws
 }
 
 extension Shape {
@@ -40,7 +41,17 @@ extension Shape {
         }
     }
 
-    public mutating func add(trait: Trait, to member: String) throws { throw Smithy.MemberDoesNotExistError(name: member) }
+    public mutating func remove(trait: Trait.Type) {
+        self.traits?.remove(trait: trait)
+    }
+
+    public mutating func add(trait: Trait, to member: String) throws {
+        throw Smithy.MemberDoesNotExistError(name: member)
+    }
+
+    public mutating func remove(trait: Trait.Type, from member: String) throws {
+        throw Smithy.MemberDoesNotExistError(name: member)
+    }
 }
 
 public struct AnyShape: Shape {
@@ -77,6 +88,10 @@ public struct AnyShape: Shape {
     
     public mutating func add(trait: Trait, to member: String) throws {
         try self.value.add(trait: trait, to: member)
+    }
+
+    public mutating func remove(trait: Trait.Type, from member: String) throws {
+        try self.value.remove(trait: trait, from: member)
     }
 
     public static func registerShapeTypes(_ shapes: [Shape.Type]) {

@@ -79,6 +79,54 @@ class TraitTests: XCTestCase {
         XCTAssertNotNil(model.shape(for: "smithy.example#Structure$name")?.trait(type: RequiredTrait.self))
     }
 
+    func testRemoveTraitFromShape() throws {
+        let json = """
+        {
+            "smithy": "1.0",
+            "shapes": {
+                "smithy.example#Name": {
+                    "type": "string",
+                    "traits": {
+                        "smithy.api#pattern": "[a-z]"
+                    }
+                }
+            }
+        }
+        """
+        var model = try JSONDecoder().decode(Model.self, from: Data(json.utf8))
+        try model.validate()
+        XCTAssertNotNil(model.shape(for: "smithy.example#Name")?.trait(type: PatternTrait.self))
+        try model.remove(trait: PatternTrait.self, from: "smithy.example#Name")
+        XCTAssertNil(model.shape(for: "smithy.example#Name")?.trait(type: PatternTrait.self))
+    }
+
+    func testRemoveTraitFromMember() throws {
+        let json = """
+        {
+            "smithy": "1.0",
+            "shapes": {
+                "smithy.example#Name": { "type": "string" },
+                "smithy.example#Age": { "type": "integer" },
+                "smithy.example#Structure": {
+                    "type": "structure",
+                    "members" : {
+                        "name": {
+                            "target": "smithy.example#Name",
+                            "traits": {"smithy.api#xmlName": "name"}
+                        },
+                        "age": { "target": "smithy.example#Age" }
+                    }
+                }
+            }
+        }
+        """
+        var model = try JSONDecoder().decode(Model.self, from: Data(json.utf8))
+        try model.validate()
+        XCTAssertNotNil(model.shape(for: "smithy.example#Structure$name")?.trait(type: XmlNameTrait.self))
+        try model.remove(trait: XmlNameTrait.self, from: "smithy.example#Structure$name")
+        XCTAssertNil(model.shape(for: "smithy.example#Structure$name")?.trait(type: XmlNameTrait.self))
+    }
+
     func testEnumTrait() throws {
         let json = """
         {
