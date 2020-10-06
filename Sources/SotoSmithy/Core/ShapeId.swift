@@ -51,9 +51,9 @@ public struct ShapeId: Codable, Equatable, Hashable, RawRepresentable, CustomStr
         return rawValue.firstIndex(of: "$").map { return String(rawValue[rawValue.index(after: $0)..<rawValue.endIndex])}
     }
     /// root shape id
-    public var rootShapeId: String {
+    public var rootShapeId: ShapeId {
         let end = rawValue.firstIndex(of: "$") ?? rawValue.endIndex
-        return String(rawValue[rawValue.startIndex..<end])
+        return ShapeId(rawValue: String(rawValue[rawValue.startIndex..<end]))
     }
     
     public var description: String { return rawValue }

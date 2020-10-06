@@ -17,6 +17,68 @@ import XCTest
 
 class TraitTests: XCTestCase {
 
+    func testAddTraitToShape() throws {
+        let json = """
+        {
+            "smithy": "1.0",
+            "shapes": {
+                "smithy.example#Name": { "type": "string" },
+                "smithy.example#Age": { "type": "integer" },
+                "smithy.example#Structure": {
+                    "type": "structure",
+                    "members" : {
+                        "name": { "target": "smithy.example#Name" },
+                        "age": { "target": "smithy.example#Age" }
+                    }
+                }
+            }
+        }
+        """
+        var model = try JSONDecoder().decode(Model.self, from: Data(json.utf8))
+        try model.validate()
+        try model.add(trait: RequiredTrait(), to: "smithy.example#Structure")
+        XCTAssertNotNil(model.shape(for: "smithy.example#Structure")?.trait(type: RequiredTrait.self))
+    }
+
+    func testAddTraitToShapeFail() throws {
+        let json = """
+        {
+            "smithy": "1.0",
+            "shapes": {
+                "smithy.example#Name": { "type": "string" }
+            }
+        }
+        """
+        var model = try JSONDecoder().decode(Model.self, from: Data(json.utf8))
+        try model.validate()
+        XCTAssertThrowsError(try model.add(trait: RequiredTrait(), to: "smithy.example#NotName")) { error in
+            XCTAssertTrue(error is Smithy.ShapeDoesNotExistError)
+        }
+    }
+
+    func testAddTraitToMember() throws {
+        let json = """
+        {
+            "smithy": "1.0",
+            "shapes": {
+                "smithy.example#Name": { "type": "string" },
+                "smithy.example#Age": { "type": "integer" },
+                "smithy.example#Structure": {
+                    "type": "structure",
+                    "members" : {
+                        "name": { "target": "smithy.example#Name" },
+                        "age": { "target": "smithy.example#Age" }
+                    }
+                }
+            }
+        }
+        """
+        var model = try JSONDecoder().decode(Model.self, from: Data(json.utf8))
+        try model.validate()
+        try model.add(trait: RequiredTrait(), to: "smithy.example#Structure$name")
+        XCTAssertNotNil(model.shape(for: "smithy.example#Structure$name")?.trait(type: RequiredTrait.self))
+    }
+
     func testEnumTrait() throws {
         let json = """
         {

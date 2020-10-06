@@ -14,14 +14,14 @@
 
 public struct ServiceShape: Shape {
     public static let type = "service"
-    public let traits: TraitList?
+    public var traits: TraitList?
     public let version: String
     public let operations: [OperationMemberShape]?
     public let resources: [ResourceMemberShape]?
 }
 
 public struct OperationMemberShape: Shape {
-    public let traits: TraitList?
+    public var traits: TraitList?
     public let target: ShapeId
     
     public func validate(using model: Model) throws {
@@ -33,14 +33,14 @@ public struct OperationMemberShape: Shape {
 
 public struct OperationShape: Shape {
     public static let type = "operation"
-    public let traits: TraitList?
+    public var traits: TraitList?
     public let input: MemberShape?
     public let output: MemberShape?
     public let errors: [MemberShape]?
 }
 
 public struct ResourceMemberShape: Shape {
-    public let traits: TraitList?
+    public var traits: TraitList?
     public let target: ShapeId
     
     public func validate(using model: Model) throws {
@@ -52,7 +52,7 @@ public struct ResourceMemberShape: Shape {
 
 public struct ResourceShape: Shape {
     public static let type = "resource"
-    public let traits: TraitList?
+    public var traits: TraitList?
     public let identifiers: [String: MemberShape]?
     public let create: MemberShape?
     public let put: MemberShape?

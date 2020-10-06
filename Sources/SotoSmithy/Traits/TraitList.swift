@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+/// List of traits.
+///
 public struct TraitList: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -33,7 +35,11 @@ public struct TraitList: Codable {
     public func trait<T: Trait>(type: T.Type) -> T? {
         return traits[T.name].map { $0 as! T }
     }
-    
+
+    public mutating func add(trait: Trait) {
+        traits[type(of: trait).name] = trait
+    }
+
     static func registerTraitTypes(_ traitTypes: [Trait.Type]) {
         for trait in traitTypes {
             possibleTraits[trait.name] = trait
@@ -46,8 +52,16 @@ public struct TraitList: Codable {
         }
     }
 
+    init(traits traitsArray: [Trait]) {
+        var traits: [String: Trait] = [:]
+        traitsArray.forEach {
+            traits[type(of: $0).name] = $0
+        }
+        self.traits = traits
+    }
+
     private static var possibleTraits: [String: Trait.Type] = [:]
-    private let traits: [String: Trait]
+    private var traits: [String: Trait]
 
     private struct CodingKeys: CodingKey {
         var stringValue: String
@@ -65,11 +79,7 @@ public struct TraitList: Codable {
 extension TraitList: ExpressibleByArrayLiteral {
     public typealias ArrayLiteralElement = Trait
     public init(arrayLiteral elements: Trait...) {
-        var traits: [String: Trait] = [:]
-        elements.forEach {
-            traits[type(of: $0).name] = $0
-        }
-        self.traits = traits
+        self.init(traits: elements)
     }
 }
 

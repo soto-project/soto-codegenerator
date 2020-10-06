@@ -13,7 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 extension Smithy {
-    struct ValidationError: Error {
+    public struct ValidationError: Error {
         let reason: String
+    }
+
+    public struct ShapeDoesNotExistError: Error {
+        let id: ShapeId
+    }
+
+    public struct MemberDoesNotExistError: Error {
+        let name: String
     }
 }

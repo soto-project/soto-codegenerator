@@ -14,25 +14,42 @@
 
 public protocol Shape: Codable {
     static var type: String { get }
-    var traits: TraitList? { get }
+    var traits: TraitList? { get set }
     var shapeSelf: Shape { get }
     func validate(using model: Model) throws
+    mutating func add(trait: Trait, to member: String) throws
 }
 
-public extension Shape {
-    static var type: String { return "_undefined_" }
-    var shapeSelf: Shape { return self }
-    func validate(using model: Model) throws {
+extension Shape {
+    public static var type: String { return "_undefined_" }
+    public var shapeSelf: Shape { return self }
+
+    public func validate(using model: Model) throws {
         try traits?.validate(using: model, shape: self)
     }
-    func trait<T: Trait>(type: T.Type) -> T? {
+
+    public func trait<T: Trait>(type: T.Type) -> T? {
         return traits?.trait(type: T.self)
-    }}
+    }
+
+    public mutating func add(trait: Trait) {
+        if var traits = self.traits {
+            traits.add(trait: trait)
+        } else {
+            self.traits = TraitList(traits: [trait])
+        }
+    }
+
+    public mutating func add(trait: Trait, to member: String) throws { throw Smithy.MemberDoesNotExistError(name: member) }
+}
 
 public struct AnyShape: Shape {
     static var possibleShapes: [String: Shape.Type] = [:]
-    public let value: Shape
-    public var traits: TraitList? { return shapeSelf.traits }
+    public var value: Shape
+    public var traits: TraitList? {
+        get { return shapeSelf.traits }
+        set { value.traits = newValue }
+    }
     public var shapeSelf: Shape { return value }
     
     init(value: Shape) {
@@ -55,9 +72,13 @@ public struct AnyShape: Shape {
     }
     
     public func validate(using model: Model) throws {
-        try value.validate(using: model)
+        try self.value.validate(using: model)
     }
     
+    public mutating func add(trait: Trait, to member: String) throws {
+        try self.value.add(trait: trait, to: member)
+    }
+
     public static func registerShapeTypes(_ shapes: [Shape.Type]) {
         for shape in shapes {
             possibleShapes[shape.type] = shape

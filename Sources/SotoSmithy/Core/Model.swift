@@ -16,7 +16,7 @@ public struct Model: Decodable {
     static let smithy = Smithy()
     let version: String
     let metadata: [String: MetadataValue]?
-    let shapes: [ShapeId: AnyShape]
+    var shapes: [ShapeId: AnyShape]
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -32,7 +32,19 @@ public struct Model: Decodable {
     }
     
     public func shape(for identifier: ShapeId) -> Shape? {
-        return shapes[identifier]?.shapeSelf
+        if let member = identifier.member {
+            if let shape = shapes[identifier.rootShapeId]?.shapeSelf {
+                switch shape {
+                case let structure as StructureShape:
+                    return structure.members[member]
+                default:
+                    break
+                }
+            }
+            return nil
+        } else {
+            return shapes[identifier]?.shapeSelf
+        }
     }
 
     public func shapes<S: Shape>(of shapeType: S.Type) -> [ShapeId: S] {
@@ -42,7 +54,19 @@ public struct Model: Decodable {
     public func validate() throws {
         try shapes.forEach { try $0.value.validate(using: self) }
     }
-    
+
+    public mutating func add(trait: Trait, to identifier: ShapeId) throws {
+        if let member = identifier.member {
+            guard try shapes[identifier.rootShapeId]?.add(trait: trait, to: member) != nil else {
+                throw Smithy.ShapeDoesNotExistError(id: identifier)
+            }
+        } else {
+            guard shapes[identifier]?.add(trait: trait) != nil else {
+                throw Smithy.ShapeDoesNotExistError(id: identifier)
+            }
+        }
+    }
+
     private enum CodingKeys: String, CodingKey {
         case version = "smithy"
         case metadata
