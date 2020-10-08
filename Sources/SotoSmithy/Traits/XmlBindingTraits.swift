@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct XmlAttributeTrait: EmptyTrait {
-    public static let name = "smithy.api#xmlAttribute"
+    public static let staticName = "smithy.api#xmlAttribute"
     public static let selector: Selector = TargetSelector(OrSelector(
         ShapeSelector<BooleanShape>(),
         NumberSelector(),
@@ -24,7 +24,7 @@ public struct XmlAttributeTrait: EmptyTrait {
 }
 
 public struct XmlFlattenedTrait: EmptyTrait {
-    public static let name = "smithy.api#xmlFlattened"
+    public static let staticName = "smithy.api#xmlFlattened"
     public static let selector: Selector = TargetSelector(OrSelector(
         ShapeSelector<ListShape>(),
         ShapeSelector<SetShape>(),
@@ -34,7 +34,7 @@ public struct XmlFlattenedTrait: EmptyTrait {
 }
 
 public struct XmlNameTrait: StringTrait {
-    public static let name = "smithy.api#xmlName"
+    public static let staticName = "smithy.api#xmlName"
     public static let selector: Selector = OrSelector(
         ShapeSelector<StructureShape>(),
         ShapeSelector<UnionShape>(),
@@ -46,8 +46,8 @@ public struct XmlNameTrait: StringTrait {
     }
 }
 
-public struct XmlNamespaceTrait: Trait {
-    public static let name = "smithy.api#xmlNamespace"
+public struct XmlNamespaceTrait: StaticTrait {
+    public static let staticName = "smithy.api#xmlNamespace"
     public let uri: String
     public let prefix: String?
 }

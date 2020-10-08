@@ -13,12 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 public struct ProtocolDefinitionTrait: EmptyTrait {
-    public static let name = "smithy.api#protocolDefinition"
+    public static let staticName = "smithy.api#protocolDefinition"
     public init() {}
 }
 
 public struct JsonNameTrait: StringTrait {
-    public static let name = "smithy.api#jsonName"
+    public static let staticName = "smithy.api#jsonName"
     public static let selector: Selector = ShapeSelector<MemberShape>()
     public var value: String
     public init(value: String) {
@@ -27,7 +27,7 @@ public struct JsonNameTrait: StringTrait {
 }
 
 public struct MediaTypeTrait: StringTrait {
-    public static let name = "smithy.api#mediaType"
+    public static let staticName = "smithy.api#mediaType"
     public static let selector: Selector = OrSelector(ShapeSelector<BlobShape>(), ShapeSelector<StringShape>())
     public var value: String
     public init(value: String) {
@@ -35,8 +35,8 @@ public struct MediaTypeTrait: StringTrait {
     }
 }
 
-public struct TimestampFormatTrait: Trait {
-    public static let name = "smithy.api#timestampFormat"
+public struct TimestampFormatTrait: StaticTrait {
+    public static let staticName = "smithy.api#timestampFormat"
     public static let selector: Selector = OrTargetSelector(ShapeSelector<TimestampShape>())
     public enum TimestampFormat: String, Codable {
         case datetime = "date-time"

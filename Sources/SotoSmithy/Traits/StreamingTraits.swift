@@ -13,19 +13,19 @@
 //===----------------------------------------------------------------------===//
 
 public struct StreamingTrait: EmptyTrait {
-    public static let name = "smithy.api#streaming"
+    public static let staticName = "smithy.api#streaming"
     public static let selector: Selector = OrSelector(ShapeSelector<BlobShape>(), ShapeSelector<UnionShape>())
     public init() {}
 }
 
 public struct RequiresLengthTrait: EmptyTrait {
-    public static let name = "smithy.api#requiresLength"
+    public static let staticName = "smithy.api#requiresLength"
     public static let selector: Selector = TraitSelector<StreamingTrait>()
     public init() {}
 }
 
 public struct EventHeaderTrait: EmptyTrait {
-    public static let name = "smithy.api#eventHeader"
+    public static let staticName = "smithy.api#eventHeader"
     public static let selector: Selector = TargetSelector(OrSelector(
         ShapeSelector<BooleanShape>(),
         ShapeSelector<ByteShape>(),
@@ -40,7 +40,7 @@ public struct EventHeaderTrait: EmptyTrait {
 }
 
 public struct EventPayloadTrait: EmptyTrait {
-    public static let name = "smithy.api#eventPayload"
+    public static let staticName = "smithy.api#eventPayload"
     public static let selector: Selector = TargetSelector(OrSelector(
         ShapeSelector<BlobShape>(),
         ShapeSelector<StringShape>(),

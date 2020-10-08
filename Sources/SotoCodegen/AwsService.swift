@@ -24,9 +24,9 @@ struct AwsService {
         self.apiContext = try Self.generateServiceContext(model, serviceName: self.serviceName)
     }
 
-    static func getTrait<T: Trait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
+    static func getTrait<T: StaticTrait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
         guard let trait = shape.trait(type: T.self) else {
-            throw Error(reason: "\(id) does not have a \(T.name) trait")
+            throw Error(reason: "\(id) does not have a \(T.staticName) trait")
         }
         return trait
     }

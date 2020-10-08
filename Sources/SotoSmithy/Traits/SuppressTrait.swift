@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct SuppressTrait: SingleValueTrait {
-    public static let name = "smithy.api#suppress"
+    public static let staticName = "smithy.api#suppress"
     public typealias Value = [String]
     public let value: Value
     public init(value: Value) {

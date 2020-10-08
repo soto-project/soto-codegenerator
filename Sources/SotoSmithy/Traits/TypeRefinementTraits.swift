@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct BoxTrait: EmptyTrait {
-    public static let name = "smithy.api#box"
+    public static let staticName = "smithy.api#box"
     public static let selector: Selector = OrTargetSelector(
         OrSelector(
             ShapeSelector<BooleanShape>(),
@@ -29,7 +29,7 @@ public struct BoxTrait: EmptyTrait {
 }
 
 public struct ErrorTrait: SingleValueTrait {
-    public static let name = "smithy.api#error"
+    public static let staticName = "smithy.api#error"
     public static let selector: Selector = ShapeSelector<StructureShape>()
     public enum ErrorType: String, Codable {
         case client

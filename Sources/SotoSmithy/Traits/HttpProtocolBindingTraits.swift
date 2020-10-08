@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct HttpTrait: Trait {
-    public static let name = "smithy.api#http"
+public struct HttpTrait: StaticTrait {
+    public static let staticName = "smithy.api#http"
     public static let selector: Selector = ShapeSelector<OperationShape>()
     public let method: String
     public let uri: String
@@ -21,7 +21,7 @@ public struct HttpTrait: Trait {
 }
 
 public struct HttpErrorTrait: SingleValueTrait {
-    public static let name = "smithy.api#httpError"
+    public static let staticName = "smithy.api#httpError"
     public static let selector: Selector = AndSelector(ShapeSelector<StructureShape>(), TraitSelector<ErrorTrait>())
     public typealias Value = Int
     public var value: Int
@@ -31,7 +31,7 @@ public struct HttpErrorTrait: SingleValueTrait {
 }
 
 public struct HttpHeaderTrait: StringTrait {
-    public static let name = "smithy.api#httpHeader"
+    public static let staticName = "smithy.api#httpHeader"
     public static let selector: Selector = TargetSelector(OrSelector(
         ShapeSelector<BooleanShape>(),
         NumberSelector(),
@@ -48,7 +48,7 @@ public struct HttpHeaderTrait: StringTrait {
 }
 
 public struct HttpLabelTrait: EmptyTrait {
-    public static let name = "smithy.api#httpLabel"
+    public static let staticName = "smithy.api#httpLabel"
     public static let selector: Selector = AndSelector(
         TargetSelector(OrSelector(
             ShapeSelector<BooleanShape>(),
@@ -62,7 +62,7 @@ public struct HttpLabelTrait: EmptyTrait {
 }
 
 public struct HttpPayloadTrait: EmptyTrait {
-    public static let name = "smithy.api#httpPayload"
+    public static let staticName = "smithy.api#httpPayload"
     public static let selector: Selector = TargetSelector(OrSelector(
         ShapeSelector<StringShape>(),
         ShapeSelector<BlobShape>(),
@@ -74,7 +74,7 @@ public struct HttpPayloadTrait: EmptyTrait {
 }
 
 public struct HttpPrefixHeadersTrait: StringTrait {
-    public static let name = "smithy.api#httpPrefixHeaders"
+    public static let staticName = "smithy.api#httpPrefixHeaders"
     public static let selector: Selector = TargetSelector(ShapeSelector<MapShape>())
     public var value: String
     public init(value: String) {
@@ -83,7 +83,7 @@ public struct HttpPrefixHeadersTrait: StringTrait {
 }
 
 public struct HttpQueryTrait: StringTrait {
-    public static let name = "smithy.api#httpQuery"
+    public static let staticName = "smithy.api#httpQuery"
     public static let selector: Selector = TargetSelector(OrSelector(
         ShapeSelector<BooleanShape>(),
         NumberSelector(),
@@ -100,13 +100,13 @@ public struct HttpQueryTrait: StringTrait {
 }
 
 public struct HttpResponseCodeTrait: EmptyTrait {
-    public static let name = "smithy.api#httpResponseCode"
+    public static let staticName = "smithy.api#httpResponseCode"
     public static let selector: Selector = TargetSelector(ShapeSelector<IntegerShape>())
     public init() { }
 }
 
-public struct HttpCorsTrait: Trait {
-    public static let name = "smithy.api#cors"
+public struct HttpCorsTrait: StaticTrait {
+    public static let staticName = "smithy.api#cors"
     public static let selector: Selector = ShapeSelector<ServiceShape>()
     public let origin: String?
     public let maxAge: Int?

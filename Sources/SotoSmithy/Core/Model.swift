@@ -67,7 +67,7 @@ public struct Model: Decodable {
         }
     }
 
-    public mutating func remove(trait: Trait.Type, from identifier: ShapeId) throws {
+    public mutating func remove(trait: StaticTrait.Type, from identifier: ShapeId) throws {
         if let member = identifier.member {
             guard try shapes[identifier.rootShapeId]?.remove(trait: trait, from: member) != nil else {
                 throw Smithy.ShapeDoesNotExistError(id: identifier)

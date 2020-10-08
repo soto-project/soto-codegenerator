@@ -13,38 +13,34 @@
 //===----------------------------------------------------------------------===//
 
 public protocol Trait: Decodable {
-    static var name: String { get }
     static var selector: Selector { get }
     func validate(using model: Model, shape: Shape) throws
+    var name: String { get }
 }
 
 extension Trait {
-    static func decode(from decoder: Decoder) throws -> Self {
-        let container = try decoder.container(keyedBy: TraitCodingKeys.self)
-        let value = try container.decode(Self.self, forKey: TraitCodingKeys(stringValue: name)!)
+    static func decode<Key: CodingKey>(from decoder: Decoder, key: Key) throws -> Self {
+        let container = try decoder.container(keyedBy: Key.self)
+        let value = try container.decode(Self.self, forKey: key)
         return value
     }
     public static var selector: Selector { return AllSelector() }
     public func validate(using model: Model, shape: Shape) throws {
         guard Self.selector.select(using: model, shape: shape) else {
-            throw Smithy.ValidationError(reason: "Trait \(Self.name) cannot be applied to \(type(of: shape).type)")
+            throw Smithy.ValidationError(reason: "Trait \(name) cannot be applied to \(type(of: shape).type)")
         }
     }
 }
 
-private struct TraitCodingKeys: CodingKey {
-    var stringValue: String
-    var intValue: Int? { return nil }
-
-    init?(stringValue: String) {
-        self.stringValue = stringValue
-    }
-    init?(intValue: Int) {
-        return nil
-    }
+public protocol StaticTrait: Trait {
+    static var staticName: String { get }
 }
 
-public protocol EmptyTrait: Trait {
+extension StaticTrait {
+    public var name: String { return Self.staticName }
+}
+
+public protocol EmptyTrait: StaticTrait {
     init()
 }
 
@@ -52,7 +48,7 @@ extension EmptyTrait {
     public init(from decoder: Decoder) throws { self.init() }
 }
 
-public protocol SingleValueTrait: Trait {
+public protocol SingleValueTrait: StaticTrait {
     associatedtype Value: Codable
     var value: Value { get }
     init(value: Value)

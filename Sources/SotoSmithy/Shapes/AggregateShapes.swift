@@ -72,7 +72,7 @@ public struct StructureShape: Shape {
             throw Smithy.MemberDoesNotExistError(name: member)
         }
     }
-    public mutating func remove(trait: Trait.Type, from member: String) throws {
+    public mutating func remove(trait: StaticTrait.Type, from member: String) throws {
         guard members[member]?.remove(trait: trait) != nil else {
             throw Smithy.MemberDoesNotExistError(name: member)
         }
@@ -89,5 +89,10 @@ public struct UnionShape: Shape {
     }
     public mutating func add(trait: Trait, to member: String) {
         members[member]?.add(trait: trait)
+    }
+    public mutating func remove(trait: StaticTrait.Type, from member: String) throws {
+        guard members[member]?.remove(trait: trait) != nil else {
+            throw Smithy.MemberDoesNotExistError(name: member)
+        }
     }
 }

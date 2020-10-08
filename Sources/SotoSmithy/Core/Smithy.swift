@@ -117,7 +117,7 @@ public struct Smithy {
         )
     }
     
-    public func registerTraitTypes(_ traitTypes: Trait.Type ...) {
+    public func registerTraitTypes(_ traitTypes: StaticTrait.Type ...) {
         TraitList.registerTraitTypes(traitTypes)
     }
     

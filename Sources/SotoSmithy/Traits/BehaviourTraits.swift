@@ -13,31 +13,31 @@
 //===----------------------------------------------------------------------===//
 
 public struct IdempotencyTokenTrait: EmptyTrait {
-    public static var name = "smithy.api#idempotencyToken"
+    public static var staticName = "smithy.api#idempotencyToken"
     public static var selector: Selector = TargetSelector(ShapeSelector<StringShape>())
     public init() {}
 }
 
 public struct IdempotentTrait: EmptyTrait {
-    public static var name = "smithy.api#idempotent"
+    public static var staticName = "smithy.api#idempotent"
     public static var selector: Selector = ShapeSelector<OperationShape>()
     public init() {}
 }
 
 public struct ReadonlyTrait: EmptyTrait {
-    public static var name = "smithy.api#readonly"
+    public static var staticName = "smithy.api#readonly"
     public static var selector: Selector = ShapeSelector<OperationShape>()
     public init() {}
 }
 
-public struct RetryableTrait: Trait {
-    public static var name = "smithy.api#retryable"
+public struct RetryableTrait: StaticTrait {
+    public static var staticName = "smithy.api#retryable"
     public static var selector: Selector = AndSelector(ShapeSelector<StructureShape>(), TraitSelector<ErrorTrait>())
     public let throttling: Bool?
 }
 
-public struct PaginatedTrait: Trait {
-    public static var name = "smithy.api#paginated"
+public struct PaginatedTrait: StaticTrait {
+    public static var staticName = "smithy.api#paginated"
     public static var selector: Selector = OrSelector(ShapeSelector<OperationShape>(), ShapeSelector<ServiceShape>())
     public let inputToken: String?
     public let outputToken: String?
@@ -46,7 +46,7 @@ public struct PaginatedTrait: Trait {
 }
 
 public struct HttpChecksumRequiredTrait: EmptyTrait {
-    public static var name = "smithy.api#httpChecksumRequired"
+    public static var staticName = "smithy.api#httpChecksumRequired"
     public static var selector: Selector = ShapeSelector<OperationShape>()
     public init() {}
 }

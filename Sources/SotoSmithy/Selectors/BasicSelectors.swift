@@ -65,7 +65,7 @@ public struct OrTargetSelector: Selector {
     }
 }
 
-public struct TraitSelector<T: Trait>: Selector {
+public struct TraitSelector<T: StaticTrait>: Selector {
     public func select(using model: Model, shape: Shape) -> Bool {
         return shape.traits?.trait(type: T.self) != nil
     }

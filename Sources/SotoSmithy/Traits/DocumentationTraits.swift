@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-public struct DeprecatedTrait: Trait {
-    public static let name = "smithy.api#deprecated"
+public struct DeprecatedTrait: StaticTrait {
+    public static let staticName = "smithy.api#deprecated"
     public let message: String?
     public let since: String?
 }
@@ -22,12 +22,12 @@ public struct DocumentationTrait: StringTrait {
     public init(value: String) {
         self.value = value
     }
-    public static let name = "smithy.api#documentation"
+    public static let staticName = "smithy.api#documentation"
     public let value: String
 }
 
 public struct ExamplesTrait: SingleValueTrait {
-    public static let name = "smithy.api#examples"
+    public static let staticName = "smithy.api#examples"
     public static let selector: Selector = ShapeSelector<OperationShape>()
     public struct Example: Codable {
         public let title: String
@@ -43,7 +43,7 @@ public struct ExamplesTrait: SingleValueTrait {
 }
 
 public struct ExternalDocumentationTrait: SingleValueTrait {
-    public static let name = "smithy.api#externalDocumentation"
+    public static let staticName = "smithy.api#externalDocumentation"
     public typealias Value = [String: String]
     public let value: Value
     public init(value: Value) {
@@ -53,12 +53,12 @@ public struct ExternalDocumentationTrait: SingleValueTrait {
 }
 
 public struct InternalTrait: EmptyTrait {
-    public static let name = "smithy.api#internal"
+    public static let staticName = "smithy.api#internal"
     public init() {}
 }
 
 public struct SensitiveTrait: EmptyTrait {
-    public static let name = "smithy.api#sensitive"
+    public static let staticName = "smithy.api#sensitive"
     public static let selector: Selector = NotSelector(
         OrSelector(
             ShapeSelector<OperationShape>(),
@@ -70,7 +70,7 @@ public struct SensitiveTrait: EmptyTrait {
 }
 
 public struct SinceTrait: StringTrait {
-    public static let name = "smithy.api#since"
+    public static let staticName = "smithy.api#since"
     public var value: String
     public init(value: String) {
         self.value = value
@@ -78,7 +78,7 @@ public struct SinceTrait: StringTrait {
 }
 
 public struct TagsTrait: SingleValueTrait {
-    public static let name = "smithy.api#tags"
+    public static let staticName = "smithy.api#tags"
     public typealias Value = [String]
     public let value: Value
     public init(value: Value) {
@@ -87,7 +87,7 @@ public struct TagsTrait: SingleValueTrait {
 }
 
 public struct TitleTrait: StringTrait {
-    public static let name = "smithy.api#title"
+    public static let staticName = "smithy.api#title"
     public static let selector: Selector = OrSelector(ShapeSelector<ServiceShape>(), ShapeSelector<ResourceShape>())
     public var value: String
     public init(value: String) {
@@ -96,6 +96,6 @@ public struct TitleTrait: StringTrait {
 }
 
 public struct UnstableTrait: EmptyTrait {
-    public static let name = "smithy.api#unstable"
+    public static let staticName = "smithy.api#unstable"
     public init() {}
 }

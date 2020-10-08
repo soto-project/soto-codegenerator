@@ -17,67 +17,67 @@
 import SotoSmithy
 
 struct AwsProtocolsRestJson1Trait: EmptyTrait {
-    static let name = "aws.protocols#restJson1"
+    static let staticName = "aws.protocols#restJson1"
 }
 
 struct AwsProtocolsAwsJson1_1Trait: EmptyTrait {
-    static let name = "aws.protocols#awsJson1_1"
+    static let staticName = "aws.protocols#awsJson1_1"
 }
 
 struct AwsProtocolsAwsJson1_0Trait: EmptyTrait {
-    static let name = "aws.protocols#awsJson1_0"
+    static let staticName = "aws.protocols#awsJson1_0"
 }
 
 struct AwsProtocolsAwsQueryTrait: EmptyTrait {
-    static let name = "aws.protocols#awsQuery"
+    static let staticName = "aws.protocols#awsQuery"
 }
 
 struct AwsProtocolsEc2QueryTrait: EmptyTrait {
-    static let name = "aws.protocols#ec2Query"
+    static let staticName = "aws.protocols#ec2Query"
 }
 
 struct AwsProtocolsRestXmlTrait: EmptyTrait {
-    static let name = "aws.protocols#restXml"
+    static let staticName = "aws.protocols#restXml"
 }
 
 struct AwsProtocolsEc2QueryNameTrait: StringTrait {
-    static let name = "aws.protocols#ec2QueryName"
+    static let staticName = "aws.protocols#ec2QueryName"
     var value: String
 }
 
-struct AwsAuthSigV4Trait: Trait {
-    static let name = "aws.auth#sigv4"
+struct AwsAuthSigV4Trait: StaticTrait {
+    static let staticName = "aws.auth#sigv4"
     let name: String
 }
 
 struct AwsAuthUnsignedPayloadTrait: EmptyTrait {
-    static let name = "aws.auth#unsignedPayload"
+    static let staticName = "aws.auth#unsignedPayload"
 }
 
-struct AwsServiceTrait: Trait {
-    static let name = "aws.api#service"
+struct AwsServiceTrait: StaticTrait {
+    static let staticName = "aws.api#service"
     let sdkId: String
     let arnNamespace: String
     let cloudFormationName: String?
     let cloudTrailEventSource: String
 }
 
-struct AwsArnTrait: Trait {
-    static let name = "aws.api#arn"
+struct AwsArnTrait: StaticTrait {
+    static let staticName = "aws.api#arn"
     let template: String
     let absolute: Bool
     let noAccount: Bool
     let noRegion: Bool
 }
 
-struct AwsArnReferenceTrait: Trait {
-    static let name = "aws.api#arnReference"
+struct AwsArnReferenceTrait: StaticTrait {
+    static let staticName = "aws.api#arnReference"
     let service: String?
     let resource: String?
 }
 
-struct AwsClientEndpointDiscoveryTrait: Trait {
-    static let name = "aws.api#clientEndpointDiscovery"
+struct AwsClientEndpointDiscoveryTrait: StaticTrait {
+    static let staticName = "aws.api#clientEndpointDiscovery"
     let operation: ShapeId
     let error: ShapeId
 }

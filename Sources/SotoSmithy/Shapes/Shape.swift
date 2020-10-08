@@ -18,7 +18,7 @@ public protocol Shape: Codable {
     var shapeSelf: Shape { get }
     func validate(using model: Model) throws
     mutating func add(trait: Trait, to member: String) throws
-    mutating func remove(trait: Trait.Type, from member: String) throws
+    mutating func remove(trait: StaticTrait.Type, from member: String) throws
 }
 
 extension Shape {
@@ -29,7 +29,7 @@ extension Shape {
         try traits?.validate(using: model, shape: self)
     }
 
-    public func trait<T: Trait>(type: T.Type) -> T? {
+    public func trait<T: StaticTrait>(type: T.Type) -> T? {
         return traits?.trait(type: T.self)
     }
 
@@ -41,7 +41,7 @@ extension Shape {
         }
     }
 
-    public mutating func remove(trait: Trait.Type) {
+    public mutating func remove(trait: StaticTrait.Type) {
         self.traits?.remove(trait: trait)
     }
 
@@ -49,7 +49,7 @@ extension Shape {
         throw Smithy.MemberDoesNotExistError(name: member)
     }
 
-    public mutating func remove(trait: Trait.Type, from member: String) throws {
+    public mutating func remove(trait: StaticTrait.Type, from member: String) throws {
         throw Smithy.MemberDoesNotExistError(name: member)
     }
 }
@@ -90,7 +90,7 @@ public struct AnyShape: Shape {
         try self.value.add(trait: trait, to: member)
     }
 
-    public mutating func remove(trait: Trait.Type, from member: String) throws {
+    public mutating func remove(trait: StaticTrait.Type, from member: String) throws {
         try self.value.remove(trait: trait, from: member)
     }
 

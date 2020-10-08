@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 public struct EnumTrait: SingleValueTrait {
-    public static let name = "smithy.api#enum"
+    public static let staticName = "smithy.api#enum"
     public static let selector: Selector = ShapeSelector<StringShape>()
     public struct EnumDefinition: Codable {
         public let value: String
@@ -29,16 +29,16 @@ public struct EnumTrait: SingleValueTrait {
     }
 }
 
-public struct IdRefTrait: Trait {
-    public static let name = "smithy.api#idRef"
+public struct IdRefTrait: StaticTrait {
+    public static let staticName = "smithy.api#idRef"
     public static let selector: Selector = OrTargetSelector(ShapeSelector<StringShape>())
     public let failWhenMissing: Bool?
     public let selector: String?
     public let errorMessage: String?
 }
 
-public struct LengthTrait: Trait {
-    public static let name = "smithy.api#length"
+public struct LengthTrait: StaticTrait {
+    public static let staticName = "smithy.api#length"
     public static let selector: Selector = OrTargetSelector(
         OrSelector(
             ShapeSelector<ListShape>(),
@@ -52,7 +52,7 @@ public struct LengthTrait: Trait {
 }
 
 public struct PatternTrait: StringTrait {
-    public static let name = "smithy.api#pattern"
+    public static let staticName = "smithy.api#pattern"
     public static let selector: Selector = OrTargetSelector(ShapeSelector<StringShape>())
     public var value: String
     public init(value: String) {
@@ -61,24 +61,24 @@ public struct PatternTrait: StringTrait {
 }
 
 public struct PrivateTrait: EmptyTrait {
-    public static let name = "smithy.api#private"
+    public static let staticName = "smithy.api#private"
     public init() {}
 }
 
-public struct RangeTrait: Trait {
-    public static let name = "smithy.api#range"
+public struct RangeTrait: StaticTrait {
+    public static let staticName = "smithy.api#range"
     public static let selector: Selector = OrTargetSelector(NumberSelector())
     public let min: Double?
     public let max: Double?
 }
 
 public struct RequiredTrait: EmptyTrait {
-    public static let name = "smithy.api#required"
+    public static let staticName = "smithy.api#required"
     public static let selector: Selector = ShapeSelector<MemberShape>()
     public init() {}
 }
 
 public struct UniqueItemsTrait: EmptyTrait {
-    public static let name = "smithy.api#uniqueItems"
+    public static let staticName = "smithy.api#uniqueItems"
     public init() {}
 }
