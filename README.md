@@ -1,3 +1,3 @@
-# soto-codegen
+# SotoCodeGen
 
-A description of this package.
+Code Generator for Soto
