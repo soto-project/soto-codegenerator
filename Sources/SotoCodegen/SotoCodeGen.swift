@@ -15,6 +15,7 @@
 import Dispatch
 import Foundation
 import SotoSmithy
+import SotoSmithyAWS
 import PathKit
 import Stencil
 
@@ -26,27 +27,7 @@ struct SotoCodeGen {
         let path = Bundle.module.resourcePath!
         self.environment = Stencil.Environment(loader: FileSystemLoader(paths: [Path(path)]))
         self.command = command
-        self.registerAWSTraits()
-    }
-
-    func registerAWSTraits() {
-        let smithy = Smithy()
-        // register AWS traits
-        smithy.registerTraitTypes(
-            AwsServiceTrait.self,
-            AwsProtocolsRestJson1Trait.self,
-            AwsProtocolsAwsJson1_0Trait.self,
-            AwsProtocolsAwsJson1_1Trait.self,
-            AwsProtocolsAwsQueryTrait.self,
-            AwsProtocolsEc2QueryTrait.self,
-            AwsProtocolsRestXmlTrait.self,
-            AwsArnTrait.self,
-            AwsArnReferenceTrait.self,
-            AwsAuthSigV4Trait.self,
-            AwsAuthUnsignedPayloadTrait.self,
-            AwsClientEndpointDiscoveryTrait.self,
-            AwsProtocolsEc2QueryNameTrait.self
-        )
+        Smithy.registerAWSTraits()
     }
 
     func getModelFiles() -> [String] {
@@ -66,7 +47,7 @@ struct SotoCodeGen {
 
         return try modelFiles.map {
             let data = try Data(contentsOf: URL(fileURLWithPath: $0))
-            let model = try JSONDecoder().decode(SotoSmithy.Model.self, from: data)
+            let model = try Smithy().decode(from: data)
             try model.validate()
             return model
         }

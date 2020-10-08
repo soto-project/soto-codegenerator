@@ -17,6 +17,7 @@ let package = Package(
             name: "SotoCodegen",
             dependencies: [
                 .product(name: "SotoSmithy", package: "soto-smithy"),
+                .product(name: "SotoSmithyAWS", package: "soto-smithy"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Stencil", package: "Stencil")]
             , resources: [.process("Templates")]

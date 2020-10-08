@@ -14,6 +14,7 @@
 
 import Foundation
 import SotoSmithy
+import SotoSmithyAWS
 
 struct AwsService {
     var serviceName: String
@@ -33,7 +34,7 @@ struct AwsService {
 
     /// Return service name from API
     static func getServiceName(_ model: SotoSmithy.Model) throws -> String {
-        guard let serviceEntry = model.shapes(of: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
+        guard let serviceEntry = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
         let service = serviceEntry.value
         let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: serviceEntry.key)
 
@@ -67,7 +68,7 @@ struct AwsService {
 
     static func generateServiceContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
         var context: [String: Any] = [:]
-        guard let serviceEntry = model.shapes(of: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
+        guard let serviceEntry = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
         let serviceId = serviceEntry.key
         let service = serviceEntry.value
         let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: serviceId)
@@ -137,7 +138,8 @@ struct AwsService {
     }
 
     static func getPayload(from shape: StructureShape) -> MemberShape? {
-        for member in shape.members.values {
+        guard let members = shape.members else { return nil }
+        for member in members.values {
             if member.trait(type: HttpPayloadTrait.self) != nil {
                 return member
             }

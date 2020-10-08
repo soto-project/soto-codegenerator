@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import SotoSmithy
+import SotoSmithyAWS
 
 // MARK: Service protocol
 
