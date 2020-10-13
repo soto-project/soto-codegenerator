@@ -75,9 +75,7 @@ struct AwsService {
         let authSigV4 = try getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
 
         context["name"] = serviceName
-        context["description"] = Array<String>(service.trait(type: DocumentationTrait.self)?.value
-            .split(separator: "\n")
-            .map { $0.trimmingCharacters(in: CharacterSet.whitespaces)} ?? [])
+        context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
         // TODO: context["amzTarget"]
         context["endpointPrefix"] = awsService.arnNamespace
         context["signingName"] = authSigV4.name
@@ -212,7 +210,7 @@ struct AwsService {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         return OperationContext(
-            comment: documentationTrait?.split(separator: "\n").map { $0.trimmingCharacters(in: CharacterSet.whitespaces)} ?? [],
+            comment: documentationTrait.map{ processDocs($0) } ?? [],
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,
@@ -268,6 +266,15 @@ struct AwsService {
             }
         }
         throw Error(reason: "No service protocol trait")
+    }
+    
+    /// process documenation string
+    static func processDocs(_ docs: String) -> [String] {
+        return docs
+            .tagStriped()
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: CharacterSet.whitespaces)}
+            .compactMap { $0.isEmpty ? nil: $0 }
     }
     
     /// return symbol name with framework added if required  to avoid name clashes

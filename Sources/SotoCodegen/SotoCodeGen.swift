@@ -66,11 +66,11 @@ struct SotoCodeGen {
         let basePath = "\(command.outputFolder)/\(service.serviceName)/"
         try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
 
-/*        if try self.environment.renderTemplate(name: "api.stencil", context: service.apiContext).writeIfChanged(
+        if try self.environment.renderTemplate(name: "api.stencil", context: service.apiContext).writeIfChanged(
             toFile: "\(basePath)/\(service.serviceName)_API.swift"
         ) {
             print("Wrote: \(service.serviceName)_API.swift")
-        }*/
+        }
 
         if try self.environment.renderTemplate(name: "shapes.stencil", context: service.shapesContext).writeIfChanged(
             toFile: "\(basePath)/\(service.serviceName)_Shapes.swift"
@@ -78,7 +78,7 @@ struct SotoCodeGen {
             print("Wrote: \(service.serviceName)_Shapes.swift")
         }
 
-/*        if service.errorContext["errors"] != nil {
+        if service.errorContext["errors"] != nil {
             if try self.environment.renderTemplate(name: "error.stencil", context: service.errorContext).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Error.swift"
             ) {
@@ -92,7 +92,7 @@ struct SotoCodeGen {
             ) {
                 print("Wrote: \(service.serviceName)_Paginator.swift")
             }
-        }*/
+        }
         //print("Succesfully Generated \(service.serviceName)")
     }
 
