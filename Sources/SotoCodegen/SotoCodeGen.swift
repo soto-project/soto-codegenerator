@@ -28,11 +28,17 @@ struct SotoCodeGen {
         self.environment = Stencil.Environment(loader: FileSystemLoader(paths: [Path(path)]))
         self.command = command
         Smithy.registerAWSTraits()
+        Smithy.registerTraitTypes(
+            SotoPatchEnumTrait.self,
+            SotoPatchNameTrait.self,
+            SotoInputShapeTrait.self,
+            SotoOutputShapeTrait.self
+        )
     }
 
     func getModelFiles() -> [String] {
         if let module = command.module {
-            return Glob.entries(pattern: "\(self.command.inputFolder)/\(module)")
+            return Glob.entries(pattern: "\(self.command.inputFolder)/\(module)*.json")
         }
         return Glob.entries(pattern: "\(self.command.inputFolder)/*")
     }
@@ -60,20 +66,19 @@ struct SotoCodeGen {
         let basePath = "\(command.outputFolder)/\(service.serviceName)/"
         try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
 
-        if try self.environment.renderTemplate(name: "api.stencil", context: service.apiContext).writeIfChanged(
+/*        if try self.environment.renderTemplate(name: "api.stencil", context: service.apiContext).writeIfChanged(
             toFile: "\(basePath)/\(service.serviceName)_API.swift"
         ) {
             print("Wrote: \(service.serviceName)_API.swift")
-        }
-
-/*        let shapesContext = service.generateShapesContext()
-        if try self.environment.renderTemplate(name: "shapes.stencil", context: shapesContext).writeIfChanged(
-            toFile: "\(basePath)/\(service.api.serviceName)_Shapes.swift"
-        ) {
-            print("Wrote: \(service.api.serviceName)_Shapes.swift")
         }*/
 
-        if service.errorContext["errors"] != nil {
+        if try self.environment.renderTemplate(name: "shapes.stencil", context: service.shapesContext).writeIfChanged(
+            toFile: "\(basePath)/\(service.serviceName)_Shapes.swift"
+        ) {
+            print("Wrote: \(service.serviceName)_Shapes.swift")
+        }
+
+/*        if service.errorContext["errors"] != nil {
             if try self.environment.renderTemplate(name: "error.stencil", context: service.errorContext).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Error.swift"
             ) {
@@ -87,7 +92,7 @@ struct SotoCodeGen {
             ) {
                 print("Wrote: \(service.serviceName)_Paginator.swift")
             }
-        }
+        }*/
         //print("Succesfully Generated \(service.serviceName)")
     }
 

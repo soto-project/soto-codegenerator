@@ -19,6 +19,7 @@ import SotoSmithyAWS
 struct AwsService {
     var serviceName: String
     var apiContext: [String: Any]
+    var shapesContext: [String: Any]
     var paginatorContext: [String: Any]
     var errorContext: [String: Any]
 
@@ -28,6 +29,7 @@ struct AwsService {
         do {
             self.serviceName = serviceName
             self.apiContext = try Self.generateServiceContext(model, serviceName: self.serviceName)
+            self.shapesContext = try Self.generateShapesContext(model, serviceName: self.serviceName)
             self.paginatorContext = try Self.generatePaginatorContext(model, serviceName: self.serviceName)
             self.errorContext = try Self.generateErrorContext(model, serviceName: self.serviceName)
         } catch let error as Error {
@@ -180,6 +182,30 @@ struct AwsService {
         return context
     }
 
+    static func generateShapesContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
+        var context: [String: Any] = [:]
+        context["name"] = serviceName
+        
+        markInputOutputShapes(model)
+        
+        var shapeContexts: [[String: Any]] = []
+
+        // generate enums
+        let enums = try model.select(from: "[trait:enum]").map { $0 }.sorted { $0.key.shapeName < $1.key.shapeName }
+        for e in enums {
+            guard let enumContext = self.generateEnumContext(e.value, shapeName: e.key.shapeName) else { continue }
+            let enumContextContainer: [String: Any] = ["enum": enumContext]
+            shapeContexts.append(enumContextContainer)
+        }
+        
+        // generate structures
+        
+        if shapeContexts.count > 0 {
+            context["shapes"] = shapeContexts
+        }
+        return context
+    }
+    
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`
     static func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool = false) throws -> OperationContext {
         let documentationTrait = operation.trait(type: DocumentationTrait.self)?.value
@@ -196,6 +222,39 @@ struct AwsService {
             deprecated: deprecatedTrait?.message,
             streaming: streaming ? "ByteBuffer": nil,
             documentationUrl: nil
+        )
+    }
+
+    /// Generate the context information for outputting an enum
+    static func generateEnumContext(_ shape: Shape, shapeName: String) -> EnumContext? {
+        guard let trait = shape.trait(type: EnumTrait.self) else { return nil }
+        // Operations
+        var valueContexts: [EnumMemberContext] = []
+        let enumDefinitions = trait.value.sorted { $0.value < $1.value }
+        for value in enumDefinitions {
+            var key = value.value.lowercased()
+                .replacingOccurrences(of: ".", with: "_")
+                .replacingOccurrences(of: ":", with: "_")
+                .replacingOccurrences(of: "-", with: "_")
+                .replacingOccurrences(of: " ", with: "_")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "(", with: "_")
+                .replacingOccurrences(of: ")", with: "_")
+                .replacingOccurrences(of: "*", with: "all")
+
+            if Int(String(key[key.startIndex])) != nil { key = "_" + key }
+
+            var caseName = key.camelCased().reservedwordEscaped()
+            if caseName.allLetterIsNumeric() {
+                caseName = "\(shapeName.toSwiftVariableCase())\(caseName)"
+            }
+            valueContexts.append(EnumMemberContext(case: caseName, documentation: value.documentation, string: value.value))
+        }
+
+        return EnumContext(
+            name: shapeName.toSwiftClassCase().reservedwordEscaped(),
+            documentation: shape.trait(type: DocumentationTrait.self)?.value,
+            values: valueContexts
         )
     }
 
@@ -230,6 +289,31 @@ struct AwsService {
         return nil
     }
 
+    /// mark up model with Soto traits for input and output shapes
+    static func markInputOutputShapes(_ model: Model) {
+        func addTrait<T: StaticTrait>(to shapeId: ShapeId, trait: T, depth: Int = 0) {
+            guard let shape = model.shape(for: shapeId) else { return }
+            // if shape already has trait then don't apply it again
+            guard shape.trait(type: T.self) == nil else { return }
+            shape.add(trait: trait)
+
+            guard let structure = shape as? StructureShape else { return }
+            guard let members = structure.members else { return }
+            for member in members {
+                addTrait(to: member.value.target, trait: trait, depth: depth + 1)
+            }
+        }
+
+        for operation in model.select(type: OperationShape.self) {
+            if let input = operation.value.input {
+                addTrait(to: input.target, trait: SotoInputShapeTrait())
+            }
+            if let output = operation.value.output {
+                addTrait(to: output.target, trait: SotoOutputShapeTrait())
+            }
+        }
+    }
+    
     /// convert paginator token to KeyPath
     static func toKeyPath(token: String, structure: StructureShape) -> String {
         var split = token.split(separator: ".")
@@ -288,6 +372,18 @@ extension AwsService {
 
     struct ErrorContext {
         let `enum`: String
+        let string: String
+    }
+
+    struct EnumContext {
+        let name: String
+        let documentation: String?
+        let values: [EnumMemberContext]
+    }
+
+    struct EnumMemberContext {
+        let `case`: String
+        let documentation: String?
         let string: String
     }
 }

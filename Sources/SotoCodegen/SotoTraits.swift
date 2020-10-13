@@ -26,3 +26,11 @@ struct SotoPatchNameTrait: StaticTrait {
     static let staticName = "soto.patch#name"
     let name: String
 }
+
+struct SotoInputShapeTrait: StaticTrait {
+    static let staticName = "soto.api#inputShape"
+}
+
+struct SotoOutputShapeTrait: StaticTrait {
+    static let staticName = "soto.api#outputShape"
+}
