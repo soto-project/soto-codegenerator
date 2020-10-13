@@ -36,8 +36,8 @@ struct SotoCodeGenCommand: ParsableCommand {
             .joined(separator: "/")
     }
 
-    static var defaultOutputFolder: String { return "\(rootPath)/services" }
-    static var defaultInputFolder: String { return "\(rootPath)/models" }
+    static var defaultOutputFolder: String { return "\(rootPath)/aws/services" }
+    static var defaultInputFolder: String { return "\(rootPath)/aws/models" }
 
     func run() throws {
         try SotoCodeGen(command: self).generate()
