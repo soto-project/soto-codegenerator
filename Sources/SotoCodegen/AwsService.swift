@@ -149,7 +149,7 @@ struct AwsService {
                 )
             )
         }
-
+        paginatorContexts.sort { $0.operation.funcName < $1.operation.funcName }
         if paginatorContexts.count > 0 {
             context["paginators"] = paginatorContexts
         }
