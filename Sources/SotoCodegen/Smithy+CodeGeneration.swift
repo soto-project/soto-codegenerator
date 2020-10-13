@@ -15,32 +15,32 @@
 import SotoSmithy
 import SotoSmithyAWS
 
-// MARK: Service protocol
-
-protocol AwsServiceProtocolTrait {
+protocol SotoOutput {
     var output: String { get }
 }
 
-extension AwsProtocolsRestJson1Trait: AwsServiceProtocolTrait {
-    var output: String { ".restjson" }
-}
+// MARK: Service protocol
 
-extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocolTrait {
-    var output: String { ".json(version: \"1.0\")" }
-}
+extension AwsProtocolsRestJson1Trait: SotoOutput { var output: String { ".restjson" }}
+extension AwsProtocolsAwsJson1_1Trait: SotoOutput { var output: String { ".json(version: \"1.0\")" } }
+extension AwsProtocolsAwsJson1_0Trait: SotoOutput { var output: String { ".json(version: \"1.1\")" } }
+extension AwsProtocolsAwsQueryTrait: SotoOutput { var output: String { ".query" } }
+extension AwsProtocolsEc2QueryTrait: SotoOutput { var output: String { ".ec2" } }
+extension AwsProtocolsRestXmlTrait: SotoOutput { var output: String { ".restxml" } }
 
-extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocolTrait {
-    var output: String { ".json(version: \"1.1\")" }
-}
 
-extension AwsProtocolsAwsQueryTrait: AwsServiceProtocolTrait {
-    var output: String { ".query" }
-}
+// MARK: Shape types
 
-extension AwsProtocolsEc2QueryTrait: AwsServiceProtocolTrait {
-    var output: String { ".ec2" }
-}
-
-extension AwsProtocolsRestXmlTrait: AwsServiceProtocolTrait {
-    var output: String { ".restxml" }
-}
+extension BlobShape: SotoOutput { var output: String { "Data" } }
+extension BooleanShape: SotoOutput { var output: String { "Bool" } }
+extension StringShape: SotoOutput { var output: String { "String" } }
+extension ByteShape: SotoOutput { var output: String { "Int8" } }
+extension ShortShape: SotoOutput { var output: String { "Int16" } }
+extension IntegerShape: SotoOutput { var output: String { "Int" } }
+extension LongShape: SotoOutput { var output: String { "Int64" } }
+extension FloatShape: SotoOutput { var output: String { "Float" } }
+extension DoubleShape: SotoOutput { var output: String { "Double" } }
+extension BigIntegerShape: SotoOutput { var output: String { "Int64" } }
+extension BigDecimalShape: SotoOutput { var output: String { "Double" } }
+extension TimestampShape: SotoOutput { var output: String { "Date" }}
+extension DocumentShape: SotoOutput { var output: String { "String" }}

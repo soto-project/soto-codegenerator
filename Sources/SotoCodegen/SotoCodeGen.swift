@@ -80,17 +80,16 @@ struct SotoCodeGen {
             ) {
                 print("Wrote: \(service.api.serviceName)_Error.swift")
             }
-        }
-
-        let paginatorContext = try service.generatePaginatorContext()
-        if paginatorContext["paginators"] != nil {
-            if try self.environment.renderTemplate(name: "paginator.stencil", context: paginatorContext).writeIfChanged(
-                toFile: "\(basePath)/\(service.api.serviceName)_Paginator.swift"
-            ) {
-                print("Wrote: \(service.api.serviceName)_Paginator.swift")
-            }
         }*/
-            print("Succesfully Generated \(service.serviceName)")
+
+        if service.paginatorContext["paginators"] != nil {
+            if try self.environment.renderTemplate(name: "paginator.stencil", context: service.paginatorContext).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_Paginator.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_Paginator.swift")
+            }
+        }
+        //print("Succesfully Generated \(service.serviceName)")
     }
 
     func generate() throws {
