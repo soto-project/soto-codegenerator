@@ -157,6 +157,24 @@ struct AwsService {
         return context
     }
 
+    /// Generate the context information for outputting the error enums
+    func generateErrorContext(_ model: SotoSmithy.Model, serviceName: String) -> [String: Any] {
+        var context: [String: Any] = [:]
+        context["name"] = serviceName
+        //context["errorName"] = self.serviceErrorName
+
+        /*var errorContexts: [ErrorContext] = []
+        let errors = self.errors.sorted { $0.name < $1.name }
+        for error in errors {
+            let code: String = error.error?.code ?? error.name
+            errorContexts.append(ErrorContext(enum: error.name.toSwiftVariableCase(), string: code))
+        }
+        if errorContexts.count > 0 {
+            context["errors"] = errorContexts
+        }*/
+        return context
+    }
+
 
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`
     static func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool = false) throws -> OperationContext {
@@ -177,10 +195,11 @@ struct AwsService {
         )
     }
 
-    static func getServiceProtocol(_ service: ServiceShape) throws -> SotoOutput {
+    /// get service protocol from service
+    static func getServiceProtocol(_ service: ServiceShape) throws -> AwsServiceProtocol {
         if let traits = service.traits {
             for trait in traits {
-                if let protocolTrait = trait as? SotoOutput {
+                if let protocolTrait = trait as? AwsServiceProtocol {
                     return protocolTrait
                 }
             }
@@ -188,6 +207,7 @@ struct AwsService {
         throw Error(reason: "No service protocol trait")
     }
     
+    /// return symbol name with framework added if required  to avoid name clashes
     static func getSymbol(for symbol: String, from framework: String, model: SotoSmithy.Model, namespace: String) -> String {
         if model.shape(for: ShapeId(rawValue: "\(namespace)#\(symbol)")) != nil {
             return "\(framework).\(symbol)"
@@ -195,6 +215,7 @@ struct AwsService {
         return symbol
     }
 
+    /// return payload member of structure
     static func getPayload(from shape: StructureShape) -> MemberShape? {
         guard let members = shape.members else { return nil }
         for member in members.values {
@@ -261,4 +282,8 @@ extension AwsService {
         let tokenType: String
     }
 
+    struct ErrorContext {
+        let `enum`: String
+        let string: String
+    }
 }
