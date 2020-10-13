@@ -20,6 +20,7 @@ struct AwsService {
     var serviceName: String
     var apiContext: [String: Any]
     var paginatorContext: [String: Any]
+    var errorContext: [String: Any]
 
     init(_ model: SotoSmithy.Model) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
@@ -28,6 +29,7 @@ struct AwsService {
             self.serviceName = serviceName
             self.apiContext = try Self.generateServiceContext(model, serviceName: self.serviceName)
             self.paginatorContext = try Self.generatePaginatorContext(model, serviceName: self.serviceName)
+            self.errorContext = try Self.generateErrorContext(model, serviceName: self.serviceName)
         } catch let error as Error {
             throw Error(reason: "\(error) in service \(serviceName)")
         }
@@ -158,23 +160,25 @@ struct AwsService {
     }
 
     /// Generate the context information for outputting the error enums
-    func generateErrorContext(_ model: SotoSmithy.Model, serviceName: String) -> [String: Any] {
+    static func generateErrorContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
+        let errorShapes = try model.select(from: "structure [trait:error]")
+        guard errorShapes.count > 0 else { return [:] }
+        
         var context: [String: Any] = [:]
         context["name"] = serviceName
-        //context["errorName"] = self.serviceErrorName
-
-        /*var errorContexts: [ErrorContext] = []
-        let errors = self.errors.sorted { $0.name < $1.name }
-        for error in errors {
-            let code: String = error.error?.code ?? error.name
-            errorContexts.append(ErrorContext(enum: error.name.toSwiftVariableCase(), string: code))
+        context["errorName"] = serviceName + "ErrorType"
+        
+        var errorContexts: [ErrorContext] = []
+        for error in errorShapes {
+            let name: String = error.key.shapeName
+            errorContexts.append(ErrorContext(enum: name.toSwiftVariableCase(), string: name))
         }
+        errorContexts.sort { $0.enum < $1.enum }
         if errorContexts.count > 0 {
             context["errors"] = errorContexts
-        }*/
+        }
         return context
     }
-
 
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`
     static func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool = false) throws -> OperationContext {

@@ -65,22 +65,21 @@ struct SotoCodeGen {
         ) {
             print("Wrote: \(service.serviceName)_API.swift")
         }
-/*
-        let shapesContext = service.generateShapesContext()
+
+/*        let shapesContext = service.generateShapesContext()
         if try self.environment.renderTemplate(name: "shapes.stencil", context: shapesContext).writeIfChanged(
             toFile: "\(basePath)/\(service.api.serviceName)_Shapes.swift"
         ) {
             print("Wrote: \(service.api.serviceName)_Shapes.swift")
-        }
-
-        let errorContext = service.generateErrorContext()
-        if errorContext["errors"] != nil {
-            if try self.environment.renderTemplate(name: "error.stencil", context: errorContext).writeIfChanged(
-                toFile: "\(basePath)/\(service.api.serviceName)_Error.swift"
-            ) {
-                print("Wrote: \(service.api.serviceName)_Error.swift")
-            }
         }*/
+
+        if service.errorContext["errors"] != nil {
+            if try self.environment.renderTemplate(name: "error.stencil", context: service.errorContext).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_Error.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_Error.swift")
+            }
+        }
 
         if service.paginatorContext["paginators"] != nil {
             if try self.environment.renderTemplate(name: "paginator.stencil", context: service.paginatorContext).writeIfChanged(
