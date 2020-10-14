@@ -283,13 +283,17 @@ struct AwsService {
         let payload = getPayload(from: shape)
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payload != nil) else { return nil }
         let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: shape is UnionShape)
+        var xmlNamespace: String?
+        if serviceProtocol is AwsProtocolsRestXmlTrait {
+            xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri ?? service.trait(type: XmlNamespaceTrait.self)?.uri
+        }
         return StructureContext(
             object: "struct",
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
             payload: payload?.key.toSwiftLabelCase(),
             payloadOptions: nil,
-            namespace: nil,
+            namespace: xmlNamespace,
             encoding: [],
             members: contexts.members,
             awsShapeMembers: contexts.awsShapeMembers,
