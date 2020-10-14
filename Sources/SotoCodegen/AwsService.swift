@@ -172,23 +172,23 @@ struct AwsService {
         var shapeContexts: [[String: Any]] = []
 
         // generate enums
-        let enums = try model.select(from: "[trait:enum]").map { $0 }.sorted { $0.key.shapeName < $1.key.shapeName }
+        let enums = try model.select(from: "[trait:enum]").map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
         for e in enums {
-            guard let enumContext = self.generateEnumContext(e.value, shapeName: e.key.shapeName) else { continue }
+            guard let enumContext = self.generateEnumContext(e.value, shapeName: e.key) else { continue }
             shapeContexts.append(["enum": enumContext])
         }
         
         // generate structures
-        let structures = model.select(type: StructureShape.self).map { $0 }.sorted { $0.key.shapeName < $1.key.shapeName }
+        let structures = model.select(type: StructureShape.self).map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
         for structure in structures {
-            guard let shapeContext = self.generateStructureContext(structure.value, shapeName: structure.key.shapeName) else { continue }
+            guard let shapeContext = self.generateStructureContext(structure.value, shapeName: structure.key) else { continue }
             shapeContexts.append(["struct": shapeContext])
         }
 
         // generate unions
-        let unions = model.select(type: UnionShape.self).map { $0 }.sorted { $0.key.shapeName < $1.key.shapeName }
+        let unions = model.select(type: UnionShape.self).map { $0 }.map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
         for union in unions {
-            guard let shapeContext = self.generateStructureContext(union.value, shapeName: union.key.shapeName) else { continue }
+            guard let shapeContext = self.generateStructureContext(union.value, shapeName: union.key) else { continue }
             shapeContexts.append(["enumWithValues": shapeContext])
         }
 
@@ -233,7 +233,7 @@ struct AwsService {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         return OperationContext(
-            comment: documentationTrait.map{ processDocs($0) } ?? [],
+            comment: documentationTrait.map{ [$0] } ?? [],//.map{ processDocs($0) } ?? [],
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,

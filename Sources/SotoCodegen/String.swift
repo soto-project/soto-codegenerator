@@ -92,11 +92,11 @@ extension String {
         return self.replacingOccurrences(of: "-", with: "")
     }
 
-    public func camelCased(separator: String = "_") -> String {
-        let items = self.components(separatedBy: separator)
+    public func camelCased(separator: Character = "_") -> String {
+        let items = self.split(separator: separator)
         var camelCase = ""
         items.enumerated().forEach {
-            camelCase += 0 == $0 ? $1 : $1.capitalized
+            camelCase += 0 == $0 ? String($1) : $1.capitalized
         }
         return camelCase.lowerFirst()
     }
