@@ -73,6 +73,7 @@ struct AwsService {
         let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: serviceId)
         let authSigV4 = try getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
         let serviceProtocol = try getServiceProtocol(service)
+        let operations = try generateOperationContexts(service: service, model: model)
 
         context["name"] = serviceName
         context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
@@ -83,31 +84,17 @@ struct AwsService {
         if serviceProtocol is AwsProtocolsAwsJson1_0Trait || serviceProtocol is AwsProtocolsAwsJson1_1Trait {
             context["amzTarget"] = serviceId.shapeName
         }
-
-        var operationContexts: [OperationContext] = []
-        var streamingOperationContexts: [OperationContext] = []
-        if let operations = service.operations {
-            for operationId in operations {
-                guard let operation = model.shape(for: operationId.target) as? OperationShape else {
-                    throw Error(reason: "Operation \(operationId.target) does not exist")
-                }
-                let operationContext = try generateOperationContext(operation, operationName: operationId.target)
-                operationContexts.append(operationContext)
-
-                if let output = operation.output,
-                   let outputShape = model.shape(for: output.target) as? StructureShape,
-                   let payloadMember = getPayload(from: outputShape),
-                   let payloadShape = model.shape(for: payloadMember.target),
-                   payloadShape.trait(type: StreamingTrait.self) != nil,
-                   payloadShape is BlobShape {
-                    let operationContext = try generateOperationContext(operation, operationName: operationId.target, streaming: true)
-                    streamingOperationContexts.append(operationContext)
-                }
-            }
+        if !model.select(with: TraitSelector<ErrorTrait>()).isEmpty {
+            context["errorTypes"] = serviceName + "ErrorType"
         }
+        context["middlewareClass"] = getMiddleware(for: service)
+        //context["serviceEndpoints"]
+        //context["regionalized"]
+        //context["partitionEndpoints"]
+        //context["middlewareClass"]
 
-        context["operations"] = operationContexts.sorted { $0.funcName < $1.funcName }
-        context["streamingOperations"] = streamingOperationContexts.sorted { $0.funcName < $1.funcName }
+        context["operations"] = operations.operations
+        context["streamingOperations"] = operations.streamingOperations
         context["logger"] = getSymbol(for: "Logger", from: "Logging", model: model, namespace: serviceId.namespace ?? "")
         return context
     }
@@ -182,6 +169,7 @@ struct AwsService {
         return context
     }
 
+    /// Generate context for outputting Shapes
     static func generateShapesContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
         var context: [String: Any] = [:]
         context["name"] = serviceName
@@ -205,7 +193,36 @@ struct AwsService {
         }
         return context
     }
-    
+
+    /// Generate list of operation and streaming operation contexts
+    static func generateOperationContexts(service: ServiceShape, model: Model) throws -> (operations: [OperationContext], streamingOperations: [OperationContext]) {
+        var operationContexts: [OperationContext] = []
+        var streamingOperationContexts: [OperationContext] = []
+        if let operations = service.operations {
+            for operationId in operations {
+                guard let operation = model.shape(for: operationId.target) as? OperationShape else {
+                    throw Error(reason: "Operation \(operationId.target) does not exist")
+                }
+                let operationContext = try generateOperationContext(operation, operationName: operationId.target)
+                operationContexts.append(operationContext)
+
+                if let output = operation.output,
+                   let outputShape = model.shape(for: output.target) as? StructureShape,
+                   let payloadMember = getPayload(from: outputShape),
+                   let payloadShape = model.shape(for: payloadMember.target),
+                   payloadShape.trait(type: StreamingTrait.self) != nil,
+                   payloadShape is BlobShape {
+                    let operationContext = try generateOperationContext(operation, operationName: operationId.target, streaming: true)
+                    streamingOperationContexts.append(operationContext)
+                }
+            }
+        }
+        return (
+            operations: operationContexts.sorted { $0.funcName < $1.funcName },
+            streamingOperations: streamingOperationContexts.sorted { $0.funcName < $1.funcName }
+        )
+    }
+
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`
     static func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool = false) throws -> OperationContext {
         let documentationTrait = operation.trait(type: DocumentationTrait.self)?.value
@@ -278,7 +295,24 @@ struct AwsService {
             .map { $0.trimmingCharacters(in: CharacterSet.whitespaces)}
             .compactMap { $0.isEmpty ? nil: $0 }
     }
-    
+
+    /// return middleware name given a service name
+    static func getMiddleware(for service: ServiceShape) -> String? {
+        guard let awsServiceTrait = service.trait(type: AwsServiceTrait.self) else { return nil }
+        switch awsServiceTrait.sdkId {
+        case "API Gateway":
+            return "APIGatewayMiddleware()"
+        case "Glacier":
+            return "GlacierRequestMiddleware(apiVersion: \"\(service.version)\")"
+        case "S3":
+            return "S3RequestMiddleware()"
+        case "S3 Control":
+            return "S3ControlMiddleware()"
+        default:
+            return nil
+        }
+    }
+
     /// return symbol name with framework added if required  to avoid name clashes
     static func getSymbol(for symbol: String, from framework: String, model: SotoSmithy.Model, namespace: String) -> String {
         if model.shape(for: ShapeId(rawValue: "\(namespace)#\(symbol)")) != nil {
