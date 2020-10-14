@@ -8,9 +8,9 @@ let package = Package(
         .executable(name: "SotoCodeGen", targets: ["SotoCodegen"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/adam-fowler/soto-smithy.git", .upToNextMajor(from: "0.1.0")),
-        .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMajor(from: "0.0.1")),
-        .package(url: "https://github.com/swift-aws/Stencil.git", .upToNextMajor(from: "0.13.2")),
+        .package(url: "https://github.com/adam-fowler/soto-smithy.git", .upToNextMajor(from: "0.2.0")),
+        .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMajor(from: "0.3.0")),
+        .package(url: "https://github.com/soto-project/Stencil.git", .upToNextMajor(from: "0.13.2")),
     ],
     targets: [
         .target(
