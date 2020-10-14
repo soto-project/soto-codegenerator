@@ -351,34 +351,23 @@ struct AwsService {
     }
 
     func generateMemberEncodingContext(_ member: MemberShape, name: String) -> MemberEncodingContext? {
-        /*let isPayload = (shape.payload == name)
-        var locationName: String? = member.locationName
-        let location = member.location ?? .body
-
-        if isPayload || location != .body, locationName == nil {
-            locationName = name
-        }
-        // remove location if equal to body and name is same as variable name
-        if location == .body, locationName == name.toSwiftLabelCase() || !isPayload {
-            locationName = nil
-        }
-        guard locationName != nil else { return nil }
-        return AWSShapeMemberContext(
-            name: name.toSwiftLabelCase(),
-            location: locationName.map { location.enumStringValue(named: $0) },
-            locationName: locationName
-        )*/
+        // if header
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".header(locationName: \"\(headerTrait.value)\")")
+        // if prefix header
         } else if let headerPrefixTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".header(locationName: \"\(headerPrefixTrait.value)\")")
+        // if query string
         } else if let queryTrait = member.trait(type: HttpQueryTrait.self) {
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".querystring(locationName: \"\(queryTrait.value)\")")
+        // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
             let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".uri(locationName: \"\(aliasTrait?.aliasName ?? name)\")")
+        // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".statusCode")
+        // if payload and not a blob
         } else if member.hasTrait(type: HttpPayloadTrait.self), !(model.shape(for: member.target) is BlobShape) {
             let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait
             let payloadName = aliasTrait?.aliasName ?? name
