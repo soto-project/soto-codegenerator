@@ -91,7 +91,6 @@ struct AwsService {
         //context["serviceEndpoints"]
         //context["regionalized"]
         //context["partitionEndpoints"]
-        //context["middlewareClass"]
 
         context["operations"] = operations.operations
         context["streamingOperations"] = operations.streamingOperations
@@ -182,12 +181,23 @@ struct AwsService {
         let enums = try model.select(from: "[trait:enum]").map { $0 }.sorted { $0.key.shapeName < $1.key.shapeName }
         for e in enums {
             guard let enumContext = self.generateEnumContext(e.value, shapeName: e.key.shapeName) else { continue }
-            let enumContextContainer: [String: Any] = ["enum": enumContext]
-            shapeContexts.append(enumContextContainer)
+            shapeContexts.append(["enum": enumContext])
         }
         
         // generate structures
-        
+        let structures = model.select(type: StructureShape.self).map { $0 }.sorted { $0.key.shapeName < $1.key.shapeName }
+        for structure in structures {
+            guard let shapeContext = self.generateStructureContext(structure.value, shapeName: structure.key.shapeName) else { continue }
+            shapeContexts.append(["struct": shapeContext])
+        }
+
+        // generate unions
+        let unions = model.select(type: UnionShape.self).map { $0 }.sorted { $0.key.shapeName < $1.key.shapeName }
+        for union in unions {
+            guard let shapeContext = self.generateStructureContext(union.value, shapeName: union.key.shapeName) else { continue }
+            shapeContexts.append(["enumWithValues": shapeContext])
+        }
+
         if shapeContexts.count > 0 {
             context["shapes"] = shapeContexts
         }
@@ -209,7 +219,7 @@ struct AwsService {
                 if let output = operation.output,
                    let outputShape = model.shape(for: output.target) as? StructureShape,
                    let payloadMember = getPayload(from: outputShape),
-                   let payloadShape = model.shape(for: payloadMember.target),
+                   let payloadShape = model.shape(for: payloadMember.value.target),
                    payloadShape.trait(type: StreamingTrait.self) != nil,
                    payloadShape is BlobShape {
                     let operationContext = try generateOperationContext(operation, operationName: operationId.target, streaming: true)
@@ -275,6 +285,25 @@ struct AwsService {
         )
     }
 
+    /// Generate the context information for outputting a shape
+    static func generateStructureContext(_ shape: CollectionShape, shapeName: String) -> StructureContext? {
+        let payload = getPayload(from: shape)
+        guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payload != nil) else { return nil }
+        return StructureContext(
+            object: ObjectType.struct,
+            name: shapeName.toSwiftClassCase(),
+            shapeProtocol: shapeProtocol,
+            payload: payload?.key.toSwiftLabelCase(),
+            payloadOptions: nil,
+            namespace: nil,
+            encoding: [],
+            members: [],
+            awsShapeMembers: [],
+            codingKeys: [],
+            validation: []
+        )
+    }
+
     /// get service protocol from service
     static func getServiceProtocol(_ service: ServiceShape) throws -> AwsServiceProtocol {
         if let traits = service.traits {
@@ -322,10 +351,10 @@ struct AwsService {
     }
 
     /// return payload member of structure
-    static func getPayload(from shape: StructureShape) -> MemberShape? {
+    static func getPayload(from shape: CollectionShape) -> (key: String, value: MemberShape)? {
         guard let members = shape.members else { return nil }
-        for member in members.values {
-            if member.trait(type: HttpPayloadTrait.self) != nil {
+        for member in members {
+            if member.value.trait(type: HttpPayloadTrait.self) != nil {
                 return member
             }
         }
@@ -382,8 +411,30 @@ struct AwsService {
         }
         return split.map { String($0).toSwiftVariableCase() }.joined(separator: ".")
     }
+
+    /// get protocol needed for shape
+    static func getShapeProtocol(_ shape: Shape, hasPayload: Bool) -> String? {
+        let usedInInput = shape.hasTrait(type: SotoInputShapeTrait.self)
+        let usedInOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
+        var shapeProtocol: String
+        if usedInInput {
+            shapeProtocol = "AWSEncodableShape"
+            if usedInOutput {
+                shapeProtocol += " & AWSDecodableShape"
+            }
+        } else if usedInOutput {
+            shapeProtocol = "AWSDecodableShape"
+        } else {
+            return nil
+        }
+        if hasPayload {
+            shapeProtocol += " & AWSShapeWithPayload"
+        }
+        return shapeProtocol
+    }
 }
 
+protocol EncodingPropertiesContext {}
 
 extension AwsService {
     struct Error: Swift.Error {
@@ -427,5 +478,87 @@ extension AwsService {
         let `case`: String
         let documentation: String?
         let string: String
+    }
+
+    struct ArrayEncodingPropertiesContext: EncodingPropertiesContext {
+        let name: String
+        let member: String
+    }
+
+    struct DictionaryEncodingPropertiesContext: EncodingPropertiesContext {
+        let name: String
+        let entry: String?
+        let key: String
+        let value: String
+    }
+
+    struct MemberContext {
+        let variable: String
+        let locationPath: String
+        let parameter: String
+        let required: Bool
+        let `default`: String?
+        let propertyWrapper: String?
+        let type: String
+        let comment: [String.SubSequence]
+        var duplicate: Bool
+    }
+
+    struct AWSShapeMemberContext {
+        let name: String
+        let location: String?
+        let locationName: String?
+    }
+
+    class ValidationContext {
+        let name: String
+        let shape: Bool
+        let required: Bool
+        let reqs: [String: Any]
+        let member: ValidationContext?
+        let key: ValidationContext?
+        let value: ValidationContext?
+
+        init(
+            name: String,
+            shape: Bool = false,
+            required: Bool = true,
+            reqs: [String: Any] = [:],
+            member: ValidationContext? = nil,
+            key: ValidationContext? = nil,
+            value: ValidationContext? = nil
+        ) {
+            self.name = name
+            self.shape = shape
+            self.required = required
+            self.reqs = reqs
+            self.member = member
+            self.key = key
+            self.value = value
+        }
+    }
+
+    struct CodingKeysContext {
+        let variable: String
+        let codingKey: String
+        var duplicate: Bool
+    }
+
+    enum ObjectType: String {
+        case `class`
+        case `struct`
+    }
+    struct StructureContext {
+        let object: ObjectType
+        let name: String
+        let shapeProtocol: String
+        let payload: String?
+        var payloadOptions: String?
+        let namespace: String?
+        let encoding: [EncodingPropertiesContext]
+        let members: [MemberContext]
+        let awsShapeMembers: [AWSShapeMemberContext]
+        let codingKeys: [CodingKeysContext]
+        let validation: [ValidationContext]
     }
 }
