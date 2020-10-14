@@ -49,7 +49,6 @@ struct AwsService {
         let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: id)
 
         // port of https://github.com/aws/aws-sdk-go-v2/blob/996478f06a00c31ee7e7b0c3ac6674ce24ba0120/private/model/api/api.go#L105
-        //
         let stripServiceNamePrefixes: [String] = ["Amazon", "AWS"]
 
         var serviceName = awsService.sdkId
@@ -73,14 +72,17 @@ struct AwsService {
         let service = serviceEntry.value
         let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: serviceId)
         let authSigV4 = try getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
+        let serviceProtocol = try getServiceProtocol(service)
 
         context["name"] = serviceName
         context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
-        // TODO: context["amzTarget"]
         context["endpointPrefix"] = awsService.arnNamespace
         context["signingName"] = authSigV4.name
-        context["protocol"] = try getServiceProtocol(service).output
+        context["protocol"] = serviceProtocol.output
         context["apiVersion"] = service.version
+        if serviceProtocol is AwsProtocolsAwsJson1_0Trait || serviceProtocol is AwsProtocolsAwsJson1_1Trait {
+            context["amzTarget"] = serviceId.shapeName
+        }
 
         var operationContexts: [OperationContext] = []
         var streamingOperationContexts: [OperationContext] = []
@@ -346,7 +348,6 @@ struct AwsService {
         }
         return split.map { String($0).toSwiftVariableCase() }.joined(separator: ".")
     }
-
 }
 
 

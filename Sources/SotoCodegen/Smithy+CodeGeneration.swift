@@ -24,8 +24,8 @@ protocol AwsServiceProtocol: SotoOutput { }
 // MARK: Service protocol
 
 extension AwsProtocolsRestJson1Trait: AwsServiceProtocol { var output: String { ".restjson" }}
-extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol { var output: String { ".json(version: \"1.0\")" } }
-extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol { var output: String { ".json(version: \"1.1\")" } }
+extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol { var output: String { ".json(version: \"1.0\")" } }
+extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol { var output: String { ".json(version: \"1.1\")" } }
 extension AwsProtocolsAwsQueryTrait: AwsServiceProtocol { var output: String { ".query" } }
 extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol { var output: String { ".ec2" } }
 extension AwsProtocolsRestXmlTrait: AwsServiceProtocol { var output: String { ".restxml" } }
