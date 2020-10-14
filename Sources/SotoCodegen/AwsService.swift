@@ -300,7 +300,7 @@ struct AwsService {
 
     struct MembersContexts {
         var members: [MemberContext] = []
-        var awsShapeMembers: [AWSShapeMemberContext] = []
+        var awsShapeMembers: [MemberEncodingContext] = []
         var codingKeys: [CodingKeysContext] = []
     }
     /// generate shape members context
@@ -316,6 +316,10 @@ struct AwsService {
             // coding key context
             if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, outputShape: outputShape) {
                 contexts.codingKeys.append(codingKeyContext)
+            }
+            // member encoding context
+            if let memberEncodingContext = generateMemberEncodingContext(member.value, name: member.key) {
+                contexts.awsShapeMembers.append(memberEncodingContext)
             }
         }
         return contexts
@@ -346,6 +350,46 @@ struct AwsService {
         )
     }
 
+    func generateMemberEncodingContext(_ member: MemberShape, name: String) -> MemberEncodingContext? {
+        /*let isPayload = (shape.payload == name)
+        var locationName: String? = member.locationName
+        let location = member.location ?? .body
+
+        if isPayload || location != .body, locationName == nil {
+            locationName = name
+        }
+        // remove location if equal to body and name is same as variable name
+        if location == .body, locationName == name.toSwiftLabelCase() || !isPayload {
+            locationName = nil
+        }
+        guard locationName != nil else { return nil }
+        return AWSShapeMemberContext(
+            name: name.toSwiftLabelCase(),
+            location: locationName.map { location.enumStringValue(named: $0) },
+            locationName: locationName
+        )*/
+        if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
+            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".header(locationName: \"\(headerTrait.value)\")")
+        } else if let headerPrefixTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
+            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".header(locationName: \"\(headerPrefixTrait.value)\")")
+        } else if let queryTrait = member.trait(type: HttpQueryTrait.self) {
+            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".querystring(locationName: \"\(queryTrait.value)\")")
+        } else if member.hasTrait(type: HttpLabelTrait.self) {
+            let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait
+            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".uri(locationName: \"\(aliasTrait?.aliasName ?? name)\")")
+        } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
+            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".statusCode")
+        } else if member.hasTrait(type: HttpPayloadTrait.self), !(model.shape(for: member.target) is BlobShape) {
+            let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait
+            let payloadName = aliasTrait?.aliasName ?? name
+            let swiftLabelName = name.toSwiftLabelCase()
+            if swiftLabelName != payloadName {
+                return MemberEncodingContext(name: swiftLabelName, location: ".body(locationName: \"\(payloadName)\")")
+            }
+        }
+        return nil
+    }
+    
     func generateCodingKeyContext(_ member: MemberShape, name: String, outputShape: Bool) -> CodingKeysContext? {
         guard outputShape ||
                 (!member.hasTrait(type: HttpHeaderTrait.self) &&
@@ -585,10 +629,9 @@ extension AwsService {
         var duplicate: Bool
     }
 
-    struct AWSShapeMemberContext {
+    struct MemberEncodingContext {
         let name: String
         let location: String?
-        let locationName: String?
     }
 
     class ValidationContext {
@@ -634,7 +677,7 @@ extension AwsService {
         let namespace: String?
         let encoding: [EncodingPropertiesContext]
         let members: [MemberContext]
-        let awsShapeMembers: [AWSShapeMemberContext]
+        let awsShapeMembers: [MemberEncodingContext]
         let codingKeys: [CodingKeysContext]
         let validation: [ValidationContext]
     }

@@ -111,7 +111,7 @@ struct SotoCodeGen {
         models.forEach { model in
             group.enter()
 
-            DispatchQueue.global().sync {
+            DispatchQueue.global().async {
                 defer { group.leave() }
                 do {
                     let service = try AwsService(model)
