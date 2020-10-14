@@ -19,8 +19,8 @@ let package = Package(
                 .product(name: "SotoSmithy", package: "soto-smithy"),
                 .product(name: "SotoSmithyAWS", package: "soto-smithy"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Stencil", package: "Stencil")]
-            , resources: [.process("Templates")]
+                .product(name: "Stencil", package: "Stencil")],
+            resources: [.process("Templates")]
         ),
     ]
 )

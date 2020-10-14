@@ -108,11 +108,10 @@ struct AwsService {
             guard let inputShape = model.shape(for: input) as? StructureShape else { continue }
             guard let inputToken = paginatedTrait.inputToken else { continue }
             guard let inputMember = inputShape.members?[inputToken] else { continue }
-            guard let inputMemberShape = model.shape(for: inputMember.target) else { continue }
-            guard let inputMemberShapeName = inputMemberShape as? SotoOutput else { continue }
             guard let output = operationShape.output?.target else { continue }
             guard let outputShape = model.shape(for: output) as? StructureShape else { continue }
             guard let outputToken = paginatedTrait.outputToken else { continue }
+            let inputMemberShapeName = inputMember.output(model)
 
             // construct array of input shape parameters to use in `usingPaginationToken` function
             var initParams: [String: String] = [:]
@@ -129,7 +128,7 @@ struct AwsService {
                     moreResults: nil,
                     initParams: initParamsArray,
                     paginatorProtocol: "AWSPaginateToken",
-                    tokenType: inputMemberShapeName.output
+                    tokenType: inputMemberShapeName
                 )
             )
         }
@@ -233,7 +232,7 @@ struct AwsService {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         return OperationContext(
-            comment: documentationTrait.map{ [$0] } ?? [],//.map{ processDocs($0) } ?? [],
+            comment: documentationTrait.map{ processDocs($0) } ?? [],
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,
@@ -308,14 +307,16 @@ struct AwsService {
     func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsEnum: Bool) -> MembersContexts {
         var contexts = MembersContexts()
         guard let members = shape.members else { return contexts }
+        let outputShape = shape.hasTrait(type: SotoOutputShapeTrait.self)
         let sortedMembers = members.map{ $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
         for member in sortedMembers {
             // member context
             let memberContext = generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum)
             contexts.members.append(memberContext)
             // coding key context
-            let codingKeyContext = generateCodingKeyContext(member.value, name: member.key)
-            contexts.codingKeys.append(codingKeyContext)
+            if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, outputShape: outputShape) {
+                contexts.codingKeys.append(codingKeyContext)
+            }
         }
         return contexts
     }
@@ -340,12 +341,20 @@ struct AwsService {
             default: defaultValue,
             propertyWrapper: nil,
             type: type + ((required || typeIsEnum) ? "" : "?"),
-            comment: documentation.map { processDocs($0.value) } ?? [],
+            comment: documentation.map { processMemberDocs($0.value) } ?? [],
             duplicate: false // NEED to catch this
         )
     }
 
-    func generateCodingKeyContext(_ member: MemberShape, name: String) -> CodingKeysContext {
+    func generateCodingKeyContext(_ member: MemberShape, name: String, outputShape: Bool) -> CodingKeysContext? {
+        guard outputShape ||
+                (!member.hasTrait(type: HttpHeaderTrait.self) &&
+                    !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
+                    !member.hasTrait(type: HttpQueryTrait.self) &&
+                    !member.hasTrait(type: HttpLabelTrait.self) &&
+                    !(member.hasTrait(type: HttpPayloadTrait.self) && model.shape(for: member.target) is BlobShape)) else {
+            return nil
+        }
         var codingKey: String = name
         if let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait {
             codingKey = aliasTrait.aliasName
@@ -373,11 +382,20 @@ struct AwsService {
     }
     
     /// process documenation string
-    func processDocs(_ docs: String) -> [String] {
+    func processDocs(_ docs: String) -> [String.SubSequence] {
         return docs
             .tagStriped()
+            .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
             .split(separator: "\n")
-            .map { $0.trimmingCharacters(in: CharacterSet.whitespaces)}
+            .compactMap { $0.isEmpty ? nil: $0 }
+    }
+
+    /// process documenation string
+    func processMemberDocs(_ docs: String) -> [String.SubSequence] {
+        return docs
+            .tagStriped()
+            .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
+            .split(separator: "\n")
             .compactMap { $0.isEmpty ? nil: $0 }
     }
 
@@ -506,7 +524,7 @@ extension AwsService {
     }
 
     struct OperationContext {
-        let comment: [String]
+        let comment: [String.SubSequence]
         let funcName: String
         let inputShape: String?
         let outputShape: String?
@@ -563,7 +581,7 @@ extension AwsService {
         let `default`: String?
         let propertyWrapper: String?
         let type: String
-        let comment: [String]
+        let comment: [String.SubSequence]
         var duplicate: Bool
     }
 

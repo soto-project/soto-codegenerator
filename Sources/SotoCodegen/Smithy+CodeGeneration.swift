@@ -63,7 +63,6 @@ extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
 
 extension BlobShape: SotoOutput { var output: String { "Data" } }
 extension BooleanShape: SotoOutput { var output: String { "Bool" } }
-extension StringShape: SotoOutput { var output: String { "String" } }
 extension ByteShape: SotoOutput { var output: String { "Int8" } }
 extension ShortShape: SotoOutput { var output: String { "Int16" } }
 extension IntegerShape: SotoOutput { var output: String { "Int" } }
@@ -81,6 +80,9 @@ extension MemberShape {
         let memberShape = model.shape(for: self.target)!
         if let sotoMemberShape = memberShape as? SotoOutput {
             return sotoMemberShape.output
+        } else if memberShape is StringShape {
+            if memberShape.hasTrait(type: EnumTrait.self) { return self.target.shapeName }
+            return "String"
         } else if memberShape is CollectionShape {
             return self.target.shapeName
         } else if let listShape = memberShape as? ListShape {
