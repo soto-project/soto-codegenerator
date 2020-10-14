@@ -55,7 +55,7 @@ extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol {
 }
 extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
     var output: String { ".restxml" }
-    var nameTrait: ProtocolAliasTrait.Type { return AwsProtocolsEc2QueryNameTrait.self }
+    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
 }
 
 
