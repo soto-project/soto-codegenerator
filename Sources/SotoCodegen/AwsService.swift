@@ -347,8 +347,8 @@ struct AwsService {
 
     func generateCodingKeyContext(_ member: MemberShape, name: String) -> CodingKeysContext {
         var codingKey: String = name
-        if let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) {
-            codingKey = aliasTrait.traitName
+        if let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait {
+            codingKey = aliasTrait.aliasName
         }
         return CodingKeysContext(variable: name.toSwiftVariableCase(), codingKey: codingKey, duplicate: false)
     }
