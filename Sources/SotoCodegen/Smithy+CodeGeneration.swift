@@ -19,16 +19,44 @@ protocol SotoOutput {
     var output: String { get }
 }
 
-protocol AwsServiceProtocol: SotoOutput { }
+protocol ProtocolAliasTrait: StaticTrait {
+    var aliasName: String { get }
+}
+
+protocol AwsServiceProtocol: SotoOutput {
+    var nameTrait: ProtocolAliasTrait.Type { get }
+}
 
 // MARK: Service protocol
 
-extension AwsProtocolsRestJson1Trait: AwsServiceProtocol { var output: String { ".restjson" }}
-extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol { var output: String { ".json(version: \"1.0\")" } }
-extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol { var output: String { ".json(version: \"1.1\")" } }
-extension AwsProtocolsAwsQueryTrait: AwsServiceProtocol { var output: String { ".query" } }
-extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol { var output: String { ".ec2" } }
-extension AwsProtocolsRestXmlTrait: AwsServiceProtocol { var output: String { ".restxml" } }
+extension JsonNameTrait: ProtocolAliasTrait { var aliasName: String { return value } }
+extension XmlNameTrait: ProtocolAliasTrait { var aliasName: String { return value } }
+extension AwsProtocolsEc2QueryNameTrait: ProtocolAliasTrait { var aliasName: String { return value } }
+
+extension AwsProtocolsRestJson1Trait: AwsServiceProtocol {
+    var output: String { ".restjson" }
+    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
+}
+extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol {
+    var output: String { ".json(version: \"1.0\")" }
+    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
+}
+extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol {
+    var output: String { ".json(version: \"1.1\")" }
+    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
+}
+extension AwsProtocolsAwsQueryTrait: AwsServiceProtocol {
+    var output: String { ".query" }
+    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
+}
+extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol {
+    var output: String { ".ec2" }
+    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
+}
+extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
+    var output: String { ".restxml" }
+    var nameTrait: ProtocolAliasTrait.Type { return AwsProtocolsEc2QueryNameTrait.self }
+}
 
 
 // MARK: Shape types
@@ -46,3 +74,20 @@ extension BigIntegerShape: SotoOutput { var output: String { "Int64" } }
 extension BigDecimalShape: SotoOutput { var output: String { "Double" } }
 extension TimestampShape: SotoOutput { var output: String { "Date" }}
 extension DocumentShape: SotoOutput { var output: String { "String" }}
+
+extension MemberShape {
+    func output(_ model: Model) -> String {
+        // assume model has been validated
+        let memberShape = model.shape(for: self.target)!
+        if let sotoMemberShape = memberShape as? SotoOutput {
+            return sotoMemberShape.output
+        } else if memberShape is CollectionShape {
+            return self.target.shapeName
+        } else if let listShape = memberShape as? ListShape {
+            return "[\(listShape.member.output(model))]"
+        } else if let mapShape = memberShape as? MapShape {
+            return "[\(mapShape.key.output(model)): \(mapShape.value.output(model))]"
+        }
+        return "Unsupported"
+    }
+}

@@ -66,28 +66,32 @@ struct SotoCodeGen {
         let basePath = "\(command.outputFolder)/\(service.serviceName)/"
         try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
 
-        if try self.environment.renderTemplate(name: "api.stencil", context: service.apiContext).writeIfChanged(
+        let apiContext = try service.generateServiceContext()
+        if try self.environment.renderTemplate(name: "api.stencil", context: apiContext).writeIfChanged(
             toFile: "\(basePath)/\(service.serviceName)_API.swift"
         ) {
             print("Wrote: \(service.serviceName)_API.swift")
         }
 
-        if try self.environment.renderTemplate(name: "shapes.stencil", context: service.shapesContext).writeIfChanged(
+        let shapesContext = try service.generateShapesContext()
+        if try self.environment.renderTemplate(name: "shapes.stencil", context: shapesContext).writeIfChanged(
             toFile: "\(basePath)/\(service.serviceName)_Shapes.swift"
         ) {
             print("Wrote: \(service.serviceName)_Shapes.swift")
         }
 
-        if service.errorContext["errors"] != nil {
-            if try self.environment.renderTemplate(name: "error.stencil", context: service.errorContext).writeIfChanged(
+        let errorContext = try service.generateErrorContext()
+        if errorContext["errors"] != nil {
+            if try self.environment.renderTemplate(name: "error.stencil", context: errorContext).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Error.swift"
             ) {
                 print("Wrote: \(service.serviceName)_Error.swift")
             }
         }
 
-        if service.paginatorContext["paginators"] != nil {
-            if try self.environment.renderTemplate(name: "paginator.stencil", context: service.paginatorContext).writeIfChanged(
+        let paginatorContext = try service.generatePaginatorContext()
+        if paginatorContext["paginators"] != nil {
+            if try self.environment.renderTemplate(name: "paginator.stencil", context: paginatorContext).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Paginator.swift"
             ) {
                 print("Wrote: \(service.serviceName)_Paginator.swift")

@@ -17,36 +17,31 @@ import SotoSmithy
 import SotoSmithyAWS
 
 struct AwsService {
+    var model: Model
     var serviceName: String
-    var apiContext: [String: Any]
+    var serviceId: ShapeId
+    var service: ServiceShape
+    var serviceProtocol: AwsServiceProtocol
+/*    var apiContext: [String: Any]
     var shapesContext: [String: Any]
     var paginatorContext: [String: Any]
-    var errorContext: [String: Any]
+    var errorContext: [String: Any]*/
 
     init(_ model: SotoSmithy.Model) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
-        let serviceName = try Self.getServiceName(service.value, id: service.key)
-        do {
-            self.serviceName = serviceName
-            self.apiContext = try Self.generateServiceContext(model, serviceName: self.serviceName)
-            self.shapesContext = try Self.generateShapesContext(model, serviceName: self.serviceName)
-            self.paginatorContext = try Self.generatePaginatorContext(model, serviceName: self.serviceName)
-            self.errorContext = try Self.generateErrorContext(model, serviceName: self.serviceName)
-        } catch let error as Error {
-            throw Error(reason: "\(error) in service \(serviceName)")
-        }
-    }
 
-    static func getTrait<T: StaticTrait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
-        guard let trait = shape.trait(type: T.self) else {
-            throw Error(reason: "\(id) does not have a \(T.staticName) trait")
-        }
-        return trait
+        self.model = model
+        self.serviceId = service.key
+        self.service = service.value
+        self.serviceName = try Self.getServiceName(service.value, id: service.key)
+        self.serviceProtocol = try Self.getServiceProtocol(service.value)
     }
 
     /// Return service name from API
     static func getServiceName(_ service: SotoSmithy.ServiceShape, id: ShapeId) throws -> String {
-        let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: id)
+        guard let awsService = service.trait(type: AwsServiceTrait.self) else {
+            throw Error(reason: "\(id) does not have a \(AwsServiceTrait.staticName) trait")
+        }
 
         // port of https://github.com/aws/aws-sdk-go-v2/blob/996478f06a00c31ee7e7b0c3ac6674ce24ba0120/private/model/api/api.go#L105
         let stripServiceNamePrefixes: [String] = ["Amazon", "AWS"]
@@ -65,15 +60,14 @@ struct AwsService {
     }
 
     /// Generate context for rendering service template
-    static func generateServiceContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
+    func generateServiceContext() throws -> [String: Any] {
         var context: [String: Any] = [:]
         guard let serviceEntry = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
         let serviceId = serviceEntry.key
         let service = serviceEntry.value
         let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: serviceId)
         let authSigV4 = try getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
-        let serviceProtocol = try getServiceProtocol(service)
-        let operations = try generateOperationContexts(service: service, model: model)
+        let operations = try generateOperationContexts()
 
         context["name"] = serviceName
         context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
@@ -99,7 +93,7 @@ struct AwsService {
     }
 
     /// Generate paginator context
-    static func generatePaginatorContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
+    func generatePaginatorContext() throws -> [String: Any] {
         let paginatorOperations = try model.select(from: "operation [trait:paginated]")
         guard paginatorOperations.count > 0 else { return [:] }
         var context: [String: Any] = ["name": serviceName]
@@ -130,7 +124,7 @@ struct AwsService {
 
             paginatorContexts.append(
                 PaginatorContext(
-                    operation: try Self.generateOperationContext(operationShape, operationName: operation.key),
+                    operation: try generateOperationContext(operationShape, operationName: operation.key),
                     output: toKeyPath(token: outputToken, structure: outputShape),
                     moreResults: nil,
                     initParams: initParamsArray,
@@ -148,7 +142,7 @@ struct AwsService {
     }
 
     /// Generate the context information for outputting the error enums
-    static func generateErrorContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
+    func generateErrorContext() throws -> [String: Any] {
         let errorShapes = try model.select(from: "structure [trait:error]")
         guard errorShapes.count > 0 else { return [:] }
         
@@ -169,7 +163,7 @@ struct AwsService {
     }
 
     /// Generate context for outputting Shapes
-    static func generateShapesContext(_ model: SotoSmithy.Model, serviceName: String) throws -> [String: Any] {
+    func generateShapesContext() throws -> [String: Any] {
         var context: [String: Any] = [:]
         context["name"] = serviceName
         
@@ -205,7 +199,7 @@ struct AwsService {
     }
 
     /// Generate list of operation and streaming operation contexts
-    static func generateOperationContexts(service: ServiceShape, model: Model) throws -> (operations: [OperationContext], streamingOperations: [OperationContext]) {
+    func generateOperationContexts() throws -> (operations: [OperationContext], streamingOperations: [OperationContext]) {
         var operationContexts: [OperationContext] = []
         var streamingOperationContexts: [OperationContext] = []
         if let operations = service.operations {
@@ -234,7 +228,7 @@ struct AwsService {
     }
 
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`
-    static func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool = false) throws -> OperationContext {
+    func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool = false) throws -> OperationContext {
         let documentationTrait = operation.trait(type: DocumentationTrait.self)?.value
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
@@ -253,7 +247,7 @@ struct AwsService {
     }
 
     /// Generate the context information for outputting an enum
-    static func generateEnumContext(_ shape: Shape, shapeName: String) -> EnumContext? {
+    func generateEnumContext(_ shape: Shape, shapeName: String) -> EnumContext? {
         guard let trait = shape.trait(type: EnumTrait.self) else { return nil }
         // Operations
         var valueContexts: [EnumMemberContext] = []
@@ -286,22 +280,84 @@ struct AwsService {
     }
 
     /// Generate the context information for outputting a shape
-    static func generateStructureContext(_ shape: CollectionShape, shapeName: String) -> StructureContext? {
+    func generateStructureContext(_ shape: CollectionShape, shapeName: String) -> StructureContext? {
         let payload = getPayload(from: shape)
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payload != nil) else { return nil }
+        let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: shape is UnionShape)
         return StructureContext(
-            object: ObjectType.struct,
+            object: "struct",
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
             payload: payload?.key.toSwiftLabelCase(),
             payloadOptions: nil,
             namespace: nil,
             encoding: [],
-            members: [],
-            awsShapeMembers: [],
-            codingKeys: [],
+            members: contexts.members,
+            awsShapeMembers: contexts.awsShapeMembers,
+            codingKeys: contexts.codingKeys,
             validation: []
         )
+    }
+
+    struct MembersContexts {
+        var members: [MemberContext] = []
+        var awsShapeMembers: [AWSShapeMemberContext] = []
+        var codingKeys: [CodingKeysContext] = []
+    }
+    /// generate shape members context
+    func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsEnum: Bool) -> MembersContexts {
+        var contexts = MembersContexts()
+        guard let members = shape.members else { return contexts }
+        let sortedMembers = members.map{ $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
+        for member in sortedMembers {
+            // member context
+            let memberContext = generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum)
+            contexts.members.append(memberContext)
+            // coding key context
+            let codingKeyContext = generateCodingKeyContext(member.value, name: member.key)
+            contexts.codingKeys.append(codingKeyContext)
+        }
+        return contexts
+    }
+
+    func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsEnum: Bool) -> MemberContext {
+        let required = member.hasTrait(type: RequiredTrait.self)
+        let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
+        let documentation = member.trait(type: DocumentationTrait.self)
+        let defaultValue: String?
+        if idempotencyToken == true {
+            defaultValue = "\(shapeName.toSwiftClassCase()).idempotencyToken()"
+        } else if !required {
+            defaultValue = "nil"
+        } else {
+            defaultValue = nil
+        }
+        let type = member.output(model)
+        return MemberContext(
+            variable: name.toSwiftVariableCase(),
+            parameter: name.toSwiftLabelCase(),
+            required: member.hasTrait(type: RequiredTrait.self),
+            default: defaultValue,
+            propertyWrapper: nil,
+            type: type + ((required || typeIsEnum) ? "" : "?"),
+            comment: documentation.map { processDocs($0.value) } ?? [],
+            duplicate: false // NEED to catch this
+        )
+    }
+
+    func generateCodingKeyContext(_ member: MemberShape, name: String) -> CodingKeysContext {
+        var codingKey: String = name
+        if let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) {
+            codingKey = aliasTrait.traitName
+        }
+        return CodingKeysContext(variable: name.toSwiftVariableCase(), codingKey: codingKey, duplicate: false)
+    }
+
+    func getTrait<T: StaticTrait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
+        guard let trait = shape.trait(type: T.self) else {
+            throw Error(reason: "\(id) does not have a \(T.staticName) trait")
+        }
+        return trait
     }
 
     /// get service protocol from service
@@ -317,7 +373,7 @@ struct AwsService {
     }
     
     /// process documenation string
-    static func processDocs(_ docs: String) -> [String] {
+    func processDocs(_ docs: String) -> [String] {
         return docs
             .tagStriped()
             .split(separator: "\n")
@@ -326,7 +382,7 @@ struct AwsService {
     }
 
     /// return middleware name given a service name
-    static func getMiddleware(for service: ServiceShape) -> String? {
+    func getMiddleware(for service: ServiceShape) -> String? {
         guard let awsServiceTrait = service.trait(type: AwsServiceTrait.self) else { return nil }
         switch awsServiceTrait.sdkId {
         case "API Gateway":
@@ -343,7 +399,7 @@ struct AwsService {
     }
 
     /// return symbol name with framework added if required  to avoid name clashes
-    static func getSymbol(for symbol: String, from framework: String, model: SotoSmithy.Model, namespace: String) -> String {
+    func getSymbol(for symbol: String, from framework: String, model: SotoSmithy.Model, namespace: String) -> String {
         if model.shape(for: ShapeId(rawValue: "\(namespace)#\(symbol)")) != nil {
             return "\(framework).\(symbol)"
         }
@@ -351,7 +407,7 @@ struct AwsService {
     }
 
     /// return payload member of structure
-    static func getPayload(from shape: CollectionShape) -> (key: String, value: MemberShape)? {
+    func getPayload(from shape: CollectionShape) -> (key: String, value: MemberShape)? {
         guard let members = shape.members else { return nil }
         for member in members {
             if member.value.trait(type: HttpPayloadTrait.self) != nil {
@@ -362,17 +418,25 @@ struct AwsService {
     }
 
     /// mark up model with Soto traits for input and output shapes
-    static func markInputOutputShapes(_ model: Model) {
-        func addTrait<T: StaticTrait>(to shapeId: ShapeId, trait: T, depth: Int = 0) {
+    func markInputOutputShapes(_ model: Model) {
+        func addTrait<T: StaticTrait>(to shapeId: ShapeId, trait: T) {
             guard let shape = model.shape(for: shapeId) else { return }
             // if shape already has trait then don't apply it again
             guard shape.trait(type: T.self) == nil else { return }
             shape.add(trait: trait)
 
-            guard let structure = shape as? StructureShape else { return }
-            guard let members = structure.members else { return }
-            for member in members {
-                addTrait(to: member.value.target, trait: trait, depth: depth + 1)
+            if let structure = shape as? CollectionShape {
+                guard let members = structure.members else { return }
+                for member in members {
+                    addTrait(to: member.value.target, trait: trait)
+                }
+            } else if let list = shape as? ListShape {
+                addTrait(to: list.member.target, trait: trait)
+            } else if let set = shape as? SetShape {
+                addTrait(to: set.member.target, trait: trait)
+            } else if let map = shape as? MapShape {
+                addTrait(to: map.key.target, trait: trait)
+                addTrait(to: map.value.target, trait: trait)
             }
         }
 
@@ -387,7 +451,7 @@ struct AwsService {
     }
     
     /// convert paginator token to KeyPath
-    static func toKeyPath(token: String, structure: StructureShape) -> String {
+    func toKeyPath(token: String, structure: StructureShape) -> String {
         var split = token.split(separator: ".")
         for i in 0..<split.count {
             // if string contains [-1] replace with '.last'.
@@ -413,7 +477,7 @@ struct AwsService {
     }
 
     /// get protocol needed for shape
-    static func getShapeProtocol(_ shape: Shape, hasPayload: Bool) -> String? {
+    func getShapeProtocol(_ shape: Shape, hasPayload: Bool) -> String? {
         let usedInInput = shape.hasTrait(type: SotoInputShapeTrait.self)
         let usedInOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
         var shapeProtocol: String
@@ -494,13 +558,12 @@ extension AwsService {
 
     struct MemberContext {
         let variable: String
-        let locationPath: String
         let parameter: String
         let required: Bool
         let `default`: String?
         let propertyWrapper: String?
         let type: String
-        let comment: [String.SubSequence]
+        let comment: [String]
         var duplicate: Bool
     }
 
@@ -544,12 +607,8 @@ extension AwsService {
         var duplicate: Bool
     }
 
-    enum ObjectType: String {
-        case `class`
-        case `struct`
-    }
     struct StructureContext {
-        let object: ObjectType
+        let object: String
         let name: String
         let shapeProtocol: String
         let payload: String?
