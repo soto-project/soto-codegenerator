@@ -22,10 +22,6 @@ struct AwsService {
     var serviceId: ShapeId
     var service: ServiceShape
     var serviceProtocolTrait: AwsServiceProtocol
-/*    var apiContext: [String: Any]
-    var shapesContext: [String: Any]
-    var paginatorContext: [String: Any]
-    var errorContext: [String: Any]*/
 
     init(_ model: SotoSmithy.Model) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
@@ -35,6 +31,8 @@ struct AwsService {
         self.service = service.value
         self.serviceName = try Self.getServiceName(service.value, id: service.key)
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
+
+        try model.patch(serviceName: serviceName)
     }
 
     /// Return service name from API
