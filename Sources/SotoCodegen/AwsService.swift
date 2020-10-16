@@ -294,11 +294,11 @@ struct AwsService {
             payload: payload?.key.toSwiftLabelCase(),
             payloadOptions: nil,
             namespace: xmlNamespace,
-            encoding: [],
+            encoding: contexts.encoding,
             members: contexts.members,
             awsShapeMembers: contexts.awsShapeMembers,
             codingKeys: contexts.codingKeys,
-            validation: []
+            validation: contexts.validation
         )
     }
 
@@ -306,12 +306,16 @@ struct AwsService {
         var members: [MemberContext] = []
         var awsShapeMembers: [MemberEncodingContext] = []
         var codingKeys: [CodingKeysContext] = []
+        var validation: [ValidationContext] = []
+        var encoding: [EncodingPropertiesContext] = []
     }
+    
     /// generate shape members context
     func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsEnum: Bool) -> MembersContexts {
         var contexts = MembersContexts()
         guard let members = shape.members else { return contexts }
         let outputShape = shape.hasTrait(type: SotoOutputShapeTrait.self)
+        let inputShape = shape.hasTrait(type: SotoInputShapeTrait.self)
         let sortedMembers = members.map{ $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
         for member in sortedMembers {
             // member context
@@ -324,6 +328,12 @@ struct AwsService {
             // member encoding context
             if let memberEncodingContext = generateMemberEncodingContext(member.value, name: member.key) {
                 contexts.awsShapeMembers.append(memberEncodingContext)
+            }
+            // validation context
+            if inputShape {
+                if let validationContext = generateValidationContext(member.value, name: member.key) {
+                    contexts.validation.append(validationContext)
+                }
             }
         }
         return contexts
@@ -366,15 +376,15 @@ struct AwsService {
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".querystring(locationName: \"\(queryTrait.value)\")")
         // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
-            let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait
-            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".uri(locationName: \"\(aliasTrait?.aliasName ?? name)\")")
+            let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? AliasTrait
+            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")")
         // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".statusCode")
         // if payload and not a blob
         } else if member.hasTrait(type: HttpPayloadTrait.self), !(model.shape(for: member.target) is BlobShape) {
-            let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait
-            let payloadName = aliasTrait?.aliasName ?? name
+            let aliasTrait = member.traits?.first(where: {$0 is AliasTrait}) as? AliasTrait
+            let payloadName = aliasTrait?.alias ?? name
             let swiftLabelName = name.toSwiftLabelCase()
             if swiftLabelName != payloadName {
                 return MemberEncodingContext(name: swiftLabelName, location: ".body(locationName: \"\(payloadName)\")")
@@ -393,12 +403,113 @@ struct AwsService {
             return nil
         }
         var codingKey: String = name
-        if let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? ProtocolAliasTrait {
-            codingKey = aliasTrait.aliasName
+        if let aliasTrait = member.traits?.first(where: {$0 is AliasTrait}) as? AliasTrait {
+            codingKey = aliasTrait.alias
         }
         return CodingKeysContext(variable: name.toSwiftVariableCase(), codingKey: codingKey, duplicate: false)
     }
 
+    func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
+
+        func generateValidationContext(_ shapeId: ShapeId, name: String, required: Bool, container: Bool = false, alreadyProcessed: Set<ShapeId>) -> ValidationContext? {
+            guard !alreadyProcessed.contains(shapeId) else { return nil }
+            guard let shape = model.shape(for: shapeId) else { return nil }
+            
+            var requirements: [String: Any] = [:]
+            if let lengthTrait = shape.trait(type: LengthTrait.self) {
+                requirements["min"] = lengthTrait.min
+                requirements["max"] = lengthTrait.max
+            }
+            if let rangeTrait = shape.trait(type: RangeTrait.self) {
+                requirements["min"] = rangeTrait.min
+                requirements["max"] = rangeTrait.max
+            }
+            if let patternTrait = shape.trait(type: PatternTrait.self) {
+                requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
+            }
+            
+            var listMember: MemberShape? = nil
+            if let list = shape as? ListShape {
+                listMember = list.member
+            } else if let set = shape as? SetShape {
+                listMember = set.member
+            }
+            if let listMember = listMember {
+                // validation code doesn't support containers inside containers. Only service affected by this is SSM
+                if !container {
+                    if let memberValidationContext = generateValidationContext(
+                        listMember.target,
+                        name: name,
+                        required: true,
+                        container: true,
+                        alreadyProcessed: alreadyProcessed
+                    ) {
+                        return ValidationContext(
+                            name: name.toSwiftVariableCase(),
+                            required: required,
+                            reqs: requirements,
+                            member: memberValidationContext
+                        )
+                    }
+                }
+            }
+            
+            if let map = shape as? MapShape {
+                // validation code doesn't support containers inside containers. Only service affected by this is SSM
+                if !container {
+                    let keyValidationContext = generateValidationContext(
+                        map.key.target,
+                        name: name,
+                        required: true,
+                        container: true,
+                        alreadyProcessed: alreadyProcessed
+                    )
+                    let valueValidationContext = generateValidationContext(
+                        map.value.target,
+                        name: name,
+                        required: true,
+                        container: true,
+                        alreadyProcessed: alreadyProcessed
+                    )
+                    if keyValidationContext != nil || valueValidationContext != nil {
+                        return ValidationContext(
+                            name: name.toSwiftVariableCase(),
+                            required: required,
+                            reqs: requirements,
+                            key: keyValidationContext,
+                            value: valueValidationContext
+                        )
+                    }
+                }
+            }
+            
+            if let collection = shape as? CollectionShape, let members = collection.members {
+                for member in members {
+                    let memberRequired = member.value.hasTrait(type: RequiredTrait.self)
+                    var alreadyProcessed2 = alreadyProcessed
+                    alreadyProcessed2.insert(shapeId)
+                    if generateValidationContext(
+                        member.value.target,
+                        name: member.key,
+                        required: memberRequired,
+                        container: false,
+                        alreadyProcessed: alreadyProcessed2
+                    ) != nil {
+                        return ValidationContext(name: name.toSwiftVariableCase(), shape: true, required: required)
+                    }
+                }
+
+            }
+            if requirements.count > 0 {
+                return ValidationContext(name: name.toSwiftVariableCase(), reqs: requirements)
+            }
+            return nil
+        }
+        
+        let required = member.hasTrait(type: RequiredTrait.self)
+        return generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
+    }
+    
     func getTrait<T: StaticTrait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
         guard let trait = shape.trait(type: T.self) else {
             throw Error(reason: "\(id) does not have a \(T.staticName) trait")

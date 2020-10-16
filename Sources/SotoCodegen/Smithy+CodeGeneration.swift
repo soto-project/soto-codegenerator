@@ -19,43 +19,48 @@ protocol SotoOutput {
     var output: String { get }
 }
 
-protocol ProtocolAliasTrait: StaticTrait {
-    var aliasName: String { get }
+protocol AliasTrait: StaticTrait {
+    var alias: String { get }
 }
 
 protocol AwsServiceProtocol: SotoOutput {
-    var nameTrait: ProtocolAliasTrait.Type { get }
+    var nameTrait: AliasTrait.Type { get }
 }
+
+// MARK: Alias traits
+
+extension JsonNameTrait: AliasTrait { var alias: String { return value } }
+extension XmlNameTrait: AliasTrait { var alias: String { return value } }
+extension AwsProtocolsEc2QueryNameTrait: AliasTrait { var alias: String { return value } }
+extension HttpHeaderTrait: AliasTrait { var alias: String { return value } }
+extension HttpPrefixHeadersTrait: AliasTrait { var alias: String { return value } }
+extension HttpQueryTrait: AliasTrait { var alias: String { return value } }
 
 // MARK: Service protocol
 
-extension JsonNameTrait: ProtocolAliasTrait { var aliasName: String { return value } }
-extension XmlNameTrait: ProtocolAliasTrait { var aliasName: String { return value } }
-extension AwsProtocolsEc2QueryNameTrait: ProtocolAliasTrait { var aliasName: String { return value } }
-
 extension AwsProtocolsRestJson1Trait: AwsServiceProtocol {
     var output: String { ".restjson" }
-    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
+    var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
 }
 extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.0\")" }
-    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
+    var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
 }
 extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.1\")" }
-    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
+    var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
 }
 extension AwsProtocolsAwsQueryTrait: AwsServiceProtocol {
     var output: String { ".query" }
-    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
+    var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
 }
 extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol {
     var output: String { ".ec2" }
-    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
+    var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
 }
 extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
     var output: String { ".restxml" }
-    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
+    var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
 }
 
 
@@ -89,6 +94,8 @@ extension MemberShape {
             return self.target.shapeName
         } else if let listShape = memberShape as? ListShape {
             return "[\(listShape.member.output(model))]"
+        } else if let setShape = memberShape as? SetShape {
+            return "Set<\(setShape.member.output(model))>"
         } else if let mapShape = memberShape as? MapShape {
             return "[\(mapShape.key.output(model)): \(mapShape.value.output(model))]"
         }
