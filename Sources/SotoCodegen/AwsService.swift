@@ -80,6 +80,7 @@ struct AwsService {
             context["errorTypes"] = serviceName + "ErrorType"
         }
         context["middlewareClass"] = getMiddleware(for: service)
+        context["regionalized"] = true
         //context["serviceEndpoints"]
         //context["regionalized"]
         //context["partitionEndpoints"]

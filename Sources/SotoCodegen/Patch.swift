@@ -15,13 +15,49 @@
 import SotoSmithy
 
 protocol ShapePatch {
-    func patch(shape: Shape)
+    func patch(shape: Shape) -> Shape?
 }
 
-struct RemoteTraitPatch: ShapePatch {
+struct ShapeTypePatch: ShapePatch {
+    let shape: Shape
+    func patch(shape: Shape) -> Shape? {
+        return self.shape
+    }
+}
+
+struct EditShapePatch<S: Shape>: ShapePatch {
+    let edit: (S) -> (Shape)
+
+    func patch(shape: Shape) -> Shape? {
+        guard let shape = shape as? S else { return nil }
+        return edit(shape)
+    }
+}
+
+struct AddTraitPatch: ShapePatch {
+    let trait: Trait
+    func patch(shape: Shape) -> Shape? {
+        shape.add(trait: trait)
+        return nil
+    }
+}
+
+struct RemoveTraitPatch: ShapePatch {
     let trait: StaticTrait.Type
-    func patch(shape: Shape) {
+    func patch(shape: Shape) -> Shape? {
         shape.removeTrait(named: trait.staticName)
+        return nil
+    }
+}
+
+struct EditTraitPatch<T: StaticTrait>: ShapePatch {
+    let edit: (T) -> (T)
+    func patch(shape: Shape) -> Shape? {
+        guard let trait = shape.trait(type: T.self) else { return nil }
+        let newTrait = edit(trait)
+        shape.remove(trait: T.self)
+        shape.add(trait: newTrait)
+        return nil
     }
 }
 
@@ -34,14 +70,15 @@ struct EditEnumPatch: ShapePatch {
         self.remove = remove
     }
     
-    func patch(shape: Shape) {
-        guard let enumTrait = shape.trait(type: EnumTrait.self) else { return }
+    func patch(shape: Shape) -> Shape? {
+        guard let enumTrait = shape.trait(type: EnumTrait.self) else { return nil }
         var enums = enumTrait.value
         enums.removeAll { remove.contains($0.value) }
         enums += add
         let newEnumTrait = EnumTrait(value: enums)
         shape.remove(trait: EnumTrait.self)
         shape.add(trait: newEnumTrait)
+        return nil
     }
 }
 

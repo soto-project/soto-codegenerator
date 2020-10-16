@@ -28,18 +28,18 @@ extension Model {
             "ComprehendMedical": [
                 "com.amazonaws.comprehendmedical#EntitySubType": EditEnumPatch(add: [.init(value: "DX_NAME")]),
             ],
-            /*"DynamoDB": [
-                ReplacePatch(PatchKeyPath3(\.shapes["AttributeValue"], \.type.structure, \.isEnum), value: true, originalValue: false),
-            ],*/
+            "DynamoDB": [
+                "com.amazonaws.dynamodb#AttributeValue": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) }
+            ],
             "EC2": [
                 "com.amazonaws.ec2#PlatformValues": EditEnumPatch(add: [.init(value: "windows")], remove: ["Windows"])
             ],
             "ECS": [
                 "com.amazonaws.ecs#PropagateTags": EditEnumPatch(add: [.init(value: "NONE")])
             ],
-            /*"ElasticLoadBalancing": [
-                //ReplacePatch(PatchKeyPath2(\.shapes["SecurityGroupOwnerAlias"], \.type), value: .integer(), originalValue: .string(Shape.ShapeType.StringType())),
-            ],*/
+            "ElasticLoadBalancing": [
+                "com.amazonaws.elasticloadbalancing#SecurityGroupOwnerAlias": ShapeTypePatch(shape: IntegerShape())
+            ],
             "IAM": [
                 "com.amazonaws.iam#PolicySourceType": EditEnumPatch(add: [.init(value: "IAM Policy")])
             ],
@@ -48,14 +48,14 @@ extension Model {
                 //ReplacePatch(PatchKeyPath4(\.shapes["ListFunctionsRequest"], \.type.structure, \.members["MasterRegion"], \.shapeName), value: "SotoCore.Region", originalValue: "MasterRegion"),
             ],*/
             "Route53" : [
-                "com.amazonaws.route53#ListHealthChecksResponse$Marker": RemoteTraitPatch(trait: RequiredTrait.self),
-                "com.amazonaws.route53#ListHostedZonesResponse$Marker": RemoteTraitPatch(trait: RequiredTrait.self),
-                "com.amazonaws.route53#ListReusableDelegationSetsResponse$Marker": RemoteTraitPatch(trait: RequiredTrait.self)
+                "com.amazonaws.route53#ListHealthChecksResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
+                "com.amazonaws.route53#ListHostedZonesResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
+                "com.amazonaws.route53#ListReusableDelegationSetsResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self)
             ],
             "S3": [
                 "com.amazonaws.s3#ReplicationStatus": EditEnumPatch(add: [.init(value: "COMPLETED")], remove: ["COMPLETE"]),
-                //ReplacePatch(PatchKeyPath2(\.shapes["Size"], \.type), value: .long(), originalValue: .integer()),
-                //ReplacePatch(PatchKeyPath3(\.shapes["CopySource"], \.type.string, \.pattern), value: ".+\\/.+", originalValue: "\\/.+\\/.+"),
+                "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
+                "com.amazonaws.s3#CopySource": EditTraitPatch { trait in return PatternTrait(value: ".+\\/.+") },
                 // Add additional location constraints
                 "com.amazonaws.s3#BucketLocationConstraint": EditEnumPatch(add: [.init(value: "us-east-1")])
             ],
@@ -66,9 +66,12 @@ extension Model {
             }
         }
     }
+    
     func apply(patch: ShapePatch, to shapeId: ShapeId) throws {
         if let shape = shape(for: shapeId) {
-            patch.patch(shape: shape)
+            if let newShape = patch.patch(shape: shape) {
+                shapes[shapeId] = newShape
+            }
         }
     }
 }
