@@ -26,8 +26,13 @@ struct RemoteTraitPatch: ShapePatch {
 }
 
 struct EditEnumPatch: ShapePatch {
-    var add: [EnumTrait.EnumDefinition] = []
-    var remove: [String] = []
+    let add: [EnumTrait.EnumDefinition]
+    let remove: [String]
+    
+    init(add: [EnumTrait.EnumDefinition] = [], remove: [String] = []) {
+        self.add = add
+        self.remove = remove
+    }
     
     func patch(shape: Shape) {
         guard let enumTrait = shape.trait(type: EnumTrait.self) else { return }

@@ -20,11 +20,45 @@ extension Model {
             "CloudFront" : [
                 "com.amazonaws.cloudfront#HttpVersion": EditEnumPatch(add: [.init(value: "HTTP1_1"), .init(value: "HTTP2")], remove: ["http1.1", "http2"])
             ],
+            /*"CloudWatch": [
+                // Patch error shape to avoid warning in generated code. Both errors have the same code "ResourceNotFound"
+                ReplacePatch(PatchKeyPath2(\.operations["GetDashboard"], \.errors[1].shapeName), value: "ResourceNotFoundException", originalValue: "DashboardNotFoundError"),
+                ReplacePatch(PatchKeyPath2(\.operations["DeleteDashboards"], \.errors[1].shapeName), value: "ResourceNotFoundException", originalValue: "DashboardNotFoundError"),
+            ],*/
+            "ComprehendMedical": [
+                "com.amazonaws.comprehendmedical#EntitySubType": EditEnumPatch(add: [.init(value: "DX_NAME")]),
+            ],
+            /*"DynamoDB": [
+                ReplacePatch(PatchKeyPath3(\.shapes["AttributeValue"], \.type.structure, \.isEnum), value: true, originalValue: false),
+            ],*/
+            "EC2": [
+                "com.amazonaws.ec2#PlatformValues": EditEnumPatch(add: [.init(value: "windows")], remove: ["Windows"])
+            ],
+            "ECS": [
+                "com.amazonaws.ecs#PropagateTags": EditEnumPatch(add: [.init(value: "NONE")])
+            ],
+            /*"ElasticLoadBalancing": [
+                //ReplacePatch(PatchKeyPath2(\.shapes["SecurityGroupOwnerAlias"], \.type), value: .integer(), originalValue: .string(Shape.ShapeType.StringType())),
+            ],*/
+            "IAM": [
+                "com.amazonaws.iam#PolicySourceType": EditEnumPatch(add: [.init(value: "IAM Policy")])
+            ],
+            /*"Lambda": [
+                //AddDictionaryPatch(PatchKeyPath1(\.shapes), key: "SotoCore.Region", value: Shape(type: .stub, name: "SotoCore.Region")),
+                //ReplacePatch(PatchKeyPath4(\.shapes["ListFunctionsRequest"], \.type.structure, \.members["MasterRegion"], \.shapeName), value: "SotoCore.Region", originalValue: "MasterRegion"),
+            ],*/
             "Route53" : [
                 "com.amazonaws.route53#ListHealthChecksResponse$Marker": RemoteTraitPatch(trait: RequiredTrait.self),
                 "com.amazonaws.route53#ListHostedZonesResponse$Marker": RemoteTraitPatch(trait: RequiredTrait.self),
                 "com.amazonaws.route53#ListReusableDelegationSetsResponse$Marker": RemoteTraitPatch(trait: RequiredTrait.self)
-            ]
+            ],
+            "S3": [
+                "com.amazonaws.s3#ReplicationStatus": EditEnumPatch(add: [.init(value: "COMPLETED")], remove: ["COMPLETE"]),
+                //ReplacePatch(PatchKeyPath2(\.shapes["Size"], \.type), value: .long(), originalValue: .integer()),
+                //ReplacePatch(PatchKeyPath3(\.shapes["CopySource"], \.type.string, \.pattern), value: ".+\\/.+", originalValue: "\\/.+\\/.+"),
+                // Add additional location constraints
+                "com.amazonaws.s3#BucketLocationConstraint": EditEnumPatch(add: [.init(value: "us-east-1")])
+            ],
         ]
         if let servicePatches = patches[serviceName] {
             for patch in servicePatches {
