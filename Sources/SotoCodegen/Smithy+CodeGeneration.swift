@@ -31,7 +31,8 @@ protocol AwsServiceProtocol: SotoOutput {
 
 extension JsonNameTrait: AliasTrait { var alias: String { return value } }
 extension XmlNameTrait: AliasTrait { var alias: String { return value } }
-extension AwsProtocolsEc2QueryNameTrait: AliasTrait { var alias: String { return value } }
+// going to have to assume EC2 name isn't used and use Header name
+//extension AwsProtocolsEc2QueryNameTrait: AliasTrait { var alias: String { return value } }
 extension HttpHeaderTrait: AliasTrait { var alias: String { return value } }
 extension HttpPrefixHeadersTrait: AliasTrait { var alias: String { return value } }
 extension HttpQueryTrait: AliasTrait { var alias: String { return value } }

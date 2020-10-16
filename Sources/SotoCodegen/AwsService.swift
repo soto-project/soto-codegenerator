@@ -21,7 +21,7 @@ struct AwsService {
     var serviceName: String
     var serviceId: ShapeId
     var service: ServiceShape
-    var serviceProtocol: AwsServiceProtocol
+    var serviceProtocolTrait: AwsServiceProtocol
 /*    var apiContext: [String: Any]
     var shapesContext: [String: Any]
     var paginatorContext: [String: Any]
@@ -34,7 +34,7 @@ struct AwsService {
         self.serviceId = service.key
         self.service = service.value
         self.serviceName = try Self.getServiceName(service.value, id: service.key)
-        self.serviceProtocol = try Self.getServiceProtocol(service.value)
+        self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
     }
 
     /// Return service name from API
@@ -73,9 +73,9 @@ struct AwsService {
         context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
         context["endpointPrefix"] = awsService.arnNamespace
         context["signingName"] = authSigV4.name
-        context["protocol"] = serviceProtocol.output
+        context["protocol"] = serviceProtocolTrait.output
         context["apiVersion"] = service.version
-        if serviceProtocol is AwsProtocolsAwsJson1_0Trait || serviceProtocol is AwsProtocolsAwsJson1_1Trait {
+        if serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait {
             context["amzTarget"] = serviceId.shapeName
         }
         if !model.select(with: TraitSelector<ErrorTrait>()).isEmpty {
@@ -178,16 +178,16 @@ struct AwsService {
         }
         
         // generate structures
-        let structures = model.select(type: StructureShape.self).map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
+        let structures = model.select(type: StructureShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for structure in structures {
-            guard let shapeContext = self.generateStructureContext(structure.value, shapeName: structure.key) else { continue }
+            guard let shapeContext = self.generateStructureContext(structure.value, shapeId: structure.key) else { continue }
             shapeContexts.append(["struct": shapeContext])
         }
 
         // generate unions
-        let unions = model.select(type: UnionShape.self).map { $0 }.map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
+        let unions = model.select(type: UnionShape.self).map { (key: $0.key.shapeName, value: $0) }.sorted { $0.key < $1.key }
         for union in unions {
-            guard let shapeContext = self.generateStructureContext(union.value, shapeName: union.key) else { continue }
+            guard let shapeContext = self.generateStructureContext(union.value.value, shapeId: union.value.key) else { continue }
             shapeContexts.append(["enumWithValues": shapeContext])
         }
 
@@ -279,16 +279,18 @@ struct AwsService {
     }
 
     /// Generate the context information for outputting a shape
-    func generateStructureContext(_ shape: CollectionShape, shapeName: String) -> StructureContext? {
+    func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId) -> StructureContext? {
+        let shapeName = shapeId.shapeName
         let payload = getPayload(from: shape)
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payload != nil) else { return nil }
         let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: shape is UnionShape)
         var xmlNamespace: String?
-        if serviceProtocol is AwsProtocolsRestXmlTrait {
+        if serviceProtocolTrait is AwsProtocolsRestXmlTrait {
             xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri ?? service.trait(type: XmlNamespaceTrait.self)?.uri
         }
+        let recursive = doesShapeHaveRecursiveOwnReference(shape, shapeId: shapeId)
         return StructureContext(
-            object: "struct",
+            object: recursive ? "indirect struct": "struct",
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
             payload: payload?.key.toSwiftLabelCase(),
@@ -335,6 +337,9 @@ struct AwsService {
                     contexts.validation.append(validationContext)
                 }
             }
+            if let encodingPropertyContex = generateEncodingPropertyContext(member.value, name: member.key) {
+                contexts.encoding.append(encodingPropertyContex)
+            }
         }
         return contexts
     }
@@ -357,7 +362,7 @@ struct AwsService {
             parameter: name.toSwiftLabelCase(),
             required: member.hasTrait(type: RequiredTrait.self),
             default: defaultValue,
-            propertyWrapper: nil,
+            propertyWrapper: generatePropertyWrapper(member, name: name, required: required),
             type: type + ((required || typeIsEnum) ? "" : "?"),
             comment: documentation.map { processMemberDocs($0.value) } ?? [],
             duplicate: false // NEED to catch this
@@ -376,7 +381,7 @@ struct AwsService {
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".querystring(locationName: \"\(queryTrait.value)\")")
         // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
-            let aliasTrait = member.trait(named: serviceProtocol.nameTrait.staticName) as? AliasTrait
+            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
             return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")")
         // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
@@ -407,6 +412,68 @@ struct AwsService {
             codingKey = aliasTrait.alias
         }
         return CodingKeysContext(variable: name.toSwiftVariableCase(), codingKey: codingKey, duplicate: false)
+    }
+
+    /// Generate array/dictionary encoding contexts
+    func generateEncodingPropertyContext(_ member: MemberShape, name: String) -> EncodingPropertiesContext? {
+        guard let memberShape = model.shape(for: member.target) else { return nil }
+        switch memberShape {
+        case let list as ListShape:
+            let memberName = getListEntryName(member: member, list: list)
+            guard let validMemberName = memberName, validMemberName != "member" else { return nil }
+            return ArrayEncodingPropertiesContext(name: self.encodingName(name), member: validMemberName)
+        case let map as MapShape:
+            let names = getMapEntryNames(member: member, map: map)
+            guard names.entry != "entry" || names.key != "key" || names.value != "value" else { return nil }
+            return DictionaryEncodingPropertiesContext(name: self.encodingName(name), entry: names.entry, key: names.key, value: names.value)
+        default:
+            return nil
+        }
+    }
+
+    func generatePropertyWrapper(_ member: MemberShape, name: String, required: Bool) -> String? {
+        let memberShape = model.shape(for: member.target)
+        let codingWrapper: String
+        if required {
+            codingWrapper = "@CustomCoding"
+        } else {
+            codingWrapper = "@OptionalCustomCoding"
+        }
+
+        // if not located in body don't generate collection encoding property wrapper
+        /*if let location = member.location {
+            guard case .body = location else { return nil }
+        }*/
+
+        switch memberShape {
+        case let list as ListShape:
+            let memberName = getListEntryName(member: member, list: list)
+            guard let validMemberName = memberName else { return nil }
+            if validMemberName == "member" {
+                return "\(codingWrapper)<StandardArrayCoder>"
+            } else {
+                return "\(codingWrapper)<ArrayCoder<\(self.encodingName(name)), \(list.member.output(model))>>"
+            }
+        case let map as MapShape:
+            let names = getMapEntryNames(member: member, map: map)
+            if names.entry == "entry", names.key == "key", names.value == "value" {
+                return "\(codingWrapper)<StandardDictionaryCoder>"
+            } else {
+                return "\(codingWrapper)<DictionaryCoder<\(self.encodingName(name)), \(map.key.output(model)), \(map.value.output(model))>>"
+            }
+        case let timestamp as TimestampShape:
+            guard let formatTrait = timestamp.trait(type: TimestampFormatTrait.self) else { return nil }
+            switch formatTrait.value {
+            case .datetime:
+                return "\(codingWrapper)<ISO8601DateCoder>"
+            case .epochSeconds:
+                return "\(codingWrapper)<UnixEpochDateCoder>"
+            case .httpDate:
+                return "\(codingWrapper)<HTTPHeaderDateCoder>"
+            }
+        default:
+            return nil
+        }
     }
 
     func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
@@ -529,6 +596,19 @@ struct AwsService {
         throw Error(reason: "No service protocol trait")
     }
     
+    func getListEntryName(member: MemberShape, list: ListShape) -> String? {
+        guard !member.hasTrait(type: XmlFlattenedTrait.self) else { return nil }
+        guard let memberName = list.member.traits?.first(where: { $0 is AliasTrait}) as? AliasTrait else { return "member" }
+        return memberName.alias
+    }
+
+    func getMapEntryNames(member: MemberShape, map: MapShape) -> (entry: String?, key: String, value: String) {
+        let flattened = member.hasTrait(type: XmlFlattenedTrait.self)
+        let keyTrait = map.key.traits?.first(where: { $0 is AliasTrait}) as? AliasTrait
+        let valueTrait = map.value.traits?.first(where: { $0 is AliasTrait}) as? AliasTrait
+        return (entry: flattened ? nil: "entry", key: keyTrait?.alias ?? "key", value: valueTrait?.alias ?? "value")
+    }
+
     /// process documenation string
     func processDocs(_ docs: String) -> [String.SubSequence] {
         return docs
@@ -572,6 +652,10 @@ struct AwsService {
         return symbol
     }
 
+    func encodingName(_ name: String) -> String {
+        return "_\(name)Encoding"
+    }
+
     /// return payload member of structure
     func getPayload(from shape: CollectionShape) -> (key: String, value: MemberShape)? {
         guard let members = shape.members else { return nil }
@@ -581,6 +665,40 @@ struct AwsService {
             }
         }
         return nil
+    }
+
+    /// return if shape has a recursive reference (function only tests 2 levels)
+    func doesShapeHaveRecursiveOwnReference(_ shape: CollectionShape, shapeId: ShapeId) -> Bool {
+        guard let members = shape.members else { return false }
+        let hasRecursiveOwnReference = members.values.contains(where: { member in
+            // does shape have a member of same type as itself
+            if member.target == shapeId {
+                return true
+            } else {
+                guard let shape = model.shape(for: member.target) else { return false }
+                switch shape {
+                case let list as ListShape:
+                    if list.member.target == shapeId {
+                        return true
+                    }
+                case let set as SetShape:
+                    if set.member.target == shapeId {
+                        return true
+                    }
+                case let map as MapShape:
+                    if map.value.target == shapeId {
+                        return true
+                    }
+                case let structure as StructureShape:
+                    return structure.members?.first{ $0.value.target == shapeId } != nil
+                default:
+                    break
+                }
+                return false
+            }
+        })
+
+        return hasRecursiveOwnReference
     }
 
     /// mark up model with Soto traits for input and output shapes
