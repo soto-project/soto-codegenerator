@@ -290,7 +290,7 @@ struct AwsService {
         }
         let recursive = doesShapeHaveRecursiveOwnReference(shape, shapeId: shapeId)
         return StructureContext(
-            object: recursive ? "indirect struct": "struct",
+            object: recursive ? "class": "struct",
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
             payload: payload?.key.toSwiftLabelCase(),
@@ -488,8 +488,13 @@ struct AwsService {
                 requirements["max"] = lengthTrait.max
             }
             if let rangeTrait = shape.trait(type: RangeTrait.self) {
-                requirements["min"] = rangeTrait.min
-                requirements["max"] = rangeTrait.max
+                if shape is FloatShape || shape is DoubleShape || shape is BigDecimalShape {
+                    requirements["min"] = rangeTrait.min
+                    requirements["max"] = rangeTrait.max
+                } else {
+                    requirements["min"] = rangeTrait.min.map { Int64($0) }
+                    requirements["max"] = rangeTrait.max.map { Int64($0) }
+                }
             }
             if let patternTrait = shape.trait(type: PatternTrait.self) {
                 requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
