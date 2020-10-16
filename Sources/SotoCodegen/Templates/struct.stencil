@@ -21,9 +21,9 @@
 {%for encoding in struct.encoding %}
 {# Is encoding a dictionary #}
 {%if encoding.key %}
-        public struct {{encoding.name}}: DictionaryCoderProperties { static public let entry: String? = {%if encoding.entry %}"{{encoding.entry}}"{%else %}nil{%endif %}; static public let key = "{{encoding.key}}"; static public let value = "{{encoding.value}}" }
+        public struct {{encoding.name}}: DictionaryCoderProperties { public static let entry: String? = {%if encoding.entry %}"{{encoding.entry}}"{%else %}nil{%endif %}; public static let key = "{{encoding.key}}"; public static let value = "{{encoding.value}}" }
 {%else %}
-        public struct {{encoding.name}}: ArrayCoderProperties { static public let member = "{{encoding.member}}" }
+        public struct {{encoding.name}}: ArrayCoderProperties { public static let member = "{{encoding.member}}" }
 {%endif %}
 {%endfor %}
 
