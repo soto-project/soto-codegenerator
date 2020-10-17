@@ -480,6 +480,7 @@ struct AwsService {
         func generateValidationContext(_ shapeId: ShapeId, name: String, required: Bool, container: Bool = false, alreadyProcessed: Set<ShapeId>) -> ValidationContext? {
             guard !alreadyProcessed.contains(shapeId) else { return nil }
             guard let shape = model.shape(for: shapeId) else { return nil }
+            guard !shape.hasTrait(type: EnumTrait.self) else { return nil }
             
             var requirements: [String: Any] = [:]
             if let lengthTrait = shape.trait(type: LengthTrait.self) {
