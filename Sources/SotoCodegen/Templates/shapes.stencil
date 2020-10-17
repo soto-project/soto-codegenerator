@@ -28,9 +28,10 @@ extension {{name}} {
 }
 {%for shape in shapes%}
 {%if shape.enumWithValues %}
-
+{%if false %}
 extension {{name}}.{{shape.enumWithValues.name}}: Equatable {
 {%include "enumEquatableExtension.stencil" shape %}
 }
+{%endif %}
 {%endif %}
 {%endfor %}
