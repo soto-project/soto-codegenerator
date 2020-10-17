@@ -295,6 +295,8 @@ struct AwsService {
             payload: payload?.key.toSwiftLabelCase(),
             payloadOptions: nil,
             namespace: xmlNamespace,
+            isEncodable: shape.hasTrait(type: SotoInputShapeTrait.self),
+            isDecodable: shape.hasTrait(type: SotoOutputShapeTrait.self),
             encoding: contexts.encoding,
             members: contexts.members,
             awsShapeMembers: contexts.awsShapeMembers,
@@ -315,15 +317,15 @@ struct AwsService {
     func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsEnum: Bool) -> MembersContexts {
         var contexts = MembersContexts()
         guard let members = shape.members else { return contexts }
-        let outputShape = shape.hasTrait(type: SotoOutputShapeTrait.self)
-        let inputShape = shape.hasTrait(type: SotoInputShapeTrait.self)
+        let isOutputShape = shape.hasTrait(type: SotoOutputShapeTrait.self)
+        let isInputShape = shape.hasTrait(type: SotoInputShapeTrait.self)
         let sortedMembers = members.map{ $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
         for member in sortedMembers {
             // member context
             let memberContext = generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum)
             contexts.members.append(memberContext)
             // coding key context
-            if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, outputShape: outputShape) {
+            if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, isOutputShape: isOutputShape) {
                 contexts.codingKeys.append(codingKeyContext)
             }
             // member encoding context
@@ -331,7 +333,7 @@ struct AwsService {
                 contexts.awsShapeMembers.append(memberEncodingContext)
             }
             // validation context
-            if inputShape {
+            if isInputShape {
                 if let validationContext = generateValidationContext(member.value, name: member.key) {
                     contexts.validation.append(validationContext)
                 }
@@ -397,8 +399,8 @@ struct AwsService {
         return nil
     }
     
-    func generateCodingKeyContext(_ member: MemberShape, name: String, outputShape: Bool) -> CodingKeysContext? {
-        guard outputShape ||
+    func generateCodingKeyContext(_ member: MemberShape, name: String, isOutputShape: Bool) -> CodingKeysContext? {
+        guard isOutputShape ||
                 (!member.hasTrait(type: HttpHeaderTrait.self) &&
                     !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
                     !member.hasTrait(type: HttpQueryTrait.self) &&
@@ -902,6 +904,8 @@ extension AwsService {
         let payload: String?
         var payloadOptions: String?
         let namespace: String?
+        let isEncodable: Bool
+        let isDecodable: Bool
         let encoding: [EncodingPropertiesContext]
         let members: [MemberContext]
         let awsShapeMembers: [MemberEncodingContext]
