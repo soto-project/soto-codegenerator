@@ -83,22 +83,22 @@ extension MemberShape {
     func output(_ model: Model) -> String {
         // assume model has been validated
         let memberShape = model.shape(for: self.target)!
-        if let sotoMemberShape = memberShape as? SotoOutput {
-            return sotoMemberShape.output
-        } else if memberShape is StringShape {
-            if memberShape.hasTrait(type: EnumTrait.self) { return self.target.shapeName }
+        if memberShape is StringShape {
+            if memberShape.hasTrait(type: EnumTrait.self) { return self.target.shapeName.toSwiftClassCase() }
             return "String"
         } else if memberShape is BlobShape {
             if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSPayload" }
             return "Data"
         } else if memberShape is CollectionShape {
-            return self.target.shapeName
+            return self.target.shapeName.toSwiftClassCase()
         } else if let listShape = memberShape as? ListShape {
             return "[\(listShape.member.output(model))]"
         } else if let setShape = memberShape as? SetShape {
             return "Set<\(setShape.member.output(model))>"
         } else if let mapShape = memberShape as? MapShape {
             return "[\(mapShape.key.output(model)): \(mapShape.value.output(model))]"
+        } else if let sotoMemberShape = memberShape as? SotoOutput {
+            return sotoMemberShape.output
         }
         return "Unsupported"
     }
