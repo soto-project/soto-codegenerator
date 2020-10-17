@@ -29,8 +29,6 @@ struct SotoCodeGen {
         self.command = command
         Smithy.registerAWSTraits()
         Smithy.registerTraitTypes(
-            SotoPatchEnumTrait.self,
-            SotoPatchNameTrait.self,
             SotoInputShapeTrait.self,
             SotoOutputShapeTrait.self
         )

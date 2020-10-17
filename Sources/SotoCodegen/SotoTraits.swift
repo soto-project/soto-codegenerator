@@ -16,17 +16,6 @@
 
 import SotoSmithy
 
-struct SotoPatchEnumTrait: StaticTrait {
-    static let staticName = "soto.patch#enum"
-    let remove: [String]
-    let add: [EnumTrait.EnumDefinition]
-}
-
-struct SotoPatchNameTrait: StaticTrait {
-    static let staticName = "soto.patch#name"
-    let name: String
-}
-
 struct SotoInputShapeTrait: StaticTrait {
     static let staticName = "soto.api#inputShape"
 }
