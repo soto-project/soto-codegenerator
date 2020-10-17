@@ -200,23 +200,19 @@ struct AwsService {
     func generateOperationContexts() throws -> (operations: [OperationContext], streamingOperations: [OperationContext]) {
         var operationContexts: [OperationContext] = []
         var streamingOperationContexts: [OperationContext] = []
-        if let operations = service.operations {
-            for operationId in operations {
-                guard let operation = model.shape(for: operationId.target) as? OperationShape else {
-                    throw Error(reason: "Operation \(operationId.target) does not exist")
-                }
-                let operationContext = try generateOperationContext(operation, operationName: operationId.target)
-                operationContexts.append(operationContext)
+        let operations = model.select(type: OperationShape.self)
+        for operation in operations {
+            let operationContext = try generateOperationContext(operation.value, operationName: operation.key)
+            operationContexts.append(operationContext)
 
-                if let output = operation.output,
-                   let outputShape = model.shape(for: output.target) as? StructureShape,
-                   let payloadMember = getPayload(from: outputShape),
-                   let payloadShape = model.shape(for: payloadMember.value.target),
-                   payloadShape.trait(type: StreamingTrait.self) != nil,
-                   payloadShape is BlobShape {
-                    let operationContext = try generateOperationContext(operation, operationName: operationId.target, streaming: true)
-                    streamingOperationContexts.append(operationContext)
-                }
+            if let output = operation.value.output,
+               let outputShape = model.shape(for: output.target) as? StructureShape,
+               let payloadMember = getPayload(from: outputShape),
+               let payloadShape = model.shape(for: payloadMember.value.target),
+               payloadShape.trait(type: StreamingTrait.self) != nil,
+               payloadShape is BlobShape {
+                let operationContext = try generateOperationContext(operation.value, operationName: operation.key, streaming: true)
+                streamingOperationContexts.append(operationContext)
             }
         }
         return (
