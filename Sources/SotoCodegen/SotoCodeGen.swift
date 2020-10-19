@@ -51,7 +51,7 @@ struct SotoCodeGen {
 
         return try modelFiles.map {
             let data = try Data(contentsOf: URL(fileURLWithPath: $0))
-            let model = try Smithy().decode(from: data)
+            let model = try Smithy().decodeAST(from: data)
             try model.validate()
             return model
         }
