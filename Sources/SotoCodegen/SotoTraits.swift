@@ -17,9 +17,9 @@
 import SotoSmithy
 
 struct SotoInputShapeTrait: StaticTrait {
-    static let staticName = "soto.api#inputShape"
+    static let staticName: ShapeId = "soto.api#inputShape"
 }
 
 struct SotoOutputShapeTrait: StaticTrait {
-    static let staticName = "soto.api#outputShape"
+    static let staticName: ShapeId = "soto.api#outputShape"
 }
