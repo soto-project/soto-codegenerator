@@ -276,6 +276,10 @@ struct AwsService {
     /// Generate the context information for outputting an enum
     func generateEnumContext(_ shape: Shape, shapeName: String) -> EnumContext? {
         guard let trait = shape.trait(type: EnumTrait.self) else { return nil }
+        let usedInInput = shape.hasTrait(type: SotoInputShapeTrait.self)
+        let usedInOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
+        guard usedInInput || usedInOutput else { return nil }
+        
         // Operations
         var valueContexts: [EnumMemberContext] = []
         let enumDefinitions = trait.value.sorted { $0.value < $1.value }
@@ -748,6 +752,7 @@ struct AwsService {
             guard let shape = model.shape(for: shapeId) else { return }
             // if shape already has trait then don't apply it again
             guard shape.trait(type: T.self) == nil else { return }
+
             shape.add(trait: trait)
 
             if let structure = shape as? CollectionShape {
