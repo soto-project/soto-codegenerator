@@ -94,8 +94,10 @@
                 try validate(value, name: "{{v.name}}", parent: name, {{req}}: {{var}})
 {%endfor %}
 {%endfor %}
+{%if enumWithValues.validation.count != enumWithValues.members.count %}
             default:
                 break
+{%endif %}
             }
         }
 

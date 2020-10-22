@@ -3,35 +3,47 @@
 import SotoCore
 
 /// Error enum for {{name}}
-public enum {{errorName}}: AWSErrorType {
+public struct {{errorName}}: AWSErrorType {
+    enum Code: String {
 {%for error in errors %}
-    case {{error.enum}}(message: String?)
-{% endfor %}}
-
-extension {{errorName}} {
-    public init?(errorCode: String, message: String?) {
-        var errorCode = errorCode
-        if let index = errorCode.firstIndex(of: "#") {
-            errorCode = String(errorCode[errorCode.index(index, offsetBy: 1)...])
-        }
-        switch errorCode {
-{%for error in errors %}
-        case "{{error.string}}":
-            self = .{{error.enum}}(message: message)
+        case {{error.enum}} = "{{error.string}}"
 {% endfor %}
-        default:
-            return nil
-        }
+    }
+    
+    private let error: Code
+    public let context: AWSErrorContext?
+
+    /// initialize {{name}}
+    public init?(errorCode: String, context: AWSErrorContext) {
+        guard let error = Code(rawValue: errorCode) else { return nil }
+        self.error = error
+        self.context = context
+    }
+
+    internal init(_ error: Code) {
+        self.error = error
+        self.context = nil
+    }
+
+    /// return error code string
+    public var errorCode: String { error.rawValue }
+
+{%for error in errors %}
+{%for comment in error.comment %}
+        /// {{comment}}
+{%endfor %}
+    public static var {{error.enum}}: Self { .init(.{{error.enum}}) }
+{% endfor %}
+}
+
+extension {{errorName}}: Equatable {
+    public static func == (lhs: {{errorName}}, rhs: {{errorName}}) -> Bool {
+        lhs.error == rhs.error
     }
 }
 
 extension {{errorName}}: CustomStringConvertible {
     public var description: String {
-        switch self {
-{%for error in errors %}
-        case .{{error.enum}}(let message):
-            return "{{error.string}}: \(message ?? "")"
-{% endfor %}
-        }
+        return "\(self.error.rawValue): \(self.message ?? "")"
     }
 }
