@@ -240,7 +240,7 @@ struct AwsService {
 
             if let output = operation.value.output,
                let outputShape = model.shape(for: output.target) as? StructureShape,
-               let payloadMember = getPayload(from: outputShape),
+               let payloadMember = getPayloadMember(from: outputShape),
                let payloadShape = model.shape(for: payloadMember.value.target),
                payloadShape.trait(type: StreamingTrait.self) != nil,
                payloadShape is BlobShape {
@@ -313,10 +313,25 @@ struct AwsService {
     /// Generate the context information for outputting a shape
     func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId) -> StructureContext? {
         let shapeName = shapeId.shapeName
-        let payload = getPayload(from: shape)
-        guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payload != nil) else { return nil }
-        let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: shape is UnionShape)
+        var shapePayloadOptions: [String] = []
         var xmlNamespace: String?
+        let payloadMember = getPayloadMember(from: shape)
+        
+        guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payloadMember != nil) else { return nil }
+        
+        let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: shape is UnionShape)
+        
+        if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
+            if payload is BlobShape {
+                shapePayloadOptions.append("raw")
+                if payload.hasTrait(type: StreamingTrait.self) {
+                    shapePayloadOptions.append("allowStreaming")
+                    /*if !payload.hasTrait(type: RequiredTrait.self) {
+                        shapePayloadOptions.append("allowChunkedStreaming")
+                    }*/
+                }
+            }
+        }
         if serviceProtocolTrait is AwsProtocolsRestXmlTrait {
             xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri ?? service.trait(type: XmlNamespaceTrait.self)?.uri
         }
@@ -325,8 +340,8 @@ struct AwsService {
             object: recursive ? "class": "struct",
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
-            payload: payload?.key.toSwiftLabelCase(),
-            payloadOptions: nil,
+            payload: payloadMember?.key.toSwiftLabelCase(),
+            payloadOptions: shapePayloadOptions.count > 0 ? shapePayloadOptions.map { ".\($0)" }.joined(separator: ", ") : nil,
             namespace: xmlNamespace,
             isEncodable: shape.hasTrait(type: SotoInputShapeTrait.self),
             isDecodable: shape.hasTrait(type: SotoOutputShapeTrait.self),
@@ -702,7 +717,7 @@ struct AwsService {
     }
 
     /// return payload member of structure
-    func getPayload(from shape: CollectionShape) -> (key: String, value: MemberShape)? {
+    func getPayloadMember(from shape: CollectionShape) -> (key: String, value: MemberShape)? {
         guard let members = shape.members else { return nil }
         for member in members {
             if member.value.trait(type: HttpPayloadTrait.self) != nil {

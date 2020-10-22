@@ -57,8 +57,8 @@ extension Model {
                 "com.amazonaws.s3#ReplicationStatus": EditEnumPatch(add: [.init(value: "COMPLETED")], remove: ["COMPLETE"]),
                 "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
                 "com.amazonaws.s3#CopySource": EditTraitPatch { trait in return PatternTrait(value: ".+\\/.+") },
-                // Add additional location constraints
-                "com.amazonaws.s3#BucketLocationConstraint": EditEnumPatch(add: [.init(value: "us-east-1")])
+                "com.amazonaws.s3#BucketLocationConstraint": EditEnumPatch(add: [.init(value: "us-east-1")]),
+                "com.amazonaws.s3#StreamingBlob": AddTraitPatch(trait: RequiresLengthTrait())
             ],
         ]
         if let servicePatches = patches[serviceName] {
