@@ -25,14 +25,14 @@ struct AwsService {
     var serviceProtocolTrait: AwsServiceProtocol
     var endpoints: Endpoints
 
-    init(filename: String, model: SotoSmithy.Model, endpoints: Endpoints) throws {
+    init(_ model: SotoSmithy.Model, endpoints: Endpoints) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
 
         self.model = model
         self.serviceId = service.key
         self.service = service.value
         self.serviceName = try Self.getServiceName(service.value, id: service.key)
-        self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(filename: filename)
+        self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(service: service.value, id: service.key)
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
 
         self.endpoints = endpoints
@@ -63,10 +63,9 @@ struct AwsService {
     }
 
     /// return service name used in endpoint. Uses filename of Smithy file
-    static func getServiceEndpointPrefix(filename: String) throws -> String {
-        // Uses filename of Smithy file which is totally weird
-        let components = filename.split(separator: "/").last!.split(separator: ".")
-        return String(components.first!)
+    static func getServiceEndpointPrefix(service: SotoSmithy.ServiceShape, id: ShapeId) throws -> String {
+        let awsService = try Self.getTrait(from: service, trait: AwsServiceTrait.self, id: id)
+        return awsService.arnNamespace
     }
     
     /// Generate context for rendering service template
