@@ -22,8 +22,10 @@ struct AwsService {
     var serviceId: ShapeId
     var service: ServiceShape
     var serviceProtocolTrait: AwsServiceProtocol
+    var awsServiceTrait: AwsServiceTrait
+    var endpoints: Endpoints
 
-    init(_ model: SotoSmithy.Model) throws {
+    init(_ model: SotoSmithy.Model, endpoints: Endpoints) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
 
         self.model = model
@@ -31,6 +33,9 @@ struct AwsService {
         self.service = service.value
         self.serviceName = try Self.getServiceName(service.value, id: service.key)
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
+        self.awsServiceTrait = try Self.getTrait(from: self.service, trait: AwsServiceTrait.self, id: self.serviceId)
+
+        self.endpoints = endpoints
 
         try model.patch(serviceName: serviceName)
     }
@@ -63,14 +68,15 @@ struct AwsService {
         guard let serviceEntry = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
         let serviceId = serviceEntry.key
         let service = serviceEntry.value
-        let awsService = try getTrait(from: service, trait: AwsServiceTrait.self, id: serviceId)
-        let authSigV4 = try getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
+        let authSigV4 = try Self.getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
         let operations = try generateOperationContexts()
 
         context["name"] = serviceName
         context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
-        context["endpointPrefix"] = awsService.arnNamespace
-        context["signingName"] = authSigV4.name
+        context["endpointPrefix"] = awsServiceTrait.arnNamespace
+        if authSigV4.name != awsServiceTrait.arnNamespace {
+            context["signingName"] = authSigV4.name
+        }
         context["protocol"] = serviceProtocolTrait.output
         context["apiVersion"] = service.version
         if serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait {
@@ -585,7 +591,7 @@ struct AwsService {
         return generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
     }
     
-    func getTrait<T: StaticTrait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
+    static func getTrait<T: StaticTrait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
         guard let trait = shape.trait(type: T.self) else {
             throw Error(reason: "\(id) does not have a \(T.staticName) trait")
         }
@@ -766,6 +772,50 @@ struct AwsService {
             split[0] += "?"
         }
         return split.map { String($0).toSwiftVariableCase() }.joined(separator: ".")
+    }
+
+    /// Service endpoints from API and Endpoints structure
+    func getServiceEndpoints() -> [(key: String, value: String)] {
+        // create dictionary of endpoint name to Endpoint and partition from across all partitions
+        struct EndpointInfo {
+            let endpoint: Endpoints.Service.Endpoint
+            let partition: String
+        }
+        let serviceEndpoints: [(key: String, value: EndpointInfo)] = self.endpoints.partitions.reduce([]) { value, partition in
+            let endpoints = partition.services[awsServiceTrait.arnNamespace]?.endpoints
+            return value + (endpoints?.map { (key: $0.key, value: EndpointInfo(endpoint: $0.value, partition: partition.partition)) } ?? [])
+        }
+        let partitionEndpoints = self.getPartitionEndpoints()
+        let partitionEndpointSet = Set<String>(partitionEndpoints.map { $0.value.endpoint })
+        return serviceEndpoints.compactMap {
+            // if service endpoint isn't in the set of partition endpoints or a region name return nil
+            if partitionEndpointSet.contains($0.key) == false, Region(rawValue: $0.key) == nil {
+                return nil
+            }
+            // if endpoint has a hostname return that
+            if let hostname = $0.value.endpoint.hostname {
+                return (key: $0.key, value: hostname)
+            } else if partitionEndpoints[$0.value.partition] != nil {
+                // if there is a partition endpoint, then default this regions endpoint to ensure partition endpoint doesn't override it.
+                // Only an issue for S3 at the moment.
+                return (key: $0.key, value: "\(awsServiceTrait.arnNamespace).\($0.key).amazonaws.com")
+            }
+            return nil
+        }
+    }
+
+    // return dictionary of partition endpoints keyed by endpoint name
+    func getPartitionEndpoints() -> [String: (endpoint: String, region: Region)] {
+        var partitionEndpoints: [String: (endpoint: String, region: Region)] = [:]
+        endpoints.partitions.forEach {
+            if let endpoint = $0.services[awsServiceTrait.arnNamespace]?.partitionEndpoint {
+                guard let region = $0.services[awsServiceTrait.arnNamespace]?.endpoints[endpoint]?.credentialScope?.region else {
+                    preconditionFailure("Found partition endpoint without a credential scope region")
+                }
+                partitionEndpoints[$0.partition] = (endpoint: endpoint, region: region)
+            }
+        }
+        return partitionEndpoints
     }
 
     /// get protocol needed for shape

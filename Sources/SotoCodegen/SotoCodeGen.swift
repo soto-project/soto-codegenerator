@@ -41,10 +41,10 @@ struct SotoCodeGen {
         return Glob.entries(pattern: "\(self.command.inputFolder)/*")
     }
 
-/*    func loadEndpointJSON() throws -> Endpoints {
-        let data = try Data(contentsOf: URL(fileURLWithPath: "\(command.inputFolder)/endpoints/endpoints.json"))
+    func loadEndpointJSON() throws -> Endpoints {
+        let data = try Data(contentsOf: URL(fileURLWithPath: self.command.endpoints))
         return try JSONDecoder().decode(Endpoints.self, from: data)
-    }*/
+    }
 
     func loadModelJSON() throws -> [SotoSmithy.Model] {
         let modelFiles = self.getModelFiles()
@@ -102,7 +102,7 @@ struct SotoCodeGen {
         let startTime = Date()
 
         // load JSON
-        //let endpoints = try loadEndpointJSON()
+        let endpoints = try loadEndpointJSON()
         let models = try loadModelJSON()
         let group = DispatchGroup()
 
@@ -112,7 +112,7 @@ struct SotoCodeGen {
             DispatchQueue.global().async {
                 defer { group.leave() }
                 do {
-                    let service = try AwsService(model)
+                    let service = try AwsService(model, endpoints: endpoints)
                     if self.command.output {
                         try self.generateFiles(with: service)
                     }

@@ -22,6 +22,9 @@ struct SotoCodeGenCommand: ParsableCommand {
     @Option(name: .shortAndLong, help: "Folder to find json model files")
     var inputFolder: String = Self.defaultInputFolder
 
+    @Option(name: .shortAndLong, help: "Endpoint JSON file")
+    var endpoints: String = Self.defaultEndpoints
+
     @Option(name: .shortAndLong, help: "Only output files for specified module")
     var module: String?
 
@@ -38,6 +41,7 @@ struct SotoCodeGenCommand: ParsableCommand {
 
     static var defaultOutputFolder: String { return "\(rootPath)/aws/services" }
     static var defaultInputFolder: String { return "\(rootPath)/aws/models" }
+    static var defaultEndpoints: String { return "\(rootPath)/aws/endpoints.json" }
 
     func run() throws {
         try SotoCodeGen(command: self).generate()
