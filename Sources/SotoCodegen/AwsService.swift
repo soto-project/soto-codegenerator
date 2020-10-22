@@ -24,6 +24,7 @@ struct AwsService {
     var service: ServiceShape
     var serviceProtocolTrait: AwsServiceProtocol
     var endpoints: Endpoints
+    var operations: [ShapeId: OperationShape]
 
     init(_ model: SotoSmithy.Model, endpoints: Endpoints) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
@@ -35,9 +36,11 @@ struct AwsService {
         self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(service: service.value, id: service.key)
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
 
-        self.endpoints = endpoints
-
         try model.patch(serviceName: serviceName)
+
+        self.operations = Self.getOperations(service.value, model: model)
+        
+        self.endpoints = endpoints
     }
 
     /// Return service name from API
@@ -238,7 +241,7 @@ struct AwsService {
     func generateOperationContexts() throws -> (operations: [OperationContext], streamingOperations: [OperationContext]) {
         var operationContexts: [OperationContext] = []
         var streamingOperationContexts: [OperationContext] = []
-        let operations = model.select(type: OperationShape.self)
+        let operations = self.operations
         for operation in operations {
             let operationContext = try generateOperationContext(operation.value, operationName: operation.key)
             operationContexts.append(operationContext)
@@ -664,6 +667,45 @@ struct AwsService {
         throw Error(reason: "No service protocol trait")
     }
     
+    
+    /// Get list operations service uses. Slightly more complex than just asking for all the operation shapes in the fle. Instead to do
+    /// this properly you need to ask the services for all its operations and resources and then combine the operations with all the
+    /// operations from the resources
+    static func getOperations(_ service: ServiceShape, model: Model) -> [ShapeId: OperationShape] {
+        var operations: [ShapeId] = service.operations?.map { $0.target } ?? []
+
+        func addResourceOperations(_ resource: ResourceShape) {
+            resource.create.map { operations.append($0.target) }
+            resource.put.map { operations.append($0.target) }
+            resource.read.map { operations.append($0.target) }
+            resource.update.map { operations.append($0.target) }
+            resource.delete.map { operations.append($0.target) }
+            resource.list.map { operations.append($0.target) }
+            resource.operations?.forEach { operations.append($0.target) }
+            resource.collectionOperations?.forEach { operations.append($0.target) }
+            resource.resources?.forEach { resourceMember in
+                guard let resource = model.shape(for: resourceMember.target) as? ResourceShape else { return }
+                addResourceOperations(resource)
+            }
+
+        }
+        
+        if let resources = service.resources {
+            resources.forEach { resourceMember in
+                guard let resource = model.shape(for: resourceMember.target) as? ResourceShape else { return }
+                addResourceOperations(resource)
+            }
+        }
+        let operationsWithId = operations.compactMap { shapeId -> (ShapeId, OperationShape)? in
+            if let operationShape = model.shape(for: shapeId) as? OperationShape {
+                return (shapeId, operationShape)
+            } else {
+                return nil
+            }
+        }
+        return .init(operationsWithId) { lhs, _ in lhs }
+    }
+    
     func getListEntryName(member: MemberShape, list: ListShape) -> String? {
         guard !member.hasTrait(type: XmlFlattenedTrait.self) else { return nil }
         guard let memberName = list.member.traits?.first(where: { $0 is AliasTrait}) as? AliasTrait else { return "member" }
@@ -792,7 +834,7 @@ struct AwsService {
             }
         }
 
-        for operation in model.select(type: OperationShape.self) {
+        for operation in self.operations {
             if let input = operation.value.input {
                 addTrait(to: input.target, trait: SotoInputShapeTrait())
             }
