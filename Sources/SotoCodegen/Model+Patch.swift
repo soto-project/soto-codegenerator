@@ -29,7 +29,8 @@ extension Model {
                 "com.amazonaws.comprehendmedical#EntitySubType": EditEnumPatch(add: [.init(value: "DX_NAME")]),
             ],
             "DynamoDB": [
-                "com.amazonaws.dynamodb#AttributeValue": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) }
+                "com.amazonaws.dynamodb#AttributeValue": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
+                "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) }
             ],
             "EC2": [
                 "com.amazonaws.ec2#PlatformValues": EditEnumPatch(add: [.init(value: "windows")], remove: ["Windows"])
