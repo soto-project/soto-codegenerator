@@ -78,7 +78,7 @@ struct AwsService {
         let operations = try generateOperationContexts()
 
         context["name"] = serviceName
-        //context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
+        context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
         context["endpointPrefix"] = self.serviceEndpointPrefix
         if authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
@@ -178,7 +178,12 @@ struct AwsService {
         var errorContexts: [ErrorContext] = []
         for error in errorShapes {
             let name: String = error.key.shapeName
-            let errorContext = ErrorContext(enum: name.toSwiftVariableCase(), string: name, comment: [])
+            let documentationTrait = error.value.trait(type: DocumentationTrait.self)
+            let errorContext = ErrorContext(
+                enum: name.toSwiftVariableCase(),
+                string: name,
+                comment: documentationTrait.map{ processDocs($0.value) } ?? []
+            )
             errorContexts.append(errorContext)
         }
         errorContexts.sort { $0.enum < $1.enum }
@@ -260,7 +265,7 @@ struct AwsService {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         return OperationContext(
-            comment: [],//documentationTrait.map{ processDocs($0) } ?? [],
+            comment: documentationTrait.map{ processDocs($0) } ?? [],
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,
@@ -269,7 +274,7 @@ struct AwsService {
             httpMethod: httpTrait?.method ?? "POST",
             deprecated: deprecatedTrait?.message,
             streaming: streaming ? "ByteBuffer": nil,
-            documentationUrl: nil
+            documentationUrl: nil //operation.trait(type: ExternalDocumentationTrait.self)?.value["API Reference"]
         )
     }
 
@@ -300,7 +305,7 @@ struct AwsService {
             if caseName.allLetterIsNumeric() {
                 caseName = "\(shapeName.toSwiftVariableCase())\(caseName)"
             }
-            valueContexts.append(EnumMemberContext(case: caseName, documentation: value.documentation, string: value.value))
+            valueContexts.append(EnumMemberContext(case: caseName, documentation: nil/*value.documentation*/, string: value.value))
         }
 
         return EnumContext(
@@ -321,6 +326,7 @@ struct AwsService {
         
         let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: shape is UnionShape)
         
+        // get payload options
         if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
             if payload is BlobShape {
                 shapePayloadOptions.append("raw")
@@ -336,6 +342,7 @@ struct AwsService {
             xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri ?? service.trait(type: XmlNamespaceTrait.self)?.uri
         }
         let recursive = doesShapeHaveRecursiveOwnReference(shape, shapeId: shapeId)
+        
         return StructureContext(
             object: recursive ? "class": "struct",
             name: shapeName.toSwiftClassCase(),
@@ -413,7 +420,7 @@ struct AwsService {
             default: defaultValue,
             propertyWrapper: generatePropertyWrapper(member, name: name, required: required),
             type: type + ((required || typeIsEnum) ? "" : "?"),
-            comment: [],//documentation.map { processMemberDocs($0.value) } ?? [],
+            comment: documentation.map { processMemberDocs($0.value) } ?? [],
             duplicate: false // NEED to catch this
         )
     }
