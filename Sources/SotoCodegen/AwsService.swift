@@ -19,21 +19,21 @@ import SotoSmithyAWS
 struct AwsService {
     var model: Model
     var serviceName: String
+    var serviceEndpointPrefix: String
     var serviceId: ShapeId
     var service: ServiceShape
     var serviceProtocolTrait: AwsServiceProtocol
-    var awsServiceTrait: AwsServiceTrait
     var endpoints: Endpoints
 
-    init(_ model: SotoSmithy.Model, endpoints: Endpoints) throws {
+    init(filename: String, model: SotoSmithy.Model, endpoints: Endpoints) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
 
         self.model = model
         self.serviceId = service.key
         self.service = service.value
         self.serviceName = try Self.getServiceName(service.value, id: service.key)
+        self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(filename: filename)
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
-        self.awsServiceTrait = try Self.getTrait(from: self.service, trait: AwsServiceTrait.self, id: self.serviceId)
 
         self.endpoints = endpoints
 
@@ -62,6 +62,13 @@ struct AwsService {
         return serviceName
     }
 
+    /// return service name used in endpoint. Uses filename of Smithy file
+    static func getServiceEndpointPrefix(filename: String) throws -> String {
+        // Uses filename of Smithy file which is totally weird
+        let components = filename.split(separator: "/").last!.split(separator: ".")
+        return String(components.first!)
+    }
+    
     /// Generate context for rendering service template
     func generateServiceContext() throws -> [String: Any] {
         var context: [String: Any] = [:]
@@ -73,8 +80,8 @@ struct AwsService {
 
         context["name"] = serviceName
         context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
-        context["endpointPrefix"] = awsServiceTrait.arnNamespace
-        if authSigV4.name != awsServiceTrait.arnNamespace {
+        context["endpointPrefix"] = self.serviceEndpointPrefix
+        if authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
         }
         context["protocol"] = serviceProtocolTrait.output
@@ -86,10 +93,25 @@ struct AwsService {
             context["errorTypes"] = serviceName + "ErrorType"
         }
         context["middlewareClass"] = getMiddleware(for: service)
-        context["regionalized"] = true
-        //context["serviceEndpoints"]
-        //context["regionalized"]
-        //context["partitionEndpoints"]
+        
+        let endpoints = self.getServiceEndpoints()
+            .sorted { $0.key < $1.key }
+            .map { "\"\($0.key)\": \"\($0.value)\"" }
+        if endpoints.count > 0 {
+            context["serviceEndpoints"] = endpoints
+        }
+        
+        let isRegionalized: Bool? = self.endpoints.partitions.reduce(nil) {
+            guard let regionalized = $1.services[self.serviceEndpointPrefix]?.isRegionalized else { return $0 }
+            return ($0 ?? false) || regionalized
+        }
+        context["regionalized"] = isRegionalized ?? true
+        if isRegionalized != true {
+            context["partitionEndpoints"] = self.getPartitionEndpoints()
+                .map { (partition: $0.key, endpoint: $0.value.endpoint, region: $0.value.region) }
+                .sorted { $0.partition < $1.partition }
+                .map { ".\($0.partition.toSwiftRegionEnumCase()): (endpoint: \"\($0.endpoint)\", region: .\($0.region.rawValue.toSwiftRegionEnumCase()))" }
+        }
 
         context["operations"] = operations.operations
         context["streamingOperations"] = operations.streamingOperations
@@ -643,15 +665,14 @@ struct AwsService {
 
     /// return middleware name given a service name
     func getMiddleware(for service: ServiceShape) -> String? {
-        guard let awsServiceTrait = service.trait(type: AwsServiceTrait.self) else { return nil }
-        switch awsServiceTrait.sdkId {
-        case "API Gateway":
+        switch serviceName {
+        case "APIGateway":
             return "APIGatewayMiddleware()"
         case "Glacier":
             return "GlacierRequestMiddleware(apiVersion: \"\(service.version)\")"
         case "S3":
             return "S3RequestMiddleware()"
-        case "S3 Control":
+        case "S3Control":
             return "S3ControlMiddleware()"
         default:
             return nil
@@ -782,7 +803,7 @@ struct AwsService {
             let partition: String
         }
         let serviceEndpoints: [(key: String, value: EndpointInfo)] = self.endpoints.partitions.reduce([]) { value, partition in
-            let endpoints = partition.services[awsServiceTrait.arnNamespace]?.endpoints
+            let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints
             return value + (endpoints?.map { (key: $0.key, value: EndpointInfo(endpoint: $0.value, partition: partition.partition)) } ?? [])
         }
         let partitionEndpoints = self.getPartitionEndpoints()
@@ -798,7 +819,7 @@ struct AwsService {
             } else if partitionEndpoints[$0.value.partition] != nil {
                 // if there is a partition endpoint, then default this regions endpoint to ensure partition endpoint doesn't override it.
                 // Only an issue for S3 at the moment.
-                return (key: $0.key, value: "\(awsServiceTrait.arnNamespace).\($0.key).amazonaws.com")
+                return (key: $0.key, value: "\(self.serviceEndpointPrefix).\($0.key).amazonaws.com")
             }
             return nil
         }
@@ -808,11 +829,13 @@ struct AwsService {
     func getPartitionEndpoints() -> [String: (endpoint: String, region: Region)] {
         var partitionEndpoints: [String: (endpoint: String, region: Region)] = [:]
         endpoints.partitions.forEach {
-            if let endpoint = $0.services[awsServiceTrait.arnNamespace]?.partitionEndpoint {
-                guard let region = $0.services[awsServiceTrait.arnNamespace]?.endpoints[endpoint]?.credentialScope?.region else {
+            if let partitionEndpoint = $0.services[self.serviceEndpointPrefix]?.partitionEndpoint {
+                guard let service = $0.services[self.serviceEndpointPrefix],
+                      let endpoint = service.endpoints[partitionEndpoint],
+                      let region = endpoint.credentialScope?.region else {
                     preconditionFailure("Found partition endpoint without a credential scope region")
                 }
-                partitionEndpoints[$0.partition] = (endpoint: endpoint, region: region)
+                partitionEndpoints[$0.partition] = (endpoint: partitionEndpoint, region: region)
             }
         }
         return partitionEndpoints

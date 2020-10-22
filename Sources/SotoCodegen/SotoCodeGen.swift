@@ -46,15 +46,18 @@ struct SotoCodeGen {
         return try JSONDecoder().decode(Endpoints.self, from: data)
     }
 
-    func loadModelJSON() throws -> [SotoSmithy.Model] {
+    func loadModelJSON() throws -> [String: SotoSmithy.Model] {
         let modelFiles = self.getModelFiles()
-
-        return try modelFiles.map {
+        var modelFilesMap: [String: SotoSmithy.Model] = [:]
+        
+        try modelFiles.forEach {
             let data = try Data(contentsOf: URL(fileURLWithPath: $0))
             let model = try Smithy().decodeAST(from: data)
             try model.validate()
-            return model
+            modelFilesMap[$0] = model
         }
+        
+        return modelFilesMap
     }
 
     /// Generate service files from AWSService
@@ -112,7 +115,7 @@ struct SotoCodeGen {
             DispatchQueue.global().async {
                 defer { group.leave() }
                 do {
-                    let service = try AwsService(model, endpoints: endpoints)
+                    let service = try AwsService(filename: model.key, model: model.value, endpoints: endpoints)
                     if self.command.output {
                         try self.generateFiles(with: service)
                     }
