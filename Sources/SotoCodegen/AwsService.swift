@@ -449,10 +449,12 @@ struct AwsService {
         guard let memberShape = model.shape(for: member.target) else { return nil }
         switch memberShape {
         case let list as ListShape:
+            guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let memberName = getListEntryName(member: member, list: list)
             guard let validMemberName = memberName, validMemberName != "member" else { return nil }
             return ArrayEncodingPropertiesContext(name: self.encodingName(name), member: validMemberName)
         case let map as MapShape:
+            guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let names = getMapEntryNames(member: member, map: map)
             guard names.entry != "entry" || names.key != "key" || names.value != "value" else { return nil }
             return DictionaryEncodingPropertiesContext(name: self.encodingName(name), entry: names.entry, key: names.key, value: names.value)
