@@ -78,7 +78,7 @@ struct AwsService {
         let operations = try generateOperationContexts()
 
         context["name"] = serviceName
-        context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
+        //context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
         context["endpointPrefix"] = self.serviceEndpointPrefix
         if authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
@@ -178,7 +178,8 @@ struct AwsService {
         var errorContexts: [ErrorContext] = []
         for error in errorShapes {
             let name: String = error.key.shapeName
-            errorContexts.append(ErrorContext(enum: name.toSwiftVariableCase(), string: name))
+            let errorContext = ErrorContext(enum: name.toSwiftVariableCase(), string: name, comment: [])
+            errorContexts.append(errorContext)
         }
         errorContexts.sort { $0.enum < $1.enum }
         if errorContexts.count > 0 {
@@ -259,7 +260,7 @@ struct AwsService {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         return OperationContext(
-            comment: documentationTrait.map{ processDocs($0) } ?? [],
+            comment: [],//documentationTrait.map{ processDocs($0) } ?? [],
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,
@@ -393,7 +394,7 @@ struct AwsService {
             default: defaultValue,
             propertyWrapper: generatePropertyWrapper(member, name: name, required: required),
             type: type + ((required || typeIsEnum) ? "" : "?"),
-            comment: documentation.map { processMemberDocs($0.value) } ?? [],
+            comment: [],//documentation.map { processMemberDocs($0.value) } ?? [],
             duplicate: false // NEED to catch this
         )
     }
@@ -476,6 +477,7 @@ struct AwsService {
 
         switch memberShape {
         case let list as ListShape:
+            guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let memberName = getListEntryName(member: member, list: list)
             guard let validMemberName = memberName else { return nil }
             if validMemberName == "member" {
@@ -484,6 +486,7 @@ struct AwsService {
                 return "\(codingWrapper)<ArrayCoder<\(self.encodingName(name)), \(list.member.output(model))>>"
             }
         case let map as MapShape:
+            guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let names = getMapEntryNames(member: member, map: map)
             if names.entry == "entry", names.key == "key", names.value == "value" {
                 return "\(codingWrapper)<StandardDictionaryCoder>"
@@ -514,7 +517,9 @@ struct AwsService {
             
             var requirements: [String: Any] = [:]
             if let lengthTrait = shape.trait(type: LengthTrait.self) {
-                requirements["min"] = lengthTrait.min
+                if let min = lengthTrait.min, min > 0 {
+                    requirements["min"] = min
+                }
                 requirements["max"] = lengthTrait.max
             }
             if let rangeTrait = shape.trait(type: RangeTrait.self) {
@@ -894,6 +899,7 @@ extension AwsService {
     struct ErrorContext {
         let `enum`: String
         let string: String
+        let comment: [String.SubSequence]
     }
 
     struct EnumContext {

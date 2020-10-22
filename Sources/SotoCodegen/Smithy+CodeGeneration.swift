@@ -25,6 +25,7 @@ protocol AliasTrait: StaticTrait {
 
 protocol AwsServiceProtocol: SotoOutput {
     var nameTrait: AliasTrait.Type { get }
+    var requiresCollectionCoders: Bool { get }
 }
 
 // MARK: Alias traits
@@ -42,26 +43,32 @@ extension HttpQueryTrait: AliasTrait { var alias: String { return value } }
 extension AwsProtocolsRestJson1Trait: AwsServiceProtocol {
     var output: String { ".restjson" }
     var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
+    var requiresCollectionCoders: Bool { return false }
 }
 extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.0\")" }
     var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
+    var requiresCollectionCoders: Bool { return false }
 }
 extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.1\")" }
     var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
+    var requiresCollectionCoders: Bool { return false }
 }
 extension AwsProtocolsAwsQueryTrait: AwsServiceProtocol {
     var output: String { ".query" }
     var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
+    var requiresCollectionCoders: Bool { return true }
 }
 extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol {
     var output: String { ".ec2" }
     var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
+    var requiresCollectionCoders: Bool { return true }
 }
 extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
     var output: String { ".restxml" }
     var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
+    var requiresCollectionCoders: Bool { return true }
 }
 
 
