@@ -52,15 +52,21 @@ struct AwsService {
             throw Error(reason: "\(id) does not have a \(AwsServiceTrait.staticName) trait")
         }
 
-        // port of https://github.com/aws/aws-sdk-go-v2/blob/996478f06a00c31ee7e7b0c3ac6674ce24ba0120/private/model/api/api.go#L105
-        let stripServiceNamePrefixes: [String] = ["Amazon", "AWS"]
+        // https://awslabs.github.io/smithy/1.0/spec/aws/aws-core.html#choosing-an-sdk-service-id
 
         var serviceName = awsService.sdkId
 
         // Strip out prefix names not reflected in service client symbol names.
+        let stripServiceNamePrefixes: [String] = ["Amazon", "AWS"]
         for prefix in stripServiceNamePrefixes {
             serviceName.deletePrefix(prefix)
         }
+        // Strip out suffix names not reflected in service client symbol names.
+        /* not convinced by this
+        let stripServiceNameSuffixes: [String] = ["Service", "Client", "API", "Api"]
+        for suffix in stripServiceNameSuffixes {
+            serviceName.deleteSuffix(suffix)
+        }*/
         serviceName.removeCharacterSet(in: CharacterSet.alphanumerics.inverted)
         serviceName.removeWhitespaces()
         serviceName.capitalizeFirstLetter()
@@ -442,9 +448,9 @@ struct AwsService {
             return MemberEncodingContext(name: name, location: ".querystring(locationName: \"\(queryTrait.value)\")")
         // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
-            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
+            let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
-            return MemberEncodingContext(name: name, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")")
+            return MemberEncodingContext(name: labelName, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")")
         // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()

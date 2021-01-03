@@ -92,14 +92,14 @@ struct SotoCodeGen {
         let apiContext = try service.generateServiceContext()
         let api = try self.environment.renderTemplate(name: "api.stencil", context: apiContext)
         if try format(api)
-            .writeIfChanged(toFile: "\(basePath)/\(service.serviceName)_API.swift") {
+            .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_API.swift") {
                 print("Wrote: \(service.serviceName)_API.swift")
         }
 
         let shapesContext = try service.generateShapesContext()
         let shapes = try self.environment.renderTemplate(name: "shapes.stencil", context: shapesContext)
         if try format(shapes)
-            .writeIfChanged(toFile: "\(basePath)/\(service.serviceName)_Shapes.swift") {
+            .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_Shapes.swift") {
                 print("Wrote: \(service.serviceName)_Shapes.swift")
         }
 
@@ -107,7 +107,7 @@ struct SotoCodeGen {
         if errorContext["errors"] != nil {
             let errors = try self.environment.renderTemplate(name: "error.stencil", context: errorContext)
             if try format(errors)
-                .writeIfChanged(toFile: "\(basePath)/\(service.serviceName)_Error.swift") {
+                .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_Error.swift") {
                     print("Wrote: \(service.serviceName)_Error.swift")
             }
         }
@@ -116,7 +116,7 @@ struct SotoCodeGen {
         if paginatorContext["paginators"] != nil {
             let paginators = try self.environment.renderTemplate(name: "paginator.stencil", context: paginatorContext)
             if try format(paginators)
-                .writeIfChanged(toFile: "\(basePath)/\(service.serviceName)_Paginator.swift") {
+                .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_Paginator.swift") {
                     print("Wrote: \(service.serviceName)_Paginator.swift")
             }
         }

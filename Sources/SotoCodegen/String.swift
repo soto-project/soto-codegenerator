@@ -22,6 +22,7 @@ let swiftReservedWords: Set<String> = [
     "class",
     "continue",
     "default",
+    "defer",
     "do",
     "else",
     "enum",
@@ -160,6 +161,15 @@ extension String {
 
     mutating func deletePrefix(_ prefix: String) {
         self = self.deletingPrefix(prefix)
+    }
+
+    func deletingSuffix(_ suffix: String) -> String {
+        guard self.hasSuffix(suffix) else { return self }
+        return String(self.dropLast(suffix.count))
+    }
+
+    mutating func deleteSuffix(_ suffix: String) {
+        self = self.deletingSuffix(suffix)
     }
 
     func removingWhitespaces() -> String {
