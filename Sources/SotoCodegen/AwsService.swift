@@ -81,9 +81,9 @@ struct AwsService {
         let service = serviceEntry.value
         let authSigV4 = try Self.getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
         let operations = try generateOperationContexts()
-        let documentation = service.trait(type: DocumentationTrait.self).map { outputHTMLComments ? [$0.value[...]] : processDocs($0.value) }
+
         context["name"] = serviceName
-        context["description"] = documentation?.split(separator: "\n") ?? []
+        context["description"] = processDocs(from: service)
         context["endpointPrefix"] = self.serviceEndpointPrefix
         if authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
@@ -183,11 +183,10 @@ struct AwsService {
         var errorContexts: [ErrorContext] = []
         for error in errorShapes {
             let name: String = error.key.shapeName
-            let documentationTrait = error.value.trait(type: DocumentationTrait.self)
             let errorContext = ErrorContext(
                 enum: name.toSwiftVariableCase(),
                 string: name,
-                comment: documentationTrait.map{ processDocs($0.value) } ?? []
+                comment: processDocs(from: error.value)
             )
             errorContexts.append(errorContext)
         }
@@ -261,12 +260,10 @@ struct AwsService {
 
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`
     func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool) throws -> OperationContext {
-        let documentationTrait = operation.trait(type: DocumentationTrait.self)?.value
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
-        let documentation = documentationTrait.map{ processDocs($0) } ?? []
         return OperationContext(
-            comment: documentation,
+            comment: processDocs(from: operation),
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,
@@ -408,7 +405,6 @@ struct AwsService {
     func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsEnum: Bool) -> MemberContext {
         let required = member.hasTrait(type: RequiredTrait.self)
         let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
-        let documentation = member.trait(type: DocumentationTrait.self)
         let defaultValue: String?
         if idempotencyToken == true {
             defaultValue = "\(shapeName.toSwiftClassCase()).idempotencyToken()"
@@ -425,7 +421,7 @@ struct AwsService {
             default: defaultValue,
             propertyWrapper: generatePropertyWrapper(member, name: name, required: required),
             type: type + ((required || typeIsEnum) ? "" : "?"),
-            comment: documentation.map { processMemberDocs($0.value) } ?? [],
+            comment: processMemberDocs(from: member),
             duplicate: false // NEED to catch this
         )
     }
@@ -732,25 +728,36 @@ struct AwsService {
     }
 
     /// process documenation string
-    func processDocs(_ docs: String) -> [String.SubSequence] {
+    func processDocs(from shape: Shape) -> [String.SubSequence] {
+        var docs: [String.SubSequence]
+
+        let documentation = shape.trait(type: DocumentationTrait.self)?.value
         if outputHTMLComments {
-            return docs.split(separator: "\n")
+            docs = documentation?.split(separator: "\n") ?? []
         } else {
-            return docs
+            docs = documentation?
                 .tagStriped()
                 .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
                 .split(separator: "\n")
-                .compactMap { $0.isEmpty ? nil: $0 }
+                .compactMap { $0.isEmpty ? nil: $0 } ?? []
         }
+
+        if let externalDocumentation = shape.trait(type: ExternalDocumentationTrait.self)?.value {
+            for (key, value) in externalDocumentation {
+                docs.append("\(key): \(value)")
+            }
+        }
+        return docs
     }
 
     /// process documenation string
-    func processMemberDocs(_ docs: String) -> [String.SubSequence] {
-        return docs
+    func processMemberDocs(from shape: MemberShape) -> [String.SubSequence] {
+        let documentation = shape.trait(type: DocumentationTrait.self)?.value
+        return documentation?
             .tagStriped()
             .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
             .split(separator: "\n")
-            .compactMap { $0.isEmpty ? nil: $0 }
+            .compactMap { $0.isEmpty ? nil: $0 } ?? []
     }
 
     /// return middleware name given a service name
