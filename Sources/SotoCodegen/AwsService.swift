@@ -310,11 +310,14 @@ struct AwsService {
             }
             valueContexts.append(EnumMemberContext(case: caseName, documentation: nil/*value.documentation*/, string: value.value))
         }
-
+        if shape.hasTrait(type: SotoExtensibleEnumTrait.self) {
+            print(type(of:shape).type)
+        }
         return EnumContext(
             name: shapeName.toSwiftClassCase().reservedwordEscaped(),
             documentation: shape.trait(type: DocumentationTrait.self)?.value,
-            values: valueContexts
+            values: valueContexts,
+            isExtensible: shape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
     }
 
@@ -991,6 +994,7 @@ extension AwsService {
         let name: String
         let documentation: String?
         let values: [EnumMemberContext]
+        let isExtensible: Bool
     }
 
     struct EnumMemberContext {

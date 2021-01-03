@@ -33,7 +33,8 @@ extension Model {
                 "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) }
             ],
             "EC2": [
-                "com.amazonaws.ec2#PlatformValues": EditEnumPatch(add: [.init(value: "windows")], remove: ["Windows"])
+                "com.amazonaws.ec2#PlatformValues": EditEnumPatch(add: [.init(value: "windows")], remove: ["Windows"]),
+                "com.amazonaws.ec2#InstanceType": AddTraitPatch(trait: SotoExtensibleEnumTrait())
             ],
             "ECS": [
                 "com.amazonaws.ecs#PropagateTags": EditEnumPatch(add: [.init(value: "NONE")])
@@ -57,7 +58,10 @@ extension Model {
                 "com.amazonaws.s3#ReplicationStatus": EditEnumPatch(add: [.init(value: "COMPLETED")], remove: ["COMPLETE"]),
                 "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
                 "com.amazonaws.s3#CopySource": EditTraitPatch { trait in return PatternTrait(value: ".+\\/.+") },
-                "com.amazonaws.s3#BucketLocationConstraint": EditEnumPatch(add: [.init(value: "us-east-1")]),
+                "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch([
+                    EditEnumPatch(add: [.init(value: "us-east-1")]),
+                    AddTraitPatch(trait: SotoExtensibleEnumTrait())
+                ]),
                 "com.amazonaws.s3#StreamingBlob": AddTraitPatch(trait: RequiresLengthTrait())
             ],
         ]

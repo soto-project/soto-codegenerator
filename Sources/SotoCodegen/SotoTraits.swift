@@ -23,3 +23,8 @@ struct SotoInputShapeTrait: StaticTrait {
 struct SotoOutputShapeTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#outputShape"
 }
+
+struct SotoExtensibleEnumTrait: StaticTrait {
+    static let staticName: ShapeId = "soto.api#extensibleEnum"
+    var selector: Selector { TraitSelector<EnumTrait>() }
+}

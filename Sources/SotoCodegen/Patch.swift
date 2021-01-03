@@ -82,3 +82,19 @@ struct EditEnumPatch: ShapePatch {
     }
 }
 
+struct MultiplePatch: ShapePatch {
+    let patches: [ShapePatch]
+
+    init(_ patches: [ShapePatch]) {
+        self.patches = patches
+    }
+    func patch(shape: Shape) -> Shape? {
+        var shape = shape
+        for patch in patches {
+            if let newShape = patch.patch(shape: shape) {
+                shape = newShape
+            }
+        }
+        return shape
+    }
+}
