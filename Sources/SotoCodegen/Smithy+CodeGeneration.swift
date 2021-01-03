@@ -109,4 +109,27 @@ extension MemberShape {
         }
         return "Unsupported"
     }
+
+    func output(_ model: Model, withServiceName: String) -> String {
+        // assume model has been validated
+        let memberShape = model.shape(for: self.target)!
+        if memberShape is StringShape {
+            if memberShape.hasTrait(type: EnumTrait.self) { return "\(withServiceName).\(self.target.shapeName.toSwiftClassCase())" }
+            return "String"
+        } else if memberShape is BlobShape {
+            if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSPayload" }
+            return "Data"
+        } else if memberShape is CollectionShape {
+            return "\(withServiceName).\(self.target.shapeName.toSwiftClassCase())"
+        } else if let listShape = memberShape as? ListShape {
+            return "[\(listShape.member.output(model, withServiceName: withServiceName))]"
+        } else if let setShape = memberShape as? SetShape {
+            return "Set<\(setShape.member.output(model, withServiceName: withServiceName))>"
+        } else if let mapShape = memberShape as? MapShape {
+            return "[\(mapShape.key.output(model, withServiceName: withServiceName)): \(mapShape.value.output(model, withServiceName: withServiceName))]"
+        } else if let sotoMemberShape = memberShape as? SotoOutput {
+            return sotoMemberShape.output
+        }
+        return "Unsupported"
+    }
 }

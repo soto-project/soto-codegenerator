@@ -142,7 +142,7 @@ struct AwsService {
             guard let output = operationShape.output?.target else { continue }
             guard let outputShape = model.shape(for: output) as? StructureShape else { continue }
             guard let outputToken = paginatedTrait.outputToken else { continue }
-            let inputMemberShapeName = inputMember.output(model)
+            let inputMemberShapeName = inputMember.output(model, withServiceName: serviceName)
 
             // construct array of input shape parameters to use in `usingPaginationToken` function
             var initParams: [String: String] = [:]
