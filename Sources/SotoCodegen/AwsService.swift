@@ -123,7 +123,7 @@ struct AwsService {
 
     /// Generate paginator context
     func generatePaginatorContext() throws -> [String: Any] {
-        let paginatorOperations = try model.select(from: "operation [trait:paginated]")
+        let paginatorOperations = try model.select(from: "operation [trait|paginated]")
         guard paginatorOperations.count > 0 else { return [:] }
         var context: [String: Any] = ["name": serviceName]
         let namespace = paginatorOperations.first?.key.namespace
@@ -171,7 +171,7 @@ struct AwsService {
 
     /// Generate the context information for outputting the error enums
     func generateErrorContext() throws -> [String: Any] {
-        let errorShapes = try model.select(from: "structure [trait:error]")
+        let errorShapes = try model.select(from: "structure [trait|error]")
         guard errorShapes.count > 0 else { return [:] }
         
         var context: [String: Any] = [:]
@@ -206,7 +206,7 @@ struct AwsService {
         var shapeContexts: [[String: Any]] = []
 
         // generate enums
-        let enums = try model.select(from: "[trait:enum]").map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
+        let enums = try model.select(from: "[trait|enum]").map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
         for e in enums {
             guard let enumContext = self.generateEnumContext(e.value, shapeName: e.key) else { continue }
             shapeContexts.append(["enum": enumContext])
@@ -387,7 +387,11 @@ struct AwsService {
                 contexts.codingKeys.append(codingKeyContext)
             }
             // member encoding context
-            if let memberEncodingContext = generateMemberEncodingContext(member.value, name: member.key) {
+            if let memberEncodingContext = generateMemberEncodingContext(
+                member.value,
+                name: member.key,
+                isPropertyWrapper: memberContext.propertyWrapper != nil && isInputShape
+            ) {
                 contexts.awsShapeMembers.append(memberEncodingContext)
             }
             // validation context
@@ -428,30 +432,36 @@ struct AwsService {
         )
     }
 
-    func generateMemberEncodingContext(_ member: MemberShape, name: String) -> MemberEncodingContext? {
+    func generateMemberEncodingContext(_ member: MemberShape, name: String, isPropertyWrapper: Bool) -> MemberEncodingContext? {
         // if header
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
-            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".header(locationName: \"\(headerTrait.value)\")")
+            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
+            return MemberEncodingContext(name: name, location: ".header(locationName: \"\(headerTrait.value)\")")
         // if prefix header
         } else if let headerPrefixTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
-            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".header(locationName: \"\(headerPrefixTrait.value)\")")
+            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
+            return MemberEncodingContext(name: name, location: ".header(locationName: \"\(headerPrefixTrait.value)\")")
         // if query string
         } else if let queryTrait = member.trait(type: HttpQueryTrait.self) {
-            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".querystring(locationName: \"\(queryTrait.value)\")")
+            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
+            return MemberEncodingContext(name: name, location: ".querystring(locationName: \"\(queryTrait.value)\")")
         // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
+            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
-            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")")
+            return MemberEncodingContext(name: name, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")")
         // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
-            return MemberEncodingContext(name: name.toSwiftLabelCase(), location: ".statusCode")
+            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
+            return MemberEncodingContext(name: name, location: ".statusCode")
         // if payload and not a blob
         } else if member.hasTrait(type: HttpPayloadTrait.self), !(model.shape(for: member.target) is BlobShape) {
             let aliasTrait = member.traits?.first(where: {$0 is AliasTrait}) as? AliasTrait
             let payloadName = aliasTrait?.alias ?? name
             let swiftLabelName = name.toSwiftLabelCase()
             if swiftLabelName != payloadName {
-                return MemberEncodingContext(name: swiftLabelName, location: ".body(locationName: \"\(payloadName)\")")
+                let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
+                return MemberEncodingContext(name: name, location: ".body(locationName: \"\(payloadName)\")")
             }
         }
         return nil
@@ -525,15 +535,19 @@ struct AwsService {
                 return "\(codingWrapper)<DictionaryCoder<\(self.encodingName(name)), \(map.key.output(model)), \(map.value.output(model))>>"
             }
         case let timestamp as TimestampShape:
-            guard let formatTrait = timestamp.trait(type: TimestampFormatTrait.self) else { return nil }
-            switch formatTrait.value {
-            case .datetime:
-                return "\(codingWrapper)<ISO8601DateCoder>"
-            case .epochSeconds:
-                return "\(codingWrapper)<UnixEpochDateCoder>"
-            case .httpDate:
+            if let formatTrait = timestamp.trait(type: TimestampFormatTrait.self) {
+                switch formatTrait.value {
+                case .datetime:
+                    return "\(codingWrapper)<ISO8601DateCoder>"
+                case .epochSeconds:
+                    return "\(codingWrapper)<UnixEpochDateCoder>"
+                case .httpDate:
+                    return "\(codingWrapper)<HTTPHeaderDateCoder>"
+                }
+            } else if member.hasTrait(type: HttpHeaderTrait.self) {
                 return "\(codingWrapper)<HTTPHeaderDateCoder>"
             }
+            return nil
         default:
             return nil
         }
