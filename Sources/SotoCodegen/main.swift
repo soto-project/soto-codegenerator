@@ -34,6 +34,9 @@ struct SotoCodeGenCommand: ParsableCommand {
     @Flag(name: [.customShort("f"), .customLong("format")], inversion: .prefixedNo, help: "Run swift format on output")
     var swiftFormat: Bool = false
 
+    @Flag(name: .long, help: "HTML comments")
+    var htmlComments: Bool = false
+
     static var rootPath: String {
         return #file
             .split(separator: "/", omittingEmptySubsequences: false)

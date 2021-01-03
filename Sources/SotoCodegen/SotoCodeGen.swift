@@ -137,7 +137,7 @@ struct SotoCodeGen {
             DispatchQueue.global().async {
                 defer { group.leave() }
                 do {
-                    let service = try AwsService(model, endpoints: endpoints)
+                    let service = try AwsService(model, endpoints: endpoints, outputHTMLComments: command.htmlComments)
                     if self.command.output {
                         try self.generateFiles(with: service)
                     }

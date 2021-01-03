@@ -25,8 +25,9 @@ struct AwsService {
     var serviceProtocolTrait: AwsServiceProtocol
     var endpoints: Endpoints
     var operations: [ShapeId: OperationShape]
+    var outputHTMLComments: Bool
 
-    init(_ model: SotoSmithy.Model, endpoints: Endpoints) throws {
+    init(_ model: SotoSmithy.Model, endpoints: Endpoints, outputHTMLComments: Bool) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
 
         self.model = model
@@ -41,6 +42,7 @@ struct AwsService {
         self.operations = Self.getOperations(service.value, model: model)
         
         self.endpoints = endpoints
+        self.outputHTMLComments = outputHTMLComments
     }
 
     /// Return service name from API
@@ -79,9 +81,9 @@ struct AwsService {
         let service = serviceEntry.value
         let authSigV4 = try Self.getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
         let operations = try generateOperationContexts()
-
+        let documentation = service.trait(type: DocumentationTrait.self).map { outputHTMLComments ? [$0.value[...]] : processDocs($0.value) }
         context["name"] = serviceName
-        context["description"] = service.trait(type: DocumentationTrait.self).map { processDocs($0.value) }
+        context["description"] = documentation?.split(separator: "\n") ?? []
         context["endpointPrefix"] = self.serviceEndpointPrefix
         if authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
@@ -152,7 +154,7 @@ struct AwsService {
 
             paginatorContexts.append(
                 PaginatorContext(
-                    operation: try generateOperationContext(operationShape, operationName: operation.key),
+                    operation: try generateOperationContext(operationShape, operationName: operation.key, streaming: false),
                     output: toKeyPath(token: outputToken, structure: outputShape),
                     moreResults: nil,
                     initParams: initParamsArray,
@@ -243,7 +245,7 @@ struct AwsService {
         var streamingOperationContexts: [OperationContext] = []
         let operations = self.operations
         for operation in operations {
-            let operationContext = try generateOperationContext(operation.value, operationName: operation.key)
+            let operationContext = try generateOperationContext(operation.value, operationName: operation.key, streaming: false)
             operationContexts.append(operationContext)
 
             if let output = operation.value.output,
@@ -263,12 +265,13 @@ struct AwsService {
     }
 
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`
-    func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool = false) throws -> OperationContext {
+    func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool) throws -> OperationContext {
         let documentationTrait = operation.trait(type: DocumentationTrait.self)?.value
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
+        let documentation = documentationTrait.map{ processDocs($0) } ?? []
         return OperationContext(
-            comment: documentationTrait.map{ processDocs($0) } ?? [],
+            comment: documentation,
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,
@@ -735,11 +738,15 @@ struct AwsService {
 
     /// process documenation string
     func processDocs(_ docs: String) -> [String.SubSequence] {
-        return docs
-            .tagStriped()
-            .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
-            .split(separator: "\n")
-            .compactMap { $0.isEmpty ? nil: $0 }
+        if outputHTMLComments {
+            return docs.split(separator: "\n")
+        } else {
+            return docs
+                .tagStriped()
+                .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
+                .split(separator: "\n")
+                .compactMap { $0.isEmpty ? nil: $0 }
+        }
     }
 
     /// process documenation string
