@@ -225,12 +225,7 @@ struct AwsService {
         let unions = model.select(type: UnionShape.self).map { (key: $0.key.shapeName, value: $0) }.sorted { $0.key < $1.key }
         for union in unions {
             guard let shapeContext = self.generateStructureContext(union.value.value, shapeId: union.value.key) else { continue }
-            // don't create an enum with values if there is only one member
-            if shapeContext.members.count > 1 {
-                shapeContexts.append(["enumWithValues": shapeContext])
-            } else {
-                shapeContexts.append(["struct": shapeContext])
-            }
+            shapeContexts.append(["enumWithValues": shapeContext])
         }
 
         if shapeContexts.count > 0 {
