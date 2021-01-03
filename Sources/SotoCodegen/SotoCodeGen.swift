@@ -14,12 +14,28 @@
 
 import Dispatch
 import Foundation
+import PathKit
 import SotoSmithy
 import SotoSmithyAWS
-import PathKit
 import Stencil
+import SwiftFormat
 
 struct SotoCodeGen {
+    enum SwiftFormatConfig {
+        static let disabledRules = FormatRules.disabledByDefault + ["redundantReturn", "redundantBackticks", "trailingCommas", "extensionAccessControl"]
+        static let ruleNames = Set(FormatRules.byName.keys).subtracting(disabledRules)
+        static let rules: [FormatRule] = ruleNames.map { FormatRules.byName[$0]! }
+        static let formatOptions = FormatOptions(
+            ifdefIndent: .noIndent,
+            wrapArguments: .beforeFirst,
+            wrapParameters: .beforeFirst,
+            wrapCollections: .beforeFirst,
+            hoistPatternLet: false,
+            stripUnusedArguments: .unnamedOnly,
+            explicitSelf: .insert,
+            noSpaceOperators: ["...", "..<"]
+        )
+    }
     let environment: Environment
     let command: SotoCodeGenCommand
 
@@ -57,6 +73,15 @@ struct SotoCodeGen {
         }
     }
 
+    /// Run swift format on String
+    func format(_ string: String) throws -> String {
+        if self.command.swiftFormat {
+            return try SwiftFormat.format(string, rules: Self.SwiftFormatConfig.rules, options: Self.SwiftFormatConfig.formatOptions)
+        } else {
+            return string
+        }
+    }
+
     /// Generate service files from AWSService
     /// - Parameter codeGenerator: service generated from JSON
     func generateFiles(with service: AwsService) throws {
@@ -65,34 +90,34 @@ struct SotoCodeGen {
         try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
 
         let apiContext = try service.generateServiceContext()
-        if try self.environment.renderTemplate(name: "api.stencil", context: apiContext).writeIfChanged(
-            toFile: "\(basePath)/\(service.serviceName)_API.swift"
-        ) {
-            print("Wrote: \(service.serviceName)_API.swift")
+        let api = try self.environment.renderTemplate(name: "api.stencil", context: apiContext)
+        if try format(api)
+            .writeIfChanged(toFile: "\(basePath)/\(service.serviceName)_API.swift") {
+                print("Wrote: \(service.serviceName)_API.swift")
         }
 
         let shapesContext = try service.generateShapesContext()
-        if try self.environment.renderTemplate(name: "shapes.stencil", context: shapesContext).writeIfChanged(
-            toFile: "\(basePath)/\(service.serviceName)_Shapes.swift"
-        ) {
-            print("Wrote: \(service.serviceName)_Shapes.swift")
+        let shapes = try self.environment.renderTemplate(name: "shapes.stencil", context: shapesContext)
+        if try format(shapes)
+            .writeIfChanged(toFile: "\(basePath)/\(service.serviceName)_Shapes.swift") {
+                print("Wrote: \(service.serviceName)_Shapes.swift")
         }
 
         let errorContext = try service.generateErrorContext()
         if errorContext["errors"] != nil {
-            if try self.environment.renderTemplate(name: "error.stencil", context: errorContext).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_Error.swift"
-            ) {
-                print("Wrote: \(service.serviceName)_Error.swift")
+            let errors = try self.environment.renderTemplate(name: "error.stencil", context: errorContext)
+            if try format(errors)
+                .writeIfChanged(toFile: "\(basePath)/\(service.serviceName)_Error.swift") {
+                    print("Wrote: \(service.serviceName)_Error.swift")
             }
         }
 
         let paginatorContext = try service.generatePaginatorContext()
         if paginatorContext["paginators"] != nil {
-            if try self.environment.renderTemplate(name: "paginator.stencil", context: paginatorContext).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_Paginator.swift"
-            ) {
-                print("Wrote: \(service.serviceName)_Paginator.swift")
+            let paginators = try self.environment.renderTemplate(name: "paginator.stencil", context: paginatorContext)
+            if try format(paginators)
+                .writeIfChanged(toFile: "\(basePath)/\(service.serviceName)_Paginator.swift") {
+                    print("Wrote: \(service.serviceName)_Paginator.swift")
             }
         }
         //print("Succesfully Generated \(service.serviceName)")

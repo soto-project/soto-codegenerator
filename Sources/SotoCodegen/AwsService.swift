@@ -310,9 +310,6 @@ struct AwsService {
             }
             valueContexts.append(EnumMemberContext(case: caseName, documentation: nil/*value.documentation*/, string: value.value))
         }
-        if shape.hasTrait(type: SotoExtensibleEnumTrait.self) {
-            print(type(of:shape).type)
-        }
         return EnumContext(
             name: shapeName.toSwiftClassCase().reservedwordEscaped(),
             documentation: shape.trait(type: DocumentationTrait.self)?.value,
