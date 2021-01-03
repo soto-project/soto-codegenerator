@@ -877,8 +877,9 @@ struct AwsService {
             }
         }
         // if output token is member of an optional struct add ? suffix
-        let member = structure.members?[String(split[0])]
-        if member?.trait(type: RequiredTrait.self) != nil,
+
+        if let member = structure.members?[String(split[0])],
+           !member.hasTrait(type: RequiredTrait.self),
             split.count > 1
         {
             split[0] += "?"
