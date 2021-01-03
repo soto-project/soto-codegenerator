@@ -33,8 +33,9 @@ struct AwsService {
         self.model = model
         self.serviceId = service.key
         self.service = service.value
-        self.serviceName = try Self.getServiceName(service.value, id: service.key)
-        self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(service: service.value, id: service.key)
+        let serviceName = try Self.getServiceName(service.value, id: service.key)
+        self.serviceName = serviceName
+        self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(service: service.value, id: service.key) ?? serviceName.lowercased()
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
 
         try model.patch(serviceName: serviceName)
@@ -68,9 +69,9 @@ struct AwsService {
     }
 
     /// return service name used in endpoint. Uses filename of Smithy file
-    static func getServiceEndpointPrefix(service: SotoSmithy.ServiceShape, id: ShapeId) throws -> String {
+    static func getServiceEndpointPrefix(service: SotoSmithy.ServiceShape, id: ShapeId) throws -> String? {
         let awsService = try Self.getTrait(from: service, trait: AwsServiceTrait.self, id: id)
-        return awsService.arnNamespace
+        return awsService.endpointPrefix
     }
     
     /// Generate context for rendering service template
