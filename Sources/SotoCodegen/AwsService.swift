@@ -392,6 +392,7 @@ struct AwsService {
             if let memberEncodingContext = generateMemberEncodingContext(
                 member.value,
                 name: member.key,
+                isOutputShape: isOutputShape,
                 isPropertyWrapper: memberContext.propertyWrapper != nil && isInputShape
             ) {
                 contexts.awsShapeMembers.append(memberEncodingContext)
@@ -433,7 +434,7 @@ struct AwsService {
         )
     }
 
-    func generateMemberEncodingContext(_ member: MemberShape, name: String, isPropertyWrapper: Bool) -> MemberEncodingContext? {
+    func generateMemberEncodingContext(_ member: MemberShape, name: String, isOutputShape: Bool, isPropertyWrapper: Bool) -> MemberEncodingContext? {
         // if header
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
@@ -455,8 +456,9 @@ struct AwsService {
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             return MemberEncodingContext(name: name, location: ".statusCode")
-        // if payload and not a blob
-        } else if member.hasTrait(type: HttpPayloadTrait.self), !(model.shape(for: member.target) is BlobShape) {
+        // if payload and not a blob or shape is an output shape
+        } else if member.hasTrait(type: HttpPayloadTrait.self),
+                  (!(model.shape(for: member.target) is BlobShape) || isOutputShape) {
             let aliasTrait = member.traits?.first(where: {$0 is AliasTrait}) as? AliasTrait
             let payloadName = aliasTrait?.alias ?? name
             let swiftLabelName = name.toSwiftLabelCase()
