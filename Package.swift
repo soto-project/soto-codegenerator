@@ -3,9 +3,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "soto-codegen",
+    name: "soto-codegenerator",
     products: [
-        .executable(name: "SotoCodeGen", targets: ["SotoCodegen"]),
+        .executable(name: "SotoCodeGenerator", targets: ["SotoCodeGenerator"]),
     ],
     dependencies: [
         .package(url: "https://github.com/adam-fowler/soto-smithy.git", .branch("main")),
@@ -15,7 +15,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SotoCodegen",
+            name: "SotoCodeGenerator",
             dependencies: [
                 .product(name: "SotoSmithy", package: "soto-smithy"),
                 .product(name: "SotoSmithyAWS", package: "soto-smithy"),
