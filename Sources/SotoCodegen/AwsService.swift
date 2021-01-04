@@ -514,13 +514,9 @@ struct AwsService {
             codingWrapper = "@OptionalCustomCoding"
         }
 
-        // if not located in body don't generate collection encoding property wrapper
-        /*if let location = member.location {
-            guard case .body = location else { return nil }
-        }*/
-
         switch memberShape {
         case let list as ListShape:
+            guard isMemberInBody(member) else { return nil }
             guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let memberName = getListEntryName(member: member, list: list)
             guard let validMemberName = memberName else { return nil }
@@ -530,6 +526,7 @@ struct AwsService {
                 return "\(codingWrapper)<ArrayCoder<\(self.encodingName(name)), \(list.member.output(model))>>"
             }
         case let map as MapShape:
+            guard isMemberInBody(member) else { return nil }
             guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let names = getMapEntryNames(member: member, map: map)
             if names.entry == "entry", names.key == "key", names.value == "value" {
@@ -968,6 +965,14 @@ struct AwsService {
             shapeProtocol += " & AWSShapeWithPayload"
         }
         return shapeProtocol
+    }
+
+    func isMemberInBody(_ member: MemberShape) -> Bool {
+        return !(member.hasTrait(type: HttpHeaderTrait.self) ||
+            member.hasTrait(type: HttpPrefixHeadersTrait.self) ||
+            member.hasTrait(type: HttpQueryTrait.self) ||
+            member.hasTrait(type: HttpLabelTrait.self) ||
+            member.hasTrait(type: HttpResponseCodeTrait.self))
     }
 }
 
