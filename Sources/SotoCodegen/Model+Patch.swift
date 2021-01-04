@@ -18,7 +18,7 @@ extension Model {
     func patch(serviceName: String) throws {
         let patches:[String: [ShapeId: ShapePatch]] = [
             "CloudFront" : [
-                "com.amazonaws.cloudfront#HttpVersion": EditEnumPatch(add: [.init(value: "HTTP1_1"), .init(value: "HTTP2")], remove: ["http1.1", "http2"])
+                "com.amazonaws.cloudfront#HttpVersion": EditEnumPatch(add: [.init(value: "HTTP1_1"), .init(value: "HTTP2")], remove: ["http1.1", "http2"]),
             ],
             /*"CloudWatch": [
                 // Patch error shape to avoid warning in generated code. Both errors have the same code "ResourceNotFound"
@@ -30,20 +30,21 @@ extension Model {
             ],
             "DynamoDB": [
                 "com.amazonaws.dynamodb#AttributeValue": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
-                "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) }
+                "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
             ],
             "EC2": [
                 "com.amazonaws.ec2#PlatformValues": EditEnumPatch(add: [.init(value: "windows")], remove: ["Windows"]),
-                "com.amazonaws.ec2#InstanceType": AddTraitPatch(trait: SotoExtensibleEnumTrait())
+                "com.amazonaws.ec2#InstanceType": AddTraitPatch(trait: SotoExtensibleEnumTrait()),
+                "com.amazonaws.ec2#ArchitectureType": AddTraitPatch(trait: SotoExtensibleEnumTrait()),
             ],
             "ECS": [
-                "com.amazonaws.ecs#PropagateTags": EditEnumPatch(add: [.init(value: "NONE")])
+                "com.amazonaws.ecs#PropagateTags": EditEnumPatch(add: [.init(value: "NONE")]),
             ],
             "ElasticLoadBalancing": [
-                "com.amazonaws.elasticloadbalancing#SecurityGroupOwnerAlias": ShapeTypePatch(shape: IntegerShape())
+                "com.amazonaws.elasticloadbalancing#SecurityGroupOwnerAlias": ShapeTypePatch(shape: IntegerShape()),
             ],
             "IAM": [
-                "com.amazonaws.iam#PolicySourceType": EditEnumPatch(add: [.init(value: "IAM Policy")])
+                "com.amazonaws.iam#PolicySourceType": EditEnumPatch(add: [.init(value: "IAM Policy")]),
             ],
             /*"Lambda": [
                 //AddDictionaryPatch(PatchKeyPath1(\.shapes), key: "SotoCore.Region", value: Shape(type: .stub, name: "SotoCore.Region")),
@@ -52,17 +53,27 @@ extension Model {
             "Route53" : [
                 "com.amazonaws.route53#ListHealthChecksResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
                 "com.amazonaws.route53#ListHostedZonesResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
-                "com.amazonaws.route53#ListReusableDelegationSetsResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self)
+                "com.amazonaws.route53#ListReusableDelegationSetsResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
             ],
             "S3": [
                 "com.amazonaws.s3#ReplicationStatus": EditEnumPatch(add: [.init(value: "COMPLETED")], remove: ["COMPLETE"]),
                 "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
                 "com.amazonaws.s3#CopySource": EditTraitPatch { trait in return PatternTrait(value: ".+\\/.+") },
+                "com.amazonaws.s3#LifecycleRule$Filter": AddTraitPatch(trait: RequiredTrait()),
                 "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch([
                     EditEnumPatch(add: [.init(value: "us-east-1")]),
                     AddTraitPatch(trait: SotoExtensibleEnumTrait())
                 ]),
-                "com.amazonaws.s3#StreamingBlob": AddTraitPatch(trait: RequiresLengthTrait())
+                "com.amazonaws.s3#StreamingBlob": AddTraitPatch(trait: RequiresLengthTrait()),
+            ],
+            "S3Control": [
+                "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch([
+                    EditEnumPatch(add: [.init(value: "us-east-1")]),
+                    AddTraitPatch(trait: SotoExtensibleEnumTrait())
+                ]),
+            ],
+            "SageMaker": [
+                "com.amazonaws.sagemaker#ListFeatureGroupsResponse$NextToken": RemoveTraitPatch(trait: RequiredTrait.self),
             ],
         ]
         if let servicePatches = patches[serviceName] {
