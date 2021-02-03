@@ -54,7 +54,14 @@ struct SotoCodeGen {
         if let module = command.module {
             return Glob.entries(pattern: "\(self.command.inputFolder)/\(module)*.json")
         }
-        return Glob.entries(pattern: "\(self.command.inputFolder)/*")
+        return Glob.entries(pattern: "\(self.command.inputFolder)/*.json")
+    }
+
+    func getSmithyFiles() -> [String] {
+        if let module = command.module {
+            return Glob.entries(pattern: "\(self.command.inputFolder)/\(module)*.smithy")
+        }
+        return Glob.entries(pattern: "\(self.command.inputFolder)/*.smithy")
     }
 
     func loadEndpointJSON() throws -> Endpoints {
@@ -68,6 +75,18 @@ struct SotoCodeGen {
         return try modelFiles.map {
             let data = try Data(contentsOf: URL(fileURLWithPath: $0))
             let model = try Smithy().decodeAST(from: data)
+            try model.validate()
+            return model
+        }
+    }
+
+    func loadSmithy() throws -> [SotoSmithy.Model] {
+        let modelFiles = self.getSmithyFiles()
+
+        return try modelFiles.map {
+            let data = try Data(contentsOf: URL(fileURLWithPath: $0))
+            let string = String(decoding: data, as: Unicode.UTF8.self)
+            let model = try Smithy().parse(string)
             try model.validate()
             return model
         }
@@ -128,7 +147,12 @@ struct SotoCodeGen {
 
         // load JSON
         let endpoints = try loadEndpointJSON()
-        let models = try loadModelJSON()
+        let models: [SotoSmithy.Model]
+        if command.smithy {
+            models = try loadSmithy()
+        } else {
+            models = try loadModelJSON()
+        }
         let group = DispatchGroup()
 
         models.forEach { model in

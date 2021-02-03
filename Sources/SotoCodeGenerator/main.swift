@@ -19,7 +19,7 @@ struct SotoCodeGenCommand: ParsableCommand {
     @Option(name: .shortAndLong, help: "Folder to output service files to")
     var outputFolder: String = Self.defaultOutputFolder
 
-    @Option(name: .shortAndLong, help: "Folder to find json model files")
+    @Option(name: .shortAndLong, help: "Folder to find model files")
     var inputFolder: String = Self.defaultInputFolder
 
     @Option(name: .shortAndLong, help: "Endpoint JSON file")
@@ -36,6 +36,9 @@ struct SotoCodeGenCommand: ParsableCommand {
 
     @Flag(name: .long, help: "HTML comments")
     var htmlComments: Bool = false
+
+    @Flag(name: .long, help: "Load smithy")
+    var smithy: Bool = false
 
     static var rootPath: String {
         return #file
