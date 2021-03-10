@@ -17,6 +17,11 @@ import SotoSmithy
 extension Model {
     func patch(serviceName: String) throws {
         let patches:[String: [ShapeId: ShapePatch]] = [
+            "Amplify": [
+                "com.amazonaws.amplify#App$description": RemoveTraitPatch(trait: RequiredTrait.self),
+                "com.amazonaws.amplify#App$environmentVariables": RemoveTraitPatch(trait: RequiredTrait.self),
+                "com.amazonaws.amplify#App$repository": RemoveTraitPatch(trait: RequiredTrait.self),
+            ],
             "CloudFront" : [
                 "com.amazonaws.cloudfront#HttpVersion": EditEnumPatch(add: [.init(value: "HTTP1_1"), .init(value: "HTTP2")], remove: ["http1.1", "http2"]),
             ],
@@ -25,6 +30,9 @@ extension Model {
                 ReplacePatch(PatchKeyPath2(\.operations["GetDashboard"], \.errors[1].shapeName), value: "ResourceNotFoundException", originalValue: "DashboardNotFoundError"),
                 ReplacePatch(PatchKeyPath2(\.operations["DeleteDashboards"], \.errors[1].shapeName), value: "ResourceNotFoundException", originalValue: "DashboardNotFoundError"),
             ],*/
+            "CognitoIdentityProvider": [
+                "com.amazonaws.cognitoidentityprovider#UserStatusType": EditEnumPatch(add: [.init(value: "EXTERNAL_PROVIDER")]),
+            ],
             "ComprehendMedical": [
                 "com.amazonaws.comprehendmedical#EntitySubType": EditEnumPatch(add: [.init(value: "DX_NAME")]),
             ],
@@ -50,6 +58,9 @@ extension Model {
                 //AddDictionaryPatch(PatchKeyPath1(\.shapes), key: "SotoCore.Region", value: Shape(type: .stub, name: "SotoCore.Region")),
                 //ReplacePatch(PatchKeyPath4(\.shapes["ListFunctionsRequest"], \.type.structure, \.members["MasterRegion"], \.shapeName), value: "SotoCore.Region", originalValue: "MasterRegion"),
             ],*/
+            "RDSData": [
+                "com.amazonaws.rdsdata#Arn": EditTraitPatch { trait in return LengthTrait(min: trait.min, max: 2048) },
+            ],
             "Route53" : [
                 "com.amazonaws.route53#ListHealthChecksResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
                 "com.amazonaws.route53#ListHostedZonesResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
