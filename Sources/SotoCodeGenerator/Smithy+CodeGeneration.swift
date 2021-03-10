@@ -133,3 +133,18 @@ extension MemberShape {
         return "Unsupported"
     }
 }
+
+protocol SotoEquatableShape {}
+
+extension BooleanShape: SotoEquatableShape { }
+extension ByteShape: SotoEquatableShape { }
+extension ShortShape: SotoEquatableShape { }
+extension IntegerShape: SotoEquatableShape { }
+extension LongShape: SotoEquatableShape { }
+extension FloatShape: SotoEquatableShape { }
+extension DoubleShape: SotoEquatableShape { }
+extension BigIntegerShape: SotoEquatableShape { }
+extension BigDecimalShape: SotoEquatableShape { }
+extension StringShape: SotoEquatableShape { }
+extension TimestampShape: SotoEquatableShape { }
+

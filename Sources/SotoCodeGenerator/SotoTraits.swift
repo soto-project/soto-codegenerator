@@ -24,6 +24,11 @@ struct SotoOutputShapeTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#outputShape"
 }
 
+struct SotoAuthUnsignedPayloadTrait: StaticTrait {
+    static let staticName: ShapeId = "soto.api#unsignedPayload"
+    var selector: Selector { TypeSelector<StructureShape>() }
+}
+
 struct SotoExtensibleEnumTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#extensibleEnum"
     var selector: Selector { TraitSelector<EnumTrait>() }

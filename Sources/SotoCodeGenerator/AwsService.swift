@@ -159,10 +159,18 @@ struct AwsService {
             initParams[inputToken.toSwiftLabelCase()] = "token"
             let initParamsArray = initParams.map { "\($0.key): \($0.value)" }.sorted { $0.lowercased() < $1.lowercased() }
 
+            var inputKeyToken: String? = inputToken
+            guard let inputKeyShape = model.shape(for: inputMember.target) else { continue }
+            // if input key shape is not equatable then don't output input key
+            if !(inputKeyShape is SotoEquatableShape) {
+                inputKeyToken = nil
+            }
+
             paginatorContexts.append(
                 PaginatorContext(
                     operation: try generateOperationContext(operationShape, operationName: operation.key, streaming: false),
-                    output: toKeyPath(token: outputToken, structure: outputShape),
+                    inputKey: inputKeyToken.map { self.toKeyPath(token: $0, structure: inputShape) },
+                    outputKey: toKeyPath(token: outputToken, structure: outputShape),
                     moreResults: nil,
                     initParams: initParamsArray,
                     paginatorProtocol: "AWSPaginateToken",
@@ -337,9 +345,9 @@ struct AwsService {
                 shapePayloadOptions.append("raw")
                 if payload.hasTrait(type: StreamingTrait.self) {
                     shapePayloadOptions.append("allowStreaming")
-                    /*if !payload.hasTrait(type: RequiredTrait.self) {
+                    if shape.hasTrait(type: SotoAuthUnsignedPayloadTrait.self) {
                         shapePayloadOptions.append("allowChunkedStreaming")
-                    }*/
+                    }
                 }
             }
         }
@@ -866,6 +874,11 @@ struct AwsService {
         for operation in self.operations {
             if let input = operation.value.input {
                 addTrait(to: input.target, trait: SotoInputShapeTrait())
+                // need to add SotoAuthUnsignedPayloadTrait to input shape as we don't know the operation when
+                // processing shapes
+                if let shape = model.shape(for: input.target), operation.value.hasTrait(type: AwsAuthUnsignedPayloadTrait.self) {
+                    shape.add(trait: SotoAuthUnsignedPayloadTrait())
+                }
             }
             if let output = operation.value.output {
                 addTrait(to: output.target, trait: SotoOutputShapeTrait())
@@ -998,7 +1011,8 @@ extension AwsService {
 
     struct PaginatorContext {
         let operation: OperationContext
-        let output: String
+        let inputKey: String?
+        let outputKey: String
         let moreResults: String?
         let initParams: [String]
         let paginatorProtocol: String
