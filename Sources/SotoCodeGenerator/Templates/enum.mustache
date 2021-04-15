@@ -19,7 +19,7 @@
     public enum {{name}}: String, CustomStringConvertible, Codable {
 {{#values}}
 {{#documentation}}
-        /// {{documentation}}
+        /// {{.}}
 {{/documentation}}
         case {{case}} = "{{string}}"
 {{/values}}

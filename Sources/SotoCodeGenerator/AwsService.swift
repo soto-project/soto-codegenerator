@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
+import HummingbirdMustache
 import SotoSmithy
 import SotoSmithyAWS
 
@@ -318,11 +319,11 @@ struct AwsService {
             if caseName.allLetterIsNumeric() {
                 caseName = "\(shapeName.toSwiftVariableCase())\(caseName)"
             }
-            valueContexts.append(EnumMemberContext(case: caseName, documentation: nil/*value.documentation*/, string: value.value))
+            valueContexts.append(EnumMemberContext(case: caseName, documentation: processDocs(value.documentation), string: value.value))
         }
         return EnumContext(
             name: shapeName.toSwiftClassCase().reservedwordEscaped(),
-            documentation: shape.trait(type: DocumentationTrait.self)?.value,
+            documentation: processDocs(from: shape),
             values: valueContexts,
             isExtensible: shape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
@@ -601,7 +602,7 @@ struct AwsService {
                     if let memberValidationContext = generateValidationContext(
                         listMember.target,
                         name: name,
-                        required: true,
+                        required: required,
                         container: true,
                         alreadyProcessed: alreadyProcessed
                     ) {
@@ -621,14 +622,14 @@ struct AwsService {
                     let keyValidationContext = generateValidationContext(
                         map.key.target,
                         name: name,
-                        required: true,
+                        required: required,
                         container: true,
                         alreadyProcessed: alreadyProcessed
                     )
                     let valueValidationContext = generateValidationContext(
                         map.value.target,
                         name: name,
-                        required: true,
+                        required: required,
                         container: true,
                         alreadyProcessed: alreadyProcessed
                     )
@@ -662,7 +663,7 @@ struct AwsService {
 
             }
             if requirements.count > 0 {
-                return ValidationContext(name: name.toSwiftVariableCase(), reqs: requirements)
+                return ValidationContext(name: name.toSwiftVariableCase(), required: required, reqs: requirements)
             }
             return nil
         }
@@ -768,6 +769,15 @@ struct AwsService {
     /// process documenation string
     func processMemberDocs(from shape: MemberShape) -> [String.SubSequence] {
         let documentation = shape.trait(type: DocumentationTrait.self)?.value
+        return documentation?
+            .tagStriped()
+            .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
+            .split(separator: "\n")
+            .compactMap { $0.isEmpty ? nil: $0 } ?? []
+    }
+
+    /// process documentation string
+    func processDocs(_ documentation: String?) -> [String.SubSequence] {
         return documentation?
             .tagStriped()
             .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
@@ -1028,14 +1038,14 @@ extension AwsService {
 
     struct EnumContext {
         let name: String
-        let documentation: String?
+        let documentation: [String.SubSequence]
         let values: [EnumMemberContext]
         let isExtensible: Bool
     }
 
     struct EnumMemberContext {
         let `case`: String
-        let documentation: String?
+        let documentation: [String.SubSequence]
         let string: String
     }
 
@@ -1090,8 +1100,8 @@ extension AwsService {
             self.required = required
             self.reqs = reqs
             self.member = member
-            self.keyValidation = key
-            self.valueValidation = value
+            self.keyValidation = keyValidation
+            self.valueValidation = valueValidation
         }
 
         func transform(_ name: String) -> Any? {
