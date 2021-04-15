@@ -369,7 +369,8 @@ struct AwsService {
             members: contexts.members,
             awsShapeMembers: contexts.awsShapeMembers,
             codingKeys: contexts.codingKeys,
-            validation: contexts.validation
+            validation: contexts.validation,
+            requiresDefaultValidation: contexts.validation.count != contexts.members.count
         )
     }
 
@@ -1114,5 +1115,6 @@ extension AwsService {
         let awsShapeMembers: [MemberEncodingContext]
         let codingKeys: [CodingKeysContext]
         let validation: [ValidationContext]
+        let requiresDefaultValidation: Bool
     }
 }
