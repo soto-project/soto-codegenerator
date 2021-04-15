@@ -12,13 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Dispatch
 import Foundation
 import HummingbirdMustache
-import PathKit
 import SotoSmithy
 import SotoSmithyAWS
-import Stencil
 import SwiftFormat
 
 struct SotoCodeGen {
@@ -37,13 +34,11 @@ struct SotoCodeGen {
             noSpaceOperators: ["...", "..<"]
         )
     }
-    let environment: Environment
     let command: SotoCodeGenCommand
     let library: HBMustacheLibrary
 
     init(command: SotoCodeGenCommand) throws {
         let path = Bundle.module.resourcePath!
-        self.environment = Stencil.Environment(loader: FileSystemLoader(paths: [Path(path)]))
         self.command = command
         self.library = try .init(directory: path)
         Smithy.registerAWSTraits()
