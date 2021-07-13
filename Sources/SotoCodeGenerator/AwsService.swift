@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
+import HummingbirdMustache
 import SotoSmithy
 import SotoSmithyAWS
 
@@ -318,11 +319,11 @@ struct AwsService {
             if caseName.allLetterIsNumeric() {
                 caseName = "\(shapeName.toSwiftVariableCase())\(caseName)"
             }
-            valueContexts.append(EnumMemberContext(case: caseName, documentation: nil/*value.documentation*/, string: value.value))
+            valueContexts.append(EnumMemberContext(case: caseName, documentation: processDocs(value.documentation), string: value.value))
         }
         return EnumContext(
             name: shapeName.toSwiftClassCase().reservedwordEscaped(),
-            documentation: shape.trait(type: DocumentationTrait.self)?.value,
+            documentation: processDocs(from: shape),
             values: valueContexts,
             isExtensible: shape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
@@ -369,7 +370,8 @@ struct AwsService {
             members: contexts.members,
             awsShapeMembers: contexts.awsShapeMembers,
             codingKeys: contexts.codingKeys,
-            validation: contexts.validation
+            validation: contexts.validation,
+            requiresDefaultValidation: contexts.validation.count != contexts.members.count
         )
     }
 
@@ -600,7 +602,7 @@ struct AwsService {
                     if let memberValidationContext = generateValidationContext(
                         listMember.target,
                         name: name,
-                        required: true,
+                        required: required,
                         container: true,
                         alreadyProcessed: alreadyProcessed
                     ) {
@@ -620,14 +622,14 @@ struct AwsService {
                     let keyValidationContext = generateValidationContext(
                         map.key.target,
                         name: name,
-                        required: true,
+                        required: required,
                         container: true,
                         alreadyProcessed: alreadyProcessed
                     )
                     let valueValidationContext = generateValidationContext(
                         map.value.target,
                         name: name,
-                        required: true,
+                        required: required,
                         container: true,
                         alreadyProcessed: alreadyProcessed
                     )
@@ -636,8 +638,8 @@ struct AwsService {
                             name: name.toSwiftVariableCase(),
                             required: required,
                             reqs: requirements,
-                            key: keyValidationContext,
-                            value: valueValidationContext
+                            keyValidation: keyValidationContext,
+                            valueValidation: valueValidationContext
                         )
                     }
                 }
@@ -661,7 +663,7 @@ struct AwsService {
 
             }
             if requirements.count > 0 {
-                return ValidationContext(name: name.toSwiftVariableCase(), reqs: requirements)
+                return ValidationContext(name: name.toSwiftVariableCase(), required: required, reqs: requirements)
             }
             return nil
         }
@@ -767,6 +769,15 @@ struct AwsService {
     /// process documenation string
     func processMemberDocs(from shape: MemberShape) -> [String.SubSequence] {
         let documentation = shape.trait(type: DocumentationTrait.self)?.value
+        return documentation?
+            .tagStriped()
+            .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
+            .split(separator: "\n")
+            .compactMap { $0.isEmpty ? nil: $0 } ?? []
+    }
+
+    /// process documentation string
+    func processDocs(_ documentation: String?) -> [String.SubSequence] {
         return documentation?
             .tagStriped()
             .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
@@ -1027,14 +1038,14 @@ extension AwsService {
 
     struct EnumContext {
         let name: String
-        let documentation: String?
+        let documentation: [String.SubSequence]
         let values: [EnumMemberContext]
         let isExtensible: Bool
     }
 
     struct EnumMemberContext {
         let `case`: String
-        let documentation: String?
+        let documentation: [String.SubSequence]
         let string: String
     }
 
@@ -1066,14 +1077,14 @@ extension AwsService {
         let location: String?
     }
 
-    class ValidationContext {
+    class ValidationContext: HBMustacheTransformable {
         let name: String
         let shape: Bool
         let required: Bool
         let reqs: [String: Any]
         let member: ValidationContext?
-        let key: ValidationContext?
-        let value: ValidationContext?
+        let keyValidation: ValidationContext?
+        let valueValidation: ValidationContext?
 
         init(
             name: String,
@@ -1081,17 +1092,29 @@ extension AwsService {
             required: Bool = true,
             reqs: [String: Any] = [:],
             member: ValidationContext? = nil,
-            key: ValidationContext? = nil,
-            value: ValidationContext? = nil
+            keyValidation: ValidationContext? = nil,
+            valueValidation: ValidationContext? = nil
         ) {
             self.name = name
             self.shape = shape
             self.required = required
             self.reqs = reqs
             self.member = member
-            self.key = key
-            self.value = value
+            self.keyValidation = keyValidation
+            self.valueValidation = valueValidation
         }
+
+        func transform(_ name: String) -> Any? {
+             switch name {
+             case "withDictionaryContexts":
+                 if (keyValidation != nil || valueValidation != nil) {
+                     return self
+                 }
+             default:
+                 break
+             }
+             return nil
+         }
     }
 
     struct CodingKeysContext {
@@ -1114,5 +1137,6 @@ extension AwsService {
         let awsShapeMembers: [MemberEncodingContext]
         let codingKeys: [CodingKeysContext]
         let validation: [ValidationContext]
+        let requiresDefaultValidation: Bool
     }
 }

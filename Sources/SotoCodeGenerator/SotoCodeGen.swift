@@ -12,12 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Dispatch
 import Foundation
-import PathKit
+import HummingbirdMustache
 import SotoSmithy
 import SotoSmithyAWS
-import Stencil
 import SwiftFormat
 
 struct SotoCodeGen {
@@ -36,13 +34,13 @@ struct SotoCodeGen {
             noSpaceOperators: ["...", "..<"]
         )
     }
-    let environment: Environment
     let command: SotoCodeGenCommand
+    let library: HBMustacheLibrary
 
-    init(command: SotoCodeGenCommand) {
+    init(command: SotoCodeGenCommand) throws {
         let path = Bundle.module.resourcePath!
-        self.environment = Stencil.Environment(loader: FileSystemLoader(paths: [Path(path)]))
         self.command = command
+        self.library = try .init(directory: path)
         Smithy.registerAWSTraits()
         Smithy.registerTraitTypes(
             SotoInputShapeTrait.self,
@@ -109,34 +107,49 @@ struct SotoCodeGen {
         try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
 
         let apiContext = try service.generateServiceContext()
-        let api = try self.environment.renderTemplate(name: "api.stencil", context: apiContext)
+        let api = self.library.render(apiContext, withTemplate: "api")!
         if try format(api)
             .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_API.swift") {
                 print("Wrote: \(service.serviceName)_API.swift")
         }
+        let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
+        if self.command.output, try self.format(apiAsync).writeIfChanged(
+            toFile: "\(basePath)/\(service.serviceName)_API+async.swift"
+        ) {
+            print("Wrote: \(service.serviceName)_API+async.swift")
+        }
 
         let shapesContext = try service.generateShapesContext()
-        let shapes = try self.environment.renderTemplate(name: "shapes.stencil", context: shapesContext)
-        if try format(shapes)
-            .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_Shapes.swift") {
-                print("Wrote: \(service.serviceName)_Shapes.swift")
+        let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
+        if self.command.output, try self.format(shapes).writeIfChanged(
+            toFile: "\(basePath)/\(service.serviceName)_Shapes.swift"
+        ) {
+            print("Wrote: \(service.serviceName)_Shapes.swift")
         }
 
         let errorContext = try service.generateErrorContext()
         if errorContext["errors"] != nil {
-            let errors = try self.environment.renderTemplate(name: "error.stencil", context: errorContext)
-            if try format(errors)
-                .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_Error.swift") {
-                    print("Wrote: \(service.serviceName)_Error.swift")
+            let errors = self.library.render(errorContext, withTemplate: "error")!
+            if self.command.output, try self.format(errors).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_Error.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_Error.swift")
             }
         }
 
         let paginatorContext = try service.generatePaginatorContext()
         if paginatorContext["paginators"] != nil {
-            let paginators = try self.environment.renderTemplate(name: "paginator.stencil", context: paginatorContext)
-            if try format(paginators)
-                .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_Paginator.swift") {
-                    print("Wrote: \(service.serviceName)_Paginator.swift")
+            let paginators = self.library.render(paginatorContext, withTemplate: "paginator")!
+            if self.command.output, try self.format(paginators).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_Paginator.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_Paginator.swift")
+            }
+            let paginatorsAsync = self.library.render(paginatorContext, withTemplate: "paginator+async")!
+            if self.command.output, try self.format(paginatorsAsync).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_Paginator+async.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_Paginator+async.swift")
             }
         }
         //print("Succesfully Generated \(service.serviceName)")
