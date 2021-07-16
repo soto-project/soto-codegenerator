@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2020 the Soto project authors
+// Copyright (c) 2017-2021 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -563,111 +563,110 @@ struct AwsService {
         }
     }
 
-    func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
-
-        func generateValidationContext(_ shapeId: ShapeId, name: String, required: Bool, container: Bool = false, alreadyProcessed: Set<ShapeId>) -> ValidationContext? {
-            guard !alreadyProcessed.contains(shapeId) else { return nil }
-            guard let shape = model.shape(for: shapeId) else { return nil }
-            guard !shape.hasTrait(type: EnumTrait.self) else { return nil }
-            
-            var requirements: [String: Any] = [:]
-            if let lengthTrait = shape.trait(type: LengthTrait.self) {
-                if let min = lengthTrait.min, min > 0 {
-                    requirements["min"] = min
-                }
-                requirements["max"] = lengthTrait.max
+    func generateValidationContext(_ shapeId: ShapeId, name: String, required: Bool, container: Bool = false, alreadyProcessed: Set<ShapeId>) -> ValidationContext? {
+        guard !alreadyProcessed.contains(shapeId) else { return nil }
+        guard let shape = model.shape(for: shapeId) else { return nil }
+        guard !shape.hasTrait(type: EnumTrait.self) else { return nil }
+        
+        var requirements: [String: Any] = [:]
+        if let lengthTrait = shape.trait(type: LengthTrait.self) {
+            if let min = lengthTrait.min, min > 0 {
+                requirements["min"] = min
             }
-            if let rangeTrait = shape.trait(type: RangeTrait.self) {
-                if shape is FloatShape || shape is DoubleShape || shape is BigDecimalShape {
-                    requirements["min"] = rangeTrait.min
-                    requirements["max"] = rangeTrait.max
-                } else {
-                    requirements["min"] = rangeTrait.min.map { Int64($0) }
-                    requirements["max"] = rangeTrait.max.map { Int64($0) }
-                }
+            requirements["max"] = lengthTrait.max
+        }
+        if let rangeTrait = shape.trait(type: RangeTrait.self) {
+            if shape is FloatShape || shape is DoubleShape || shape is BigDecimalShape {
+                requirements["min"] = rangeTrait.min
+                requirements["max"] = rangeTrait.max
+            } else {
+                requirements["min"] = rangeTrait.min.map { Int64($0) }
+                requirements["max"] = rangeTrait.max.map { Int64($0) }
             }
-            if let patternTrait = shape.trait(type: PatternTrait.self) {
-                requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
-            }
-            
-            var listMember: MemberShape? = nil
-            if let list = shape as? ListShape {
-                listMember = list.member
-            } else if let set = shape as? SetShape {
-                listMember = set.member
-            }
-            if let listMember = listMember {
-                // validation code doesn't support containers inside containers. Only service affected by this is SSM
-                if !container {
-                    if let memberValidationContext = generateValidationContext(
-                        listMember.target,
-                        name: name,
-                        required: required,
-                        container: true,
-                        alreadyProcessed: alreadyProcessed
-                    ) {
-                        return ValidationContext(
-                            name: name.toSwiftVariableCase(),
-                            required: required,
-                            reqs: requirements,
-                            member: memberValidationContext
-                        )
-                    }
-                }
-            }
-            
-            if let map = shape as? MapShape {
-                // validation code doesn't support containers inside containers. Only service affected by this is SSM
-                if !container {
-                    let keyValidationContext = generateValidationContext(
-                        map.key.target,
-                        name: name,
-                        required: required,
-                        container: true,
-                        alreadyProcessed: alreadyProcessed
-                    )
-                    let valueValidationContext = generateValidationContext(
-                        map.value.target,
-                        name: name,
-                        required: required,
-                        container: true,
-                        alreadyProcessed: alreadyProcessed
-                    )
-                    if keyValidationContext != nil || valueValidationContext != nil {
-                        return ValidationContext(
-                            name: name.toSwiftVariableCase(),
-                            required: required,
-                            reqs: requirements,
-                            keyValidation: keyValidationContext,
-                            valueValidation: valueValidationContext
-                        )
-                    }
-                }
-            }
-            
-            if let collection = shape as? CollectionShape, let members = collection.members {
-                for member in members {
-                    let memberRequired = member.value.hasTrait(type: RequiredTrait.self)
-                    var alreadyProcessed2 = alreadyProcessed
-                    alreadyProcessed2.insert(shapeId)
-                    if generateValidationContext(
-                        member.value.target,
-                        name: member.key,
-                        required: memberRequired,
-                        container: false,
-                        alreadyProcessed: alreadyProcessed2
-                    ) != nil {
-                        return ValidationContext(name: name.toSwiftVariableCase(), shape: true, required: required)
-                    }
-                }
-
-            }
-            if requirements.count > 0 {
-                return ValidationContext(name: name.toSwiftVariableCase(), required: required, reqs: requirements)
-            }
-            return nil
+        }
+        if let patternTrait = shape.trait(type: PatternTrait.self) {
+            requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
         }
         
+        var listMember: MemberShape? = nil
+        if let list = shape as? ListShape {
+            listMember = list.member
+        } else if let set = shape as? SetShape {
+            listMember = set.member
+        }
+        if let listMember = listMember {
+            // validation code doesn't support containers inside containers. Only service affected by this is SSM
+            if !container {
+                if let memberValidationContext = generateValidationContext(
+                    listMember.target,
+                    name: name,
+                    required: required,
+                    container: true,
+                    alreadyProcessed: alreadyProcessed
+                ) {
+                    return ValidationContext(
+                        name: name.toSwiftVariableCase(),
+                        required: required,
+                        reqs: requirements,
+                        member: memberValidationContext
+                    )
+                }
+            }
+        }
+        
+        if let map = shape as? MapShape {
+            // validation code doesn't support containers inside containers. Only service affected by this is SSM
+            if !container {
+                let keyValidationContext = generateValidationContext(
+                    map.key.target,
+                    name: name,
+                    required: required,
+                    container: true,
+                    alreadyProcessed: alreadyProcessed
+                )
+                let valueValidationContext = generateValidationContext(
+                    map.value.target,
+                    name: name,
+                    required: required,
+                    container: true,
+                    alreadyProcessed: alreadyProcessed
+                )
+                if keyValidationContext != nil || valueValidationContext != nil {
+                    return ValidationContext(
+                        name: name.toSwiftVariableCase(),
+                        required: required,
+                        reqs: requirements,
+                        keyValidation: keyValidationContext,
+                        valueValidation: valueValidationContext
+                    )
+                }
+            }
+        }
+        
+        if let collection = shape as? CollectionShape, let members = collection.members {
+            for member in members {
+                let memberRequired = member.value.hasTrait(type: RequiredTrait.self)
+                var alreadyProcessed2 = alreadyProcessed
+                alreadyProcessed2.insert(shapeId)
+                if generateValidationContext(
+                    member.value.target,
+                    name: member.key,
+                    required: memberRequired,
+                    container: false,
+                    alreadyProcessed: alreadyProcessed2
+                ) != nil {
+                    return ValidationContext(name: name.toSwiftVariableCase(), shape: true, required: required)
+                }
+            }
+
+        }
+        if requirements.count > 0 {
+            return ValidationContext(name: name.toSwiftVariableCase(), required: required, reqs: requirements)
+        }
+        return nil
+    }
+    
+    func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
         let required = member.hasTrait(type: RequiredTrait.self)
         return generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
     }
@@ -1138,5 +1137,28 @@ extension AwsService {
         let codingKeys: [CodingKeysContext]
         let validation: [ValidationContext]
         let requiresDefaultValidation: Bool
+    }
+    
+    struct WaiterContext {
+        let waiterName: String
+        let operation: OperationContext
+        let inputKey: String?
+        let acceptors: [AcceptorContext]
+        let minDelayTime: Int?
+        let maxDelayTime: Int?
+    }
+
+    struct AcceptorContext {
+        let state: String
+        let matcher: MatcherContext
+    }
+
+    enum MatcherContext {
+        case jmesPath(path: String, expected: String)
+        case jmesAnyPath(path: String, expected: String)
+        case jmesAllPath(path: String, expected: String)
+        case error(String)
+        case errorStatus(Int)
+        case success(Int) // Success requires a dummy associated value, so a mustache context is created for the `MatcherContext`
     }
 }

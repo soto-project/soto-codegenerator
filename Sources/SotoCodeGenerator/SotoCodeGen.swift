@@ -152,6 +152,16 @@ struct SotoCodeGen {
                 print("Wrote: \(service.serviceName)_Paginator+async.swift")
             }
         }
+
+        let waiterContexts = try service.generateWaiterContexts()
+        if waiterContexts["waiters"] != nil {
+            let waiters = self.library.render(waiterContexts, withTemplate: "waiter")!
+            if self.command.output, try self.format(waiters).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_Waiter.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_Waiter.swift")
+            }
+        }
         //print("Succesfully Generated \(service.serviceName)")
     }
 
