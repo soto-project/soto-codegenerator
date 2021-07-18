@@ -25,9 +25,6 @@ extension Model {
             "CloudFront" : [
                 "com.amazonaws.cloudfront#HttpVersion": EditEnumPatch(add: [.init(value: "HTTP1_1"), .init(value: "HTTP2")], remove: ["http1.1", "http2"]),
             ],
-            "CodeGuruProfiler": [
-                "com.amazonaws.codeguruprofiler#Channels": EditShapePatch { (shape: SetShape) in return ListShape(traits: shape.traits, member: shape.member) }
-            ],
             /*"CloudWatch": [
                 // Patch error shape to avoid warning in generated code. Both errors have the same code "ResourceNotFound"
                 ReplacePatch(PatchKeyPath2(\.operations["GetDashboard"], \.errors[1].shapeName), value: "ResourceNotFoundException", originalValue: "DashboardNotFoundError"),

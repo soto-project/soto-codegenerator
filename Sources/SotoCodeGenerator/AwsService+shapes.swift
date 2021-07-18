@@ -36,15 +36,21 @@ extension AwsService {
         // generate structures
         let structures = model.select(type: StructureShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for structure in structures {
-            guard let shapeContext = self.generateStructureContext(structure.value, shapeId: structure.key) else { continue }
+            guard let shapeContext = self.generateStructureContext(structure.value, shapeId: structure.key, typeIsEnum: false) else { continue }
             shapeContexts.append(["struct": shapeContext])
         }
 
         // generate unions
-        let unions = model.select(type: UnionShape.self).map { (key: $0.key.shapeName, value: $0) }.sorted { $0.key < $1.key }
+        let unions = model.select(type: UnionShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for union in unions {
-            guard let shapeContext = self.generateStructureContext(union.value.value, shapeId: union.value.key) else { continue }
-            shapeContexts.append(["enumWithValues": shapeContext])
+            // if union has one member then treat type as struct
+            let typeIsEnum = union.value.members?.count == 1 ? false : true
+            guard let shapeContext = self.generateStructureContext(union.value, shapeId: union.key, typeIsEnum: typeIsEnum) else { continue }
+            if typeIsEnum {
+                shapeContexts.append(["enumWithValues": shapeContext])
+            } else {
+                shapeContexts.append(["struct": shapeContext])
+            }
         }
 
         if shapeContexts.count > 0 {
@@ -91,7 +97,7 @@ extension AwsService {
     }
 
     /// Generate the context information for outputting a shape
-    func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId) -> StructureContext? {
+    func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId, typeIsEnum: Bool) -> StructureContext? {
         let shapeName = shapeId.shapeName
         var shapePayloadOptions: [String] = []
         var xmlNamespace: String?
@@ -99,7 +105,7 @@ extension AwsService {
         
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payloadMember != nil) else { return nil }
         
-        let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: shape is UnionShape)
+        let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: typeIsEnum)
         
         // get payload options
         if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
