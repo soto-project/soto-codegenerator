@@ -198,9 +198,10 @@ struct AwsService {
         
         var errorContexts: [ErrorContext] = []
         for error in errorShapes {
-            let name: String = error.key.shapeName
+            let queryError = error.value.trait(type: AwsProtocolsAwsQueryErrorTrait.self)
+            let name: String = queryError?.code ?? error.key.shapeName
             let errorContext = ErrorContext(
-                enum: name.toSwiftVariableCase(),
+                enum: error.key.shapeName.toSwiftVariableCase(),
                 string: name,
                 comment: processDocs(from: error.value)
             )
