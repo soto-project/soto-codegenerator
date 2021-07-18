@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2020 the Soto project authors
+// Copyright (c) 2017-2021 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -19,6 +19,11 @@ import SotoSmithyAWS
 import SwiftFormat
 
 struct SotoCodeGen {
+    struct FileError: Error {
+        let filename: String
+        let error: Error
+    }
+    
     enum SwiftFormatConfig {
         static let disabledRules = FormatRules.disabledByDefault + ["redundantReturn", "redundantBackticks", "trailingCommas", "extensionAccessControl"]
         static let ruleNames = Set(FormatRules.byName.keys).subtracting(disabledRules)
@@ -67,27 +72,35 @@ struct SotoCodeGen {
         return try JSONDecoder().decode(Endpoints.self, from: data)
     }
 
-    func loadModelJSON() throws -> [SotoSmithy.Model] {
+    func loadModelJSON() throws -> [String: SotoSmithy.Model] {
         let modelFiles = self.getModelFiles()
 
-        return try modelFiles.map {
-            let data = try Data(contentsOf: URL(fileURLWithPath: $0))
-            let model = try Smithy().decodeAST(from: data)
-            try model.validate()
-            return model
-        }
+        return try .init(modelFiles.map {
+            do {
+                let data = try Data(contentsOf: URL(fileURLWithPath: $0))
+                let model = try Smithy().decodeAST(from: data)
+                try model.validate()
+                return (key: $0, value: model)
+            } catch {
+                throw FileError(filename: $0, error: error)
+            }
+        }) { left, right in left }
     }
 
-    func loadSmithy() throws -> [SotoSmithy.Model] {
+    func loadSmithy() throws -> [String: SotoSmithy.Model] {
         let modelFiles = self.getSmithyFiles()
 
-        return try modelFiles.map {
-            let data = try Data(contentsOf: URL(fileURLWithPath: $0))
-            let string = String(decoding: data, as: Unicode.UTF8.self)
-            let model = try Smithy().parse(string)
-            try model.validate()
-            return model
-        }
+        return try .init(modelFiles.map {
+            do {
+                let data = try Data(contentsOf: URL(fileURLWithPath: $0))
+                let string = String(decoding: data, as: Unicode.UTF8.self)
+                let model = try Smithy().parse(string)
+                try model.validate()
+                return (key: $0, value: model)
+            } catch {
+                throw FileError(filename: $0, error: error)
+            }
+        }) { left, right in left }
     }
 
     /// Run swift format on String
@@ -102,7 +115,7 @@ struct SotoCodeGen {
     /// Generate service files from AWSService
     /// - Parameter codeGenerator: service generated from JSON
     func generateFiles(with service: AwsService) throws {
-
+        let exportAsync = false
         let basePath = "\(command.outputFolder)/\(service.serviceName)/"
         try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
 
@@ -112,13 +125,15 @@ struct SotoCodeGen {
             .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_API.swift") {
                 print("Wrote: \(service.serviceName)_API.swift")
         }
-        let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
-        if self.command.output, try self.format(apiAsync).writeIfChanged(
-            toFile: "\(basePath)/\(service.serviceName)_API+async.swift"
-        ) {
-            print("Wrote: \(service.serviceName)_API+async.swift")
+        if exportAsync {
+            let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
+            if self.command.output, try self.format(apiAsync).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_API+async.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_API+async.swift")
+            }
         }
-
+        
         let shapesContext = try service.generateShapesContext()
         let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
         if self.command.output, try self.format(shapes).writeIfChanged(
@@ -145,11 +160,13 @@ struct SotoCodeGen {
             ) {
                 print("Wrote: \(service.serviceName)_Paginator.swift")
             }
-            let paginatorsAsync = self.library.render(paginatorContext, withTemplate: "paginator+async")!
-            if self.command.output, try self.format(paginatorsAsync).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_Paginator+async.swift"
-            ) {
-                print("Wrote: \(service.serviceName)_Paginator+async.swift")
+            if exportAsync {
+                let paginatorsAsync = self.library.render(paginatorContext, withTemplate: "paginator+async")!
+                if self.command.output, try self.format(paginatorsAsync).writeIfChanged(
+                    toFile: "\(basePath)/\(service.serviceName)_Paginator+async.swift"
+                ) {
+                    print("Wrote: \(service.serviceName)_Paginator+async.swift")
+                }
             }
         }
 
@@ -170,7 +187,7 @@ struct SotoCodeGen {
 
         // load JSON
         let endpoints = try loadEndpointJSON()
-        let models: [SotoSmithy.Model]
+        let models: [String: SotoSmithy.Model]
         if command.smithy {
             models = try loadSmithy()
         } else {
@@ -184,12 +201,12 @@ struct SotoCodeGen {
             DispatchQueue.global().async {
                 defer { group.leave() }
                 do {
-                    let service = try AwsService(model, endpoints: endpoints, outputHTMLComments: command.htmlComments)
+                    let service = try AwsService(model.value, endpoints: endpoints, outputHTMLComments: command.htmlComments)
                     if self.command.output {
                         try self.generateFiles(with: service)
                     }
                 } catch {
-                    print("\(error)")
+                    print("\(model.key): \(error)")
                     exit(1)
                 }
             }
