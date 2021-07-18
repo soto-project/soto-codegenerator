@@ -101,7 +101,8 @@ extension MemberShape {
         } else if let listShape = memberShape as? ListShape {
             return "[\(listShape.member.output(model))]"
         } else if let setShape = memberShape as? SetShape {
-            return "Set<\(setShape.member.output(model))>"
+            // Output sets as Arrays. Need to verify members are hashable before outputting as a Set
+            return "[\(setShape.member.output(model))]"
         } else if let mapShape = memberShape as? MapShape {
             return "[\(mapShape.key.output(model)): \(mapShape.value.output(model))]"
         } else if let sotoMemberShape = memberShape as? SotoOutput {
