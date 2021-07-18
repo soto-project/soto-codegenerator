@@ -732,6 +732,8 @@ extension AwsService {
         let acceptors: [AcceptorContext]
         let minDelayTime: Int?
         let maxDelayTime: Int?
+        let deprecated: Bool
+        let comment: [String.SubSequence]
     }
 
     struct AcceptorContext {

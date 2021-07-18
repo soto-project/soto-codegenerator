@@ -9,6 +9,12 @@ import SotoCore
 
 extension {{name}} {
 {{#waiters}}
+{{#comment}}
+    /// {{.}}
+{{/comment}}
+{{#deprecated}}
+    @available(*, deprecated)
+{{/deprecated}}
     public func waitUntil{{waiterName}}(
         _ input: {{operation.inputShape}},
         maxWaitTime: TimeAmount? = nil,

@@ -52,7 +52,9 @@ extension AwsService {
             inputKey: operationContext.inputShape,
             acceptors: acceptorContexts,
             minDelayTime: waiter.minDelay,
-            maxDelayTime: waiter.maxDelay
+            maxDelayTime: waiter.maxDelay,
+            deprecated: waiter.deprecated ?? false,
+            comment: self.processDocs(waiter.documentation)
         )
     }
     
