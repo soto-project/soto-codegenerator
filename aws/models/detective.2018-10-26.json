@@ -194,6 +194,12 @@
         "com.amazonaws.detective#Boolean": {
             "type": "boolean"
         },
+        "com.amazonaws.detective#ByteValue": {
+            "type": "long",
+            "traits": {
+                "smithy.api#box": {}
+            }
+        },
         "com.amazonaws.detective#ConflictException": {
             "type": "structure",
             "members": {
@@ -241,7 +247,7 @@
                 "Tags": {
                     "target": "com.amazonaws.detective#TagMap",
                     "traits": {
-                        "smithy.api#documentation": "<p>The tags to assign to the new behavior graph. For each tag, you provide the tag key and\n         the tag value.</p>"
+                        "smithy.api#documentation": "<p>The tags to assign to the new behavior graph. You can add up to 50 tags. For each tag,\n         you provide the tag key and the tag value. Each tag key can contain up to 128 characters.\n         Each tag value can contain up to 256 characters.</p>"
                     }
                 }
             }
@@ -313,7 +319,7 @@
                 "Accounts": {
                     "target": "com.amazonaws.detective#AccountList",
                     "traits": {
-                        "smithy.api#documentation": "<p>The list of AWS accounts to invite to become member accounts in the behavior graph.\n         For each invited account, the account list contains the account identifier and the AWS\n         account root user email address.</p>",
+                        "smithy.api#documentation": "<p>The list of AWS accounts to invite to become member accounts in the behavior graph.\n         You can invite up to 50 accounts at a time. For each invited account, the account list\n         contains the account identifier and the AWS account root user email address.</p>",
                         "smithy.api#required": {}
                     }
                 }
@@ -417,7 +423,7 @@
                 "AccountIds": {
                     "target": "com.amazonaws.detective#AccountIdList",
                     "traits": {
-                        "smithy.api#documentation": "<p>The list of AWS account identifiers for the member accounts to delete from the\n         behavior graph.</p>",
+                        "smithy.api#documentation": "<p>The list of AWS account identifiers for the member accounts to delete from the\n         behavior graph. You can delete up to 50 member accounts at a time.</p>",
                         "smithy.api#required": {}
                     }
                 }
@@ -543,7 +549,7 @@
                 "AccountIds": {
                     "target": "com.amazonaws.detective#AccountIdList",
                     "traits": {
-                        "smithy.api#documentation": "<p>The list of AWS account identifiers for the member account for which to return member\n         details.</p>\n         <p>You cannot use <code>GetMembers</code> to retrieve information about member accounts\n         that were removed from the behavior graph.</p>",
+                        "smithy.api#documentation": "<p>The list of AWS account identifiers for the member account for which to return member\n         details. You can request details for up to 50 member accounts at a time.</p>\n         <p>You cannot use <code>GetMembers</code> to retrieve information about member accounts\n         that were removed from the behavior graph.</p>",
                         "smithy.api#required": {}
                     }
                 }
@@ -860,7 +866,7 @@
                 "Tags": {
                     "target": "com.amazonaws.detective#TagMap",
                     "traits": {
-                        "smithy.api#documentation": "<p>The tag values that are assigned to the behavior graph.</p>"
+                        "smithy.api#documentation": "<p>The tag values that are assigned to the behavior graph. The request returns up to 50 tag\n         values.</p>"
                     }
                 }
             }
@@ -890,9 +896,9 @@
                     "target": "com.amazonaws.detective#AccountId",
                     "traits": {
                         "smithy.api#deprecated": {
-                            "message": "This property is deprecated, use AdministratorId instead."
+                            "message": "This property is deprecated. Use AdministratorId instead."
                         },
-                        "smithy.api#documentation": "<p>Deprecated. Instead of <code>MasterId</code>, use <code>AdministratorId</code>.</p>\n         <p>The AWS account identifier of the administrator account for the behavior graph.</p>"
+                        "smithy.api#documentation": "<p>The AWS account identifier of the administrator account for the behavior graph.</p>"
                     }
                 },
                 "AdministratorId": {
@@ -925,15 +931,33 @@
                         "smithy.api#documentation": "<p>The date and time that the member account was last updated. The value is in milliseconds\n         since the epoch.</p>"
                     }
                 },
+                "VolumeUsageInBytes": {
+                    "target": "com.amazonaws.detective#ByteValue",
+                    "traits": {
+                        "smithy.api#documentation": "<p>The data volume in bytes per day for the member account.</p>"
+                    }
+                },
+                "VolumeUsageUpdatedTime": {
+                    "target": "com.amazonaws.detective#Timestamp",
+                    "traits": {
+                        "smithy.api#documentation": "<p>The data and time when the member account data volume was last updated.</p>"
+                    }
+                },
                 "PercentOfGraphUtilization": {
                     "target": "com.amazonaws.detective#Percentage",
                     "traits": {
+                        "smithy.api#deprecated": {
+                            "message": "This property is deprecated. Use VolumeUsageInBytes instead."
+                        },
                         "smithy.api#documentation": "<p>The member account data volume as a percentage of the maximum allowed data volume. 0\n         indicates 0 percent, and 100 indicates 100 percent.</p>\n         <p>Note that this is not the percentage of the behavior graph data volume.</p>\n         <p>For example, the data volume for the behavior graph is 80 GB per day. The maximum data\n         volume is 160 GB per day. If the data volume for the member account is 40 GB per day, then\n            <code>PercentOfGraphUtilization</code> is 25. It represents 25% of the maximum allowed\n         data volume. </p>"
                     }
                 },
                 "PercentOfGraphUtilizationUpdatedTime": {
                     "target": "com.amazonaws.detective#Timestamp",
                     "traits": {
+                        "smithy.api#deprecated": {
+                            "message": "This property is deprecated. Use VolumeUsageUpdatedTime instead."
+                        },
                         "smithy.api#documentation": "<p>The date and time when the graph utilization percentage was last updated.</p>"
                     }
                 }
@@ -1210,7 +1234,7 @@
                 "Tags": {
                     "target": "com.amazonaws.detective#TagMap",
                     "traits": {
-                        "smithy.api#documentation": "<p>The tag values to assign to the behavior graph.</p>",
+                        "smithy.api#documentation": "<p>The tags to assign to the behavior graph. You can add up to 50 tags. For each tag, you\n         provide the tag key and the tag value. Each tag key can contain up to 128 characters. Each\n         tag value can contain up to 256 characters.</p>",
                         "smithy.api#required": {}
                     }
                 }
@@ -1306,7 +1330,7 @@
                 "TagKeys": {
                     "target": "com.amazonaws.detective#TagKeyList",
                     "traits": {
-                        "smithy.api#documentation": "<p>The tag keys of the tags to remove from the behavior graph.</p>",
+                        "smithy.api#documentation": "<p>The tag keys of the tags to remove from the behavior graph. You can remove up to 50 tags\n         at a time.</p>",
                         "smithy.api#httpQuery": "tagKeys",
                         "smithy.api#required": {}
                     }

@@ -37,6 +37,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "APICallRateForCustomerExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The customer has exceeded the allowed rate of API calls.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -60,7 +64,7 @@
         "com.amazonaws.elasticache#AccessString": {
             "type": "string",
             "traits": {
-                "smithy.api#pattern": ".*\\S.*"
+                "smithy.api#pattern": "\\S"
             }
         },
         "com.amazonaws.elasticache#AddTagsToResource": {
@@ -142,7 +146,7 @@
                     "min": 1,
                     "max": 4
                 },
-                "smithy.api#pattern": "\\d+"
+                "smithy.api#pattern": "^\\d+$"
             }
         },
         "com.amazonaws.elasticache#AllowedNodeTypeModificationsMessage": {
@@ -461,6 +465,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "AuthorizationAlreadyExists",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The specified Amazon EC2 security group is already authorized for the specified cache security group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -474,6 +482,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "AuthorizationNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The specified Amazon EC2 security group is not authorized for the specified cache security group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -739,7 +751,7 @@
                 "NumCacheNodes": {
                     "target": "com.amazonaws.elasticache#IntegerOptional",
                     "traits": {
-                        "smithy.api#documentation": "<p>The number of cache nodes in the cluster.</p>\n        <p>For clusters running Redis, this value must be 1. For clusters running Memcached, \n            this value must be between 1 and 20.</p>"
+                        "smithy.api#documentation": "<p>The number of cache nodes in the cluster.</p>\n        <p>For clusters running Redis, this value must be 1. For clusters running Memcached, \n            this value must be between 1 and 40.</p>"
                     }
                 },
                 "PreferredAvailabilityZone": {
@@ -858,6 +870,18 @@
                     "traits": {
                         "smithy.api#documentation": "<p>The ARN (Amazon Resource Name) of the cache cluster.</p>"
                     }
+                },
+                "ReplicationGroupLogDeliveryEnabled": {
+                    "target": "com.amazonaws.elasticache#Boolean",
+                    "traits": {
+                        "smithy.api#documentation": "<p>A boolean value indicating whether log delivery is enabled for the replication group.</p>"
+                    }
+                },
+                "LogDeliveryConfigurations": {
+                    "target": "com.amazonaws.elasticache#LogDeliveryConfigurationList",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Returns the destination, format and type of the logs.</p>"
+                    }
                 }
             },
             "traits": {
@@ -872,6 +896,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheClusterAlreadyExists",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>You already have a cluster with the given identifier.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -926,6 +954,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheClusterNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The requested cluster ID does not refer to an existing cluster.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -1283,6 +1315,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheParameterGroupAlreadyExists",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>A cache parameter group with the requested name already exists.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1345,6 +1381,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheParameterGroupNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The requested cache parameter group name does not refer to an existing cache parameter group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -1358,6 +1398,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheParameterGroupQuotaExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the maximum number of cache security groups.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1455,6 +1499,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheSecurityGroupAlreadyExists",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>A cache security group with the specified name already exists.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1526,6 +1574,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheSecurityGroupNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The requested cache security group name does not refer to an existing cache security group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -1539,6 +1591,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "QuotaExceeded.CacheSecurityGroup",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the allowed number of cache security groups.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1599,6 +1655,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheSubnetGroupAlreadyExists",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The requested cache subnet group name is already in use by an existing cache subnet group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1612,6 +1672,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheSubnetGroupInUse",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The requested cache subnet group is currently in use.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1645,6 +1709,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheSubnetGroupNotFoundFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The requested cache subnet group name does not refer to an existing cache subnet group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1658,6 +1726,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheSubnetGroupQuotaExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the allowed number of cache subnet groups.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1680,6 +1752,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "CacheSubnetQuotaExceededFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the allowed number of subnets in a cache subnet group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1700,6 +1776,20 @@
                 ]
             }
         },
+        "com.amazonaws.elasticache#CloudWatchLogsDestinationDetails": {
+            "type": "structure",
+            "members": {
+                "LogGroup": {
+                    "target": "com.amazonaws.elasticache#String",
+                    "traits": {
+                        "smithy.api#documentation": "<p>The name of the CloudWatch Logs log group.</p>"
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#documentation": "<p>The configuration details of the CloudWatch Logs destination.</p>"
+            }
+        },
         "com.amazonaws.elasticache#ClusterIdList": {
             "type": "list",
             "member": {
@@ -1717,6 +1807,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ClusterQuotaForCustomerExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the allowed number of clusters per customer.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -1981,7 +2075,7 @@
                 "NumCacheNodes": {
                     "target": "com.amazonaws.elasticache#IntegerOptional",
                     "traits": {
-                        "smithy.api#documentation": "<p>The initial number of cache nodes that the cluster has.</p>\n        <p>For clusters running Redis, this value must be 1. \n    For clusters running Memcached, this value must be between 1 and 20.</p>\n        <p>If you need more than 20 nodes for your Memcached cluster, \n            please fill out the ElastiCache Limit Increase Request form at <a href=\"http://aws.amazon.com/contact-us/elasticache-node-limit-request/\">http://aws.amazon.com/contact-us/elasticache-node-limit-request/</a>.</p>"
+                        "smithy.api#documentation": "<p>The initial number of cache nodes that the cluster has.</p>\n        <p>For clusters running Redis, this value must be 1. \n    For clusters running Memcached, this value must be between 1 and 40.</p>\n        <p>If you need more than 40 nodes for your Memcached cluster, \n            please fill out the ElastiCache Limit Increase Request form at <a href=\"http://aws.amazon.com/contact-us/elasticache-node-limit-request/\">http://aws.amazon.com/contact-us/elasticache-node-limit-request/</a>.</p>"
                     }
                 },
                 "CacheNodeType": {
@@ -2102,6 +2196,12 @@
                     "target": "com.amazonaws.elasticache#PreferredOutpostArnList",
                     "traits": {
                         "smithy.api#documentation": "<p>The outpost ARNs in which the cache cluster is created.</p>"
+                    }
+                },
+                "LogDeliveryConfigurations": {
+                    "target": "com.amazonaws.elasticache#LogDeliveryConfigurationRequestList",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Specifies the destination, format and type of the logs. </p>"
                     }
                 }
             },
@@ -2659,7 +2759,13 @@
                 "UserGroupIds": {
                     "target": "com.amazonaws.elasticache#UserGroupIdListInput",
                     "traits": {
-                        "smithy.api#documentation": "<p>The list of user groups to associate with the replication group.</p>"
+                        "smithy.api#documentation": "<p>The user group to associate with the replication group.</p>"
+                    }
+                },
+                "LogDeliveryConfigurations": {
+                    "target": "com.amazonaws.elasticache#LogDeliveryConfigurationRequestList",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Specifies the destination, format and type of the logs.</p>"
                     }
                 }
             },
@@ -2987,13 +3093,13 @@
                 "GlobalNodeGroupsToRemove": {
                     "target": "com.amazonaws.elasticache#GlobalNodeGroupIdList",
                     "traits": {
-                        "smithy.api#documentation": "<p>If the value of NodeGroupCount is less than the current number of node groups (shards), then either NodeGroupsToRemove or NodeGroupsToRetain is required. NodeGroupsToRemove is a list of NodeGroupIds to remove from the cluster.\n            \n            ElastiCache for Redis will attempt to remove all node groups listed by NodeGroupsToRemove from the cluster. </p>"
+                        "smithy.api#documentation": "<p>If the value of NodeGroupCount is less than the current number of node groups (shards), then either NodeGroupsToRemove or NodeGroupsToRetain is required. GlobalNodeGroupsToRemove is a list of NodeGroupIds to remove from the cluster.\n            \n            ElastiCache for Redis will attempt to remove all node groups listed by GlobalNodeGroupsToRemove from the cluster. </p>"
                     }
                 },
                 "GlobalNodeGroupsToRetain": {
                     "target": "com.amazonaws.elasticache#GlobalNodeGroupIdList",
                     "traits": {
-                        "smithy.api#documentation": "<p>If the value of NodeGroupCount is less than the current number of node groups (shards), then either NodeGroupsToRemove or NodeGroupsToRetain is required. NodeGroupsToRemove is a list of NodeGroupIds to remove from the cluster.\n            \n            ElastiCache for Redis will attempt to remove all node groups listed by NodeGroupsToRemove from the cluster. </p>"
+                        "smithy.api#documentation": "<p>If the value of NodeGroupCount is less than the current number of node groups (shards), then either NodeGroupsToRemove or NodeGroupsToRetain is required. GlobalNodeGroupsToRetain is a list of NodeGroupIds to retain from the cluster. ElastiCache for Redis will attempt to retain all node groups listed by GlobalNodeGroupsToRetain from the cluster. \n            \n\n             </p>"
                     }
                 },
                 "ApplyImmediately": {
@@ -3116,6 +3222,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "DefaultUserAssociatedToUserGroup",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p></p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -3129,6 +3239,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "DefaultUserRequired",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>You must add default user to a user group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -4842,6 +4956,41 @@
                 }
             }
         },
+        "com.amazonaws.elasticache#DestinationDetails": {
+            "type": "structure",
+            "members": {
+                "CloudWatchLogsDetails": {
+                    "target": "com.amazonaws.elasticache#CloudWatchLogsDestinationDetails",
+                    "traits": {
+                        "smithy.api#documentation": "<p>The configuration details of the CloudWatch Logs destination.</p>"
+                    }
+                },
+                "KinesisFirehoseDetails": {
+                    "target": "com.amazonaws.elasticache#KinesisFirehoseDestinationDetails",
+                    "traits": {
+                        "smithy.api#documentation": "<p>The configuration details of the Kinesis Data Firehose destination.</p>"
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#documentation": "<p>Configuration details of either a CloudWatch Logs destination or Kinesis Data Firehose destination.</p>"
+            }
+        },
+        "com.amazonaws.elasticache#DestinationType": {
+            "type": "string",
+            "traits": {
+                "smithy.api#enum": [
+                    {
+                        "value": "cloudwatch-logs",
+                        "name": "CloudWatchLogs"
+                    },
+                    {
+                        "value": "kinesis-firehose",
+                        "name": "KinesisFirehose"
+                    }
+                ]
+            }
+        },
         "com.amazonaws.elasticache#DisassociateGlobalReplicationGroup": {
             "type": "operation",
             "input": {
@@ -4913,6 +5062,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "DuplicateUserName",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>A user with this username already exists.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5008,7 +5161,7 @@
         "com.amazonaws.elasticache#EngineType": {
             "type": "string",
             "traits": {
-                "smithy.api#pattern": "[a-zA-Z]*"
+                "smithy.api#pattern": "^[a-zA-Z]*$"
             }
         },
         "com.amazonaws.elasticache#Event": {
@@ -5166,13 +5319,13 @@
         "com.amazonaws.elasticache#FilterName": {
             "type": "string",
             "traits": {
-                "smithy.api#pattern": ".*\\S.*"
+                "smithy.api#pattern": "\\S"
             }
         },
         "com.amazonaws.elasticache#FilterValue": {
             "type": "string",
             "traits": {
-                "smithy.api#pattern": ".*\\S.*"
+                "smithy.api#pattern": "\\S"
             }
         },
         "com.amazonaws.elasticache#FilterValueList": {
@@ -5318,6 +5471,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "GlobalReplicationGroupAlreadyExistsFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The Global datastore name already exists.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5407,6 +5564,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "GlobalReplicationGroupNotFoundFault",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The Global datastore does not exist</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -5572,6 +5733,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InsufficientCacheClusterCapacity",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The requested cache node type is not available in the specified Availability Zone.\n            For more information, see <a href=\"http://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/ErrorMessages.html#ErrorMessages.INSUFFICIENT_CACHE_CLUSTER_CAPACITY\">InsufficientCacheClusterCapacity</a> in the ElastiCache User Guide.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5594,6 +5759,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidARN",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The requested Amazon Resource Name (ARN) does not refer to an existing resource.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5607,6 +5776,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidCacheClusterState",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The requested cluster is not in the <code>available</code> state.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5620,6 +5793,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidCacheParameterGroupState",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The current state of the cache parameter group does not allow the requested operation to occur.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5633,6 +5810,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidCacheSecurityGroupState",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The current state of the cache security group does not allow deletion.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5646,6 +5827,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidGlobalReplicationGroupState",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The Global datastore is not available or in primary-only state.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5659,6 +5844,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidKMSKeyFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The KMS key supplied is not valid.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5675,6 +5864,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidParameterCombination",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>Two or more incompatible parameters were specified.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5691,6 +5884,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidParameterValue",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The value for a parameter is invalid.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5704,6 +5901,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidReplicationGroupState",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The requested replication group is not in the <code>available</code> state.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5717,6 +5918,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidSnapshotState",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The current state of the snapshot does not allow the requested operation to occur.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5730,6 +5935,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidSubnet",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>An invalid subnet identifier was specified.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5743,6 +5952,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidUserGroupState",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The user group is not in an active state.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5756,6 +5969,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidUserState",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The user is not in active state.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5769,6 +5986,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "InvalidVPCNetworkStateFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The VPC network is in an invalid state.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -5778,6 +5999,20 @@
             "type": "list",
             "member": {
                 "target": "com.amazonaws.elasticache#String"
+            }
+        },
+        "com.amazonaws.elasticache#KinesisFirehoseDestinationDetails": {
+            "type": "structure",
+            "members": {
+                "DeliveryStream": {
+                    "target": "com.amazonaws.elasticache#String",
+                    "traits": {
+                        "smithy.api#documentation": "<p>The name of the Kinesis Data Firehose delivery stream.</p>"
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#documentation": "<p>The configuration details of the Kinesis Data Firehose destination.</p>"
             }
         },
         "com.amazonaws.elasticache#ListAllowedNodeTypeModifications": {
@@ -5888,6 +6123,159 @@
                 "smithy.api#documentation": "<p>The input parameters for the <code>ListTagsForResource</code> operation.</p>"
             }
         },
+        "com.amazonaws.elasticache#LogDeliveryConfiguration": {
+            "type": "structure",
+            "members": {
+                "LogType": {
+                    "target": "com.amazonaws.elasticache#LogType",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Refers to <a href=\"https://redis.io/commands/slowlog\">slow-log</a>.</p>"
+                    }
+                },
+                "DestinationType": {
+                    "target": "com.amazonaws.elasticache#DestinationType",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Returns the destination type, either <code>cloudwatch-logs</code> or <code>kinesis-firehose</code>.</p>"
+                    }
+                },
+                "DestinationDetails": {
+                    "target": "com.amazonaws.elasticache#DestinationDetails",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Configuration details of either a CloudWatch Logs destination or Kinesis Data Firehose destination.</p>"
+                    }
+                },
+                "LogFormat": {
+                    "target": "com.amazonaws.elasticache#LogFormat",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Returns the log format, either JSON or TEXT.</p>"
+                    }
+                },
+                "Status": {
+                    "target": "com.amazonaws.elasticache#LogDeliveryConfigurationStatus",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Returns the log delivery configuration status. Values are one of <code>enabling</code> | <code>disabling</code> | <code>modifying</code> | <code>active</code> | <code>error</code>\n         </p>"
+                    }
+                },
+                "Message": {
+                    "target": "com.amazonaws.elasticache#String",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Returns an error message for the log delivery configuration.</p>"
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#documentation": "<p>Returns the destination, format and type of the logs. </p>"
+            }
+        },
+        "com.amazonaws.elasticache#LogDeliveryConfigurationList": {
+            "type": "list",
+            "member": {
+                "target": "com.amazonaws.elasticache#LogDeliveryConfiguration",
+                "traits": {
+                    "smithy.api#xmlName": "LogDeliveryConfiguration"
+                }
+            }
+        },
+        "com.amazonaws.elasticache#LogDeliveryConfigurationRequest": {
+            "type": "structure",
+            "members": {
+                "LogType": {
+                    "target": "com.amazonaws.elasticache#LogType",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Refers to <a href=\"https://redis.io/commands/slowlog\">slow-log</a>.</p>"
+                    }
+                },
+                "DestinationType": {
+                    "target": "com.amazonaws.elasticache#DestinationType",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Specify either <code>cloudwatch-logs</code> or <code>kinesis-firehose</code> as the destination type.</p>"
+                    }
+                },
+                "DestinationDetails": {
+                    "target": "com.amazonaws.elasticache#DestinationDetails",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Configuration details of either a CloudWatch Logs destination or Kinesis Data Firehose destination.</p>"
+                    }
+                },
+                "LogFormat": {
+                    "target": "com.amazonaws.elasticache#LogFormat",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Specifies either JSON or TEXT</p>"
+                    }
+                },
+                "Enabled": {
+                    "target": "com.amazonaws.elasticache#BooleanOptional",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Specify if log delivery is enabled. Default <code>true</code>.</p>"
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#documentation": "<p>Specifies the destination, format and type of the logs. </p>"
+            }
+        },
+        "com.amazonaws.elasticache#LogDeliveryConfigurationRequestList": {
+            "type": "list",
+            "member": {
+                "target": "com.amazonaws.elasticache#LogDeliveryConfigurationRequest",
+                "traits": {
+                    "smithy.api#xmlName": "LogDeliveryConfigurationRequest"
+                }
+            }
+        },
+        "com.amazonaws.elasticache#LogDeliveryConfigurationStatus": {
+            "type": "string",
+            "traits": {
+                "smithy.api#enum": [
+                    {
+                        "value": "active",
+                        "name": "ACTIVE"
+                    },
+                    {
+                        "value": "enabling",
+                        "name": "ENABLING"
+                    },
+                    {
+                        "value": "modifying",
+                        "name": "MODIFYING"
+                    },
+                    {
+                        "value": "disabling",
+                        "name": "DISABLING"
+                    },
+                    {
+                        "value": "error",
+                        "name": "ERROR"
+                    }
+                ]
+            }
+        },
+        "com.amazonaws.elasticache#LogFormat": {
+            "type": "string",
+            "traits": {
+                "smithy.api#enum": [
+                    {
+                        "value": "text",
+                        "name": "TEXT"
+                    },
+                    {
+                        "value": "json",
+                        "name": "JSON"
+                    }
+                ]
+            }
+        },
+        "com.amazonaws.elasticache#LogType": {
+            "type": "string",
+            "traits": {
+                "smithy.api#enum": [
+                    {
+                        "value": "slow-log",
+                        "name": "SLOW_LOG"
+                    }
+                ]
+            }
+        },
         "com.amazonaws.elasticache#ModifyCacheCluster": {
             "type": "operation",
             "input": {
@@ -5948,7 +6336,7 @@
                 "NumCacheNodes": {
                     "target": "com.amazonaws.elasticache#IntegerOptional",
                     "traits": {
-                        "smithy.api#documentation": "<p>The number of cache nodes that the cluster should have. \n            If the value for <code>NumCacheNodes</code> is greater than the sum of the number of current cache nodes and \n            the number of cache nodes pending creation (which may be zero), more nodes are added. \n            If the value is less than the number of existing cache nodes,  nodes are removed. \n            If the value is equal to the number of current cache nodes, \n             any pending add or remove requests are canceled.</p>\n        <p>If you are removing cache nodes, you must\n            use the <code>CacheNodeIdsToRemove</code> parameter to provide the IDs of the specific cache nodes to remove.</p>\n        <p>For clusters running Redis, this value must be 1. \n    For clusters running Memcached, this value must be between 1 and 20.</p>\n        \n        <note>\n            <p>Adding or removing Memcached cache nodes can be applied immediately or as a pending operation (see <code>ApplyImmediately</code>).</p>\n            <p>A pending operation to modify the number of cache nodes in a cluster during its maintenance window, \n            whether by adding or removing nodes in accordance with the scale out architecture, is not queued. \n            The customer's latest request to add or remove nodes to the cluster overrides any previous pending operations to modify the \n            number of cache nodes in the cluster. \n            For example, a request to remove 2 nodes would override a previous pending operation to remove 3 nodes. \n            Similarly, a request to add 2 nodes would override a previous pending operation to remove 3 nodes and vice versa. \n            As Memcached cache nodes may now be provisioned in different Availability Zones with flexible cache node placement, \n            a request to add nodes does not automatically override a previous pending operation to add nodes. \n            The customer can modify the previous pending operation to add more nodes or explicitly cancel the pending request and \n            retry the new request. \n            To cancel pending operations to modify the number of cache nodes in a cluster, \n            use the <code>ModifyCacheCluster</code> request and \n            set <code>NumCacheNodes</code> equal to the number of cache nodes currently in the cluster.</p>\n         </note>"
+                        "smithy.api#documentation": "<p>The number of cache nodes that the cluster should have. \n            If the value for <code>NumCacheNodes</code> is greater than the sum of the number of current cache nodes and \n            the number of cache nodes pending creation (which may be zero), more nodes are added. \n            If the value is less than the number of existing cache nodes,  nodes are removed. \n            If the value is equal to the number of current cache nodes, \n             any pending add or remove requests are canceled.</p>\n        <p>If you are removing cache nodes, you must\n            use the <code>CacheNodeIdsToRemove</code> parameter to provide the IDs of the specific cache nodes to remove.</p>\n        <p>For clusters running Redis, this value must be 1. \n    For clusters running Memcached, this value must be between 1 and 40.</p>\n        \n        <note>\n            <p>Adding or removing Memcached cache nodes can be applied immediately or as a pending operation (see <code>ApplyImmediately</code>).</p>\n            <p>A pending operation to modify the number of cache nodes in a cluster during its maintenance window, \n            whether by adding or removing nodes in accordance with the scale out architecture, is not queued. \n            The customer's latest request to add or remove nodes to the cluster overrides any previous pending operations to modify the \n            number of cache nodes in the cluster. \n            For example, a request to remove 2 nodes would override a previous pending operation to remove 3 nodes. \n            Similarly, a request to add 2 nodes would override a previous pending operation to remove 3 nodes and vice versa. \n            As Memcached cache nodes may now be provisioned in different Availability Zones with flexible cache node placement, \n            a request to add nodes does not automatically override a previous pending operation to add nodes. \n            The customer can modify the previous pending operation to add more nodes or explicitly cancel the pending request and \n            retry the new request. \n            To cancel pending operations to modify the number of cache nodes in a cluster, \n            use the <code>ModifyCacheCluster</code> request and \n            set <code>NumCacheNodes</code> equal to the number of cache nodes currently in the cluster.</p>\n         </note>"
                     }
                 },
                 "CacheNodeIdsToRemove": {
@@ -5966,7 +6354,7 @@
                 "NewAvailabilityZones": {
                     "target": "com.amazonaws.elasticache#PreferredAvailabilityZoneList",
                     "traits": {
-                        "smithy.api#documentation": "<p>The list of Availability Zones where the new Memcached cache nodes are created.</p>  \n        <p>This parameter is only valid when <code>NumCacheNodes</code> in the request is greater \n            than the sum of the number of active cache nodes and the number of cache nodes pending creation (which may be zero). \n            The number of Availability Zones supplied in this list must match the cache nodes being added in this request.</p>\n        <p>This option is only supported on Memcached clusters.</p>\n        <p>Scenarios:</p>\n            <ul>\n            <li>\n                   <p>\n                  <b>Scenario 1:</b> You have 3 active nodes and wish to add 2 nodes. \n                        Specify <code>NumCacheNodes=5</code> (3 + 2) and optionally specify two Availability Zones \n                        for the two new nodes.</p>\n                </li>\n            <li>\n                   <p>\n                  <b>Scenario 2:</b> You have 3 active nodes and 2 nodes pending creation \n                        (from the scenario 1 call) and want to add 1 more node. \n                        Specify <code>NumCacheNodes=6</code> ((3 + 2) + 1) and \n                        optionally specify an Availability Zone for the new node.</p>\n                </li>\n            <li>\n                    <p>\n                  <b>Scenario 3:</b> You want to cancel all pending operations. \n                        Specify <code>NumCacheNodes=3</code> to cancel all pending operations.</p>\n                </li>\n         </ul>\n\n        <p>The Availability Zone placement of nodes pending creation cannot be modified. If you wish to cancel any nodes pending creation, \n            add 0 nodes by setting <code>NumCacheNodes</code> to the number of current nodes.</p>\n        <p>If <code>cross-az</code> is specified, existing Memcached nodes remain in their current Availability Zone. \n            Only newly created nodes can be located in different Availability Zones. \n            For guidance on how to move existing Memcached nodes to different Availability Zones, see the\n            <b>Availability Zone Considerations</b> section of <a href=\"https://docs.aws.amazon.com/AmazonElastiCache/latest/mem-ug/CacheNodes.SupportedTypes.html\">Cache Node Considerations for Memcached</a>.</p>\n        \n         <p>\n            <b>Impact of new add/remove requests upon pending requests</b>\n         </p>\n         <ul>\n            <li>\n               <p>Scenario-1</p>\n               <ul>\n                  <li>\n                     <p>Pending Action: Delete</p>\n                  </li>\n                  <li>\n                     <p>New Request: Delete</p>\n                  </li>\n                  <li>\n                     <p>Result: The new delete, pending or immediate, replaces the pending delete.</p>\n                  </li>\n               </ul>\n            </li>\n            <li>\n               <p>Scenario-2</p>\n               <ul>\n                  <li>\n                     <p>Pending Action: Delete</p>\n                  </li>\n                  <li>\n                     <p>New Request: Create</p>\n                  </li>\n                  <li>\n                     <p>Result: The new create, pending or immediate, replaces the pending delete.</p>\n                  </li>\n               </ul>\n            </li>\n            <li>\n               <p>Scenario-3</p>\n               <ul>\n                  <li>\n                     <p>Pending Action: Create</p>\n                  </li>\n                  <li>\n                     <p>New Request: Delete</p>\n                  </li>\n                  <li>\n                     <p>Result: The new delete, pending or immediate, replaces the pending create.</p>\n                  </li>\n               </ul>\n            </li>\n            <li>\n               <p>Scenario-4</p>\n               <ul>\n                  <li>\n                     <p>Pending Action: Create</p>\n                  </li>\n                  <li>\n                     <p>New Request: Create</p>\n                  </li>\n                  <li>\n                     <p>Result: The new create is added to the pending create.</p>\n                     <important>\n                        <p>\n                           <b>Important:</b>\n                      If the new create request is <b>Apply Immediately - Yes</b>, \n                      all creates are performed immediately. \n                      If the new create request is <b>Apply Immediately - No</b>, \n                      all creates are pending.</p>\n                     </important>\n                  </li>\n               </ul>\n            </li>\n         </ul>"
+                        "smithy.api#documentation": "<note>\n            <p>This option is only supported on Memcached clusters.</p>\n         </note>\n        <p>The list of Availability Zones where the new Memcached cache nodes are created.</p>  \n        <p>This parameter is only valid when <code>NumCacheNodes</code> in the request is greater \n            than the sum of the number of active cache nodes and the number of cache nodes pending creation (which may be zero). \n            The number of Availability Zones supplied in this list must match the cache nodes being added in this request.</p>\n        \n        <p>Scenarios:</p>\n            <ul>\n            <li>\n                   <p>\n                  <b>Scenario 1:</b> You have 3 active nodes and wish to add 2 nodes. \n                        Specify <code>NumCacheNodes=5</code> (3 + 2) and optionally specify two Availability Zones \n                        for the two new nodes.</p>\n                </li>\n            <li>\n                   <p>\n                  <b>Scenario 2:</b> You have 3 active nodes and 2 nodes pending creation \n                        (from the scenario 1 call) and want to add 1 more node. \n                        Specify <code>NumCacheNodes=6</code> ((3 + 2) + 1) and \n                        optionally specify an Availability Zone for the new node.</p>\n                </li>\n            <li>\n                    <p>\n                  <b>Scenario 3:</b> You want to cancel all pending operations. \n                        Specify <code>NumCacheNodes=3</code> to cancel all pending operations.</p>\n                </li>\n         </ul>\n\n        <p>The Availability Zone placement of nodes pending creation cannot be modified. If you wish to cancel any nodes pending creation, \n            add 0 nodes by setting <code>NumCacheNodes</code> to the number of current nodes.</p>\n        <p>If <code>cross-az</code> is specified, existing Memcached nodes remain in their current Availability Zone. \n            Only newly created nodes can be located in different Availability Zones. \n            For guidance on how to move existing Memcached nodes to different Availability Zones, see the\n            <b>Availability Zone Considerations</b> section of <a href=\"https://docs.aws.amazon.com/AmazonElastiCache/latest/mem-ug/CacheNodes.SupportedTypes.html\">Cache Node Considerations for Memcached</a>.</p>\n        \n         <p>\n            <b>Impact of new add/remove requests upon pending requests</b>\n         </p>\n         <ul>\n            <li>\n               <p>Scenario-1</p>\n               <ul>\n                  <li>\n                     <p>Pending Action: Delete</p>\n                  </li>\n                  <li>\n                     <p>New Request: Delete</p>\n                  </li>\n                  <li>\n                     <p>Result: The new delete, pending or immediate, replaces the pending delete.</p>\n                  </li>\n               </ul>\n            </li>\n            <li>\n               <p>Scenario-2</p>\n               <ul>\n                  <li>\n                     <p>Pending Action: Delete</p>\n                  </li>\n                  <li>\n                     <p>New Request: Create</p>\n                  </li>\n                  <li>\n                     <p>Result: The new create, pending or immediate, replaces the pending delete.</p>\n                  </li>\n               </ul>\n            </li>\n            <li>\n               <p>Scenario-3</p>\n               <ul>\n                  <li>\n                     <p>Pending Action: Create</p>\n                  </li>\n                  <li>\n                     <p>New Request: Delete</p>\n                  </li>\n                  <li>\n                     <p>Result: The new delete, pending or immediate, replaces the pending create.</p>\n                  </li>\n               </ul>\n            </li>\n            <li>\n               <p>Scenario-4</p>\n               <ul>\n                  <li>\n                     <p>Pending Action: Create</p>\n                  </li>\n                  <li>\n                     <p>New Request: Create</p>\n                  </li>\n                  <li>\n                     <p>Result: The new create is added to the pending create.</p>\n                     <important>\n                        <p>\n                           <b>Important:</b>\n                      If the new create request is <b>Apply Immediately - Yes</b>, \n                      all creates are performed immediately. \n                      If the new create request is <b>Apply Immediately - No</b>, \n                      all creates are pending.</p>\n                     </important>\n                  </li>\n               </ul>\n            </li>\n         </ul>"
                     }
                 },
                 "CacheSecurityGroupNames": {
@@ -6051,6 +6439,12 @@
                     "target": "com.amazonaws.elasticache#AuthTokenUpdateStrategyType",
                     "traits": {
                         "smithy.api#documentation": "<p>Specifies the strategy to use to update the AUTH token. This parameter must be specified with the <code>auth-token</code> parameter.\n            Possible values:</p>\n            <ul>\n            <li>\n               <p>Rotate</p>\n            </li>\n            <li>\n               <p>Set</p>\n            </li>\n         </ul>\n        <p> \n            For more information, see <a href=\"http://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/auth.html\">Authenticating Users with Redis AUTH</a>\n         </p>"
+                    }
+                },
+                "LogDeliveryConfigurations": {
+                    "target": "com.amazonaws.elasticache#LogDeliveryConfigurationRequestList",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Specifies the destination, format and type of the logs.</p>"
                     }
                 }
             },
@@ -6457,19 +6851,25 @@
                 "UserGroupIdsToAdd": {
                     "target": "com.amazonaws.elasticache#UserGroupIdList",
                     "traits": {
-                        "smithy.api#documentation": "<p>A list of user group IDs.</p>"
+                        "smithy.api#documentation": "<p>The user group you are associating with the replication group.</p>"
                     }
                 },
                 "UserGroupIdsToRemove": {
                     "target": "com.amazonaws.elasticache#UserGroupIdList",
                     "traits": {
-                        "smithy.api#documentation": "<p>A list of users groups to remove, meaning the users in the group no longer can access thereplication group.</p>"
+                        "smithy.api#documentation": "<p>The user group to remove, meaning the users in the group no longer can access the replication group.</p>"
                     }
                 },
                 "RemoveUserGroups": {
                     "target": "com.amazonaws.elasticache#BooleanOptional",
                     "traits": {
                         "smithy.api#documentation": "<p>Removes the user groups that can access this replication group.</p>"
+                    }
+                },
+                "LogDeliveryConfigurations": {
+                    "target": "com.amazonaws.elasticache#LogDeliveryConfigurationRequestList",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Specifies the destination, format and type of the logs.</p>"
                     }
                 }
             },
@@ -6728,6 +7128,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "NoOperationFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The operation was not performed because no changes were required.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -6977,6 +7381,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "NodeGroupNotFoundFault",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The node group specified by the <code>NodeGroupId</code> parameter could not be found.\n            Please verify that the node group exists and that you spelled the <code>NodeGroupId</code> value correctly.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -7019,6 +7427,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "NodeGroupsPerReplicationGroupQuotaExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the maximum allowed number\n            of node groups (shards) in a single replication group. The default maximum is 90</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -7050,6 +7462,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "NodeQuotaForClusterExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the allowed number of cache nodes in a single cluster.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -7063,6 +7479,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "NodeQuotaForCustomerExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the allowed number of cache nodes per customer.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -7349,13 +7769,51 @@
                 ]
             }
         },
+        "com.amazonaws.elasticache#PendingLogDeliveryConfiguration": {
+            "type": "structure",
+            "members": {
+                "LogType": {
+                    "target": "com.amazonaws.elasticache#LogType",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Refers to <a href=\"https://redis.io/commands/slowlog\">slow-log</a>.</p>"
+                    }
+                },
+                "DestinationType": {
+                    "target": "com.amazonaws.elasticache#DestinationType",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Returns the destination type, either CloudWatch Logs or Kinesis Data Firehose.</p>"
+                    }
+                },
+                "DestinationDetails": {
+                    "target": "com.amazonaws.elasticache#DestinationDetails",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Configuration details of either a CloudWatch Logs destination or Kinesis Data Firehose destination.</p>"
+                    }
+                },
+                "LogFormat": {
+                    "target": "com.amazonaws.elasticache#LogFormat",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Returns the log format, either JSON or TEXT</p>"
+                    }
+                }
+            },
+            "traits": {
+                "smithy.api#documentation": "<p>The log delivery configurations being modified </p>"
+            }
+        },
+        "com.amazonaws.elasticache#PendingLogDeliveryConfigurationList": {
+            "type": "list",
+            "member": {
+                "target": "com.amazonaws.elasticache#PendingLogDeliveryConfiguration"
+            }
+        },
         "com.amazonaws.elasticache#PendingModifiedValues": {
             "type": "structure",
             "members": {
                 "NumCacheNodes": {
                     "target": "com.amazonaws.elasticache#IntegerOptional",
                     "traits": {
-                        "smithy.api#documentation": "<p>The new number of cache nodes for the cluster.</p>\n        <p>For clusters running Redis, this value must be 1. \n            For clusters running Memcached, this value must be between 1 and 20.</p>"
+                        "smithy.api#documentation": "<p>The new number of cache nodes for the cluster.</p>\n        <p>For clusters running Redis, this value must be 1. \n            For clusters running Memcached, this value must be between 1 and 40.</p>"
                     }
                 },
                 "CacheNodeIdsToRemove": {
@@ -7380,6 +7838,12 @@
                     "target": "com.amazonaws.elasticache#AuthTokenUpdateStatus",
                     "traits": {
                         "smithy.api#documentation": "<p>The auth token status</p>"
+                    }
+                },
+                "LogDeliveryConfigurations": {
+                    "target": "com.amazonaws.elasticache#PendingLogDeliveryConfigurationList",
+                    "traits": {
+                        "smithy.api#documentation": "<p>The log delivery configurations being modified </p>"
                     }
                 }
             },
@@ -7913,6 +8377,12 @@
                     "traits": {
                         "smithy.api#documentation": "<p>The list of user group IDs that have access to the replication group.</p>"
                     }
+                },
+                "LogDeliveryConfigurations": {
+                    "target": "com.amazonaws.elasticache#LogDeliveryConfigurationList",
+                    "traits": {
+                        "smithy.api#documentation": "<p>Returns the destination, format and type of the logs. </p>"
+                    }
                 }
             },
             "traits": {
@@ -7927,6 +8397,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ReplicationGroupAlreadyExists",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The specified replication group already exists.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -7940,6 +8414,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ReplicationGroupAlreadyUnderMigrationFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The targeted replication group is not available. </p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -7994,6 +8472,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ReplicationGroupNotFoundFault",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The specified replication group does not exist.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -8007,6 +8489,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ReplicationGroupNotUnderMigrationFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The designated replication group is not available for data migration.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -8052,6 +8538,12 @@
                     "target": "com.amazonaws.elasticache#UserGroupsUpdateStatus",
                     "traits": {
                         "smithy.api#documentation": "<p>The user groups being modified.</p>"
+                    }
+                },
+                "LogDeliveryConfigurations": {
+                    "target": "com.amazonaws.elasticache#PendingLogDeliveryConfigurationList",
+                    "traits": {
+                        "smithy.api#documentation": "<p>The log delivery configurations being modified </p>"
                     }
                 }
             },
@@ -8153,6 +8645,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ReservedCacheNodeAlreadyExists",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>You already have a reservation with the given identifier.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -8195,6 +8691,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ReservedCacheNodeNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The requested reserved cache node was not found.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -8208,6 +8708,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ReservedCacheNodeQuotaExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the user's cache node quota.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -8306,6 +8810,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ReservedCacheNodesOfferingNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The requested cache node offering does not exist.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -8519,6 +9027,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ServiceLinkedRoleNotFoundFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The specified service linked role (SLR) was not found.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -8621,6 +9133,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "ServiceUpdateNotFoundFault",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The service update doesn't exist</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -8801,7 +9317,7 @@
                 "NumCacheNodes": {
                     "target": "com.amazonaws.elasticache#IntegerOptional",
                     "traits": {
-                        "smithy.api#documentation": "<p>The number of cache nodes in the source cluster.</p>\n        <p>For clusters running Redis, this value must be 1. \n            For clusters running Memcached, this value must be between 1 and 20.</p>"
+                        "smithy.api#documentation": "<p>The number of cache nodes in the source cluster.</p>\n        <p>For clusters running Redis, this value must be 1. \n            For clusters running Memcached, this value must be between 1 and 40.</p>"
                     }
                 },
                 "PreferredAvailabilityZone": {
@@ -8919,6 +9435,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "SnapshotAlreadyExistsFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>You already have a snapshot with the given name.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -8941,6 +9461,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "SnapshotFeatureNotSupportedFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>You attempted one of the following operations:</p>\n        <ul>\n            <li>\n               <p>Creating a snapshot of a Redis cluster running on a <code>cache.t1.micro</code> cache\n                    node.</p>\n            </li>\n            <li>\n               <p>Creating a snapshot of a cluster that is running Memcached rather than Redis.</p>\n            </li>\n         </ul>\n        <p>Neither of these are supported by ElastiCache.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -8963,6 +9487,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "SnapshotNotFoundFault",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The requested snapshot name does not refer to an existing snapshot.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -8976,6 +9504,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "SnapshotQuotaExceededFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would exceed the maximum number of snapshots.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -9115,6 +9647,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "SubnetInUse",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The requested subnet is being used by another cache subnet group.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -9137,6 +9673,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "SubnetNotAllowedFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>At least one subnet ID does not match the other subnet IDs. This mismatch typically occurs when a\n            user sets one subnet ID to a regional Availability Zone and a different one to an outpost. Or when a user sets the subnet ID to an Outpost when not subscribed on this service.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -9210,6 +9750,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "TagNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The requested tag was not found on this resource.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -9223,6 +9767,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "TagQuotaPerResourceExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The request cannot be processed because it would cause the resource to have more than the allowed number of tags. The maximum number of tags permitted on a resource is 50.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -9296,6 +9844,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "TestFailoverNotAvailableFault",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The <code>TestFailover</code> action is not available.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -9651,6 +10203,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "UserAlreadyExists",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>A user with this ID already exists.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -9711,6 +10267,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "UserGroupAlreadyExists",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The user group with this ID already exists.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -9722,7 +10282,7 @@
                 "smithy.api#length": {
                     "min": 1
                 },
-                "smithy.api#pattern": "[a-zA-Z][a-zA-Z0-9\\-]*"
+                "smithy.api#pattern": "^[a-zA-Z][a-zA-Z0-9\\-]*$"
             }
         },
         "com.amazonaws.elasticache#UserGroupIdList": {
@@ -9756,6 +10316,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "UserGroupNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The user group was not found or does not exist</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -9789,6 +10353,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "UserGroupQuotaExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The number of users exceeds the user group limit.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
@@ -9820,7 +10388,7 @@
                 "smithy.api#length": {
                     "min": 1
                 },
-                "smithy.api#pattern": "[a-zA-Z][a-zA-Z0-9\\-]*"
+                "smithy.api#pattern": "^[a-zA-Z][a-zA-Z0-9\\-]*$"
             }
         },
         "com.amazonaws.elasticache#UserIdList": {
@@ -9862,6 +10430,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "UserNotFound",
+                    "httpResponseCode": 404
+                },
                 "smithy.api#documentation": "<p>The user does not exist or could not be found.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 404
@@ -9875,6 +10447,10 @@
                 }
             },
             "traits": {
+                "aws.protocols#awsQueryError": {
+                    "code": "UserQuotaExceeded",
+                    "httpResponseCode": 400
+                },
                 "smithy.api#documentation": "<p>The quota of users has been exceeded.</p>",
                 "smithy.api#error": "client",
                 "smithy.api#httpError": 400
