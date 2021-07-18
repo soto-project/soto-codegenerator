@@ -341,8 +341,8 @@ extension AwsService {
                 requirements["min"] = rangeTrait.min
                 requirements["max"] = rangeTrait.max
             } else {
-                requirements["min"] = rangeTrait.min.map { Int64($0) }
-                requirements["max"] = rangeTrait.max.map { Int64($0) }
+                requirements["min"] = rangeTrait.min.map { NSNumber(value: $0).int64Value }
+                requirements["max"] = rangeTrait.max.map { NSNumber(value: $0).int64Value }
             }
         }
         if let patternTrait = shape.trait(type: PatternTrait.self) {
