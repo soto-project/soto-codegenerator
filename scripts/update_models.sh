@@ -54,10 +54,8 @@ build_files()
 {
     # build the code generator and run it
     echo "Build and run the code generator"
-    CURRENT_FOLDER=$(pwd)
-    cd "$CURRENT_FOLDER"/CodeGenerator
-    swift run -c release soto-codegenerator --format
-    cd "$CURRENT_FOLDER"
+    rm -rf ../soto/Sources/Soto/Services/*
+    swift run -c release SotoCodeGenerator --format --input-folder aws/models --output-folder ../soto/Sources/Soto/Services/
 }
 
 compile_files()
@@ -131,7 +129,8 @@ TARGET_MODELS=aws/models
 copy_model_files "$AWS_SDK_GO_MODELS" "$TARGET_MODELS"
 cp "$AWS_SDK_GO"/codegen/smithy-aws-go-codegen/src/main/resources/software/amazon/smithy/aws/go/codegen/endpoints.json aws/
 
-#build_files
+build_files
+
 #if [ -n "$COMPILE_FILES" ]; then
 #    compile_files
 #fi
