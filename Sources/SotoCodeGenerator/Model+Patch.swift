@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import SotoSmithy
+import SotoSmithyAWS
 
 extension Model {
     func patch(serviceName: String) throws {
@@ -25,11 +26,9 @@ extension Model {
             "CloudFront" : [
                 "com.amazonaws.cloudfront#HttpVersion": EditEnumPatch(add: [.init(value: "HTTP1_1"), .init(value: "HTTP2")], remove: ["http1.1", "http2"]),
             ],
-            /*"CloudWatch": [
-                // Patch error shape to avoid warning in generated code. Both errors have the same code "ResourceNotFound"
-                ReplacePatch(PatchKeyPath2(\.operations["GetDashboard"], \.errors[1].shapeName), value: "ResourceNotFoundException", originalValue: "DashboardNotFoundError"),
-                ReplacePatch(PatchKeyPath2(\.operations["DeleteDashboards"], \.errors[1].shapeName), value: "ResourceNotFoundException", originalValue: "DashboardNotFoundError"),
-            ],*/
+            "CloudWatch": [
+                "com.amazonaws.cloudwatch#DashboardNotFoundError": RemoveTraitPatch(trait: AwsProtocolsAwsQueryErrorTrait.self),
+            ],
             "CognitoIdentityProvider": [
                 "com.amazonaws.cognitoidentityprovider#UserStatusType": EditEnumPatch(add: [.init(value: "EXTERNAL_PROVIDER")]),
             ],
