@@ -178,6 +178,14 @@ struct SotoCodeGen {
             ) {
                 print("Wrote: \(service.serviceName)_Waiter.swift")
             }
+            if exportAsync {
+                let waitersAsync = self.library.render(waiterContexts, withTemplate: "waiter+async")!
+                if self.command.output, try self.format(waitersAsync).writeIfChanged(
+                    toFile: "\(basePath)/\(service.serviceName)_Waiter+async.swift"
+                ) {
+                    print("Wrote: \(service.serviceName)_Waiter+async.swift")
+                }
+            }
         }
         //print("Succesfully Generated \(service.serviceName)")
     }
