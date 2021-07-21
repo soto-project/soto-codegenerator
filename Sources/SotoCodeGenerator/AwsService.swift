@@ -243,6 +243,8 @@ struct AwsService {
     func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool) throws -> OperationContext {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
+        let endpointTrait = operation.trait(type: EndpointTrait.self)
+
         return OperationContext(
             comment: processDocs(from: operation),
             funcName: operationName.shapeName.toSwiftVariableCase(),
@@ -251,6 +253,7 @@ struct AwsService {
             name: operationName.shapeName,
             path: httpTrait?.uri ?? "/",
             httpMethod: httpTrait?.method ?? "POST",
+            hostPrefix: endpointTrait?.hostPrefix,
             deprecated: deprecatedTrait?.message,
             streaming: streaming ? "ByteBuffer": nil,
             documentationUrl: nil //operation.trait(type: ExternalDocumentationTrait.self)?.value["API Reference"]
@@ -380,8 +383,6 @@ struct AwsService {
             return "GlacierRequestMiddleware(apiVersion: \"\(service.version)\")"
         case "S3":
             return "S3RequestMiddleware()"
-        case "S3Control":
-            return "S3ControlMiddleware()"
         default:
             return nil
         }
@@ -601,6 +602,7 @@ extension AwsService {
         let name: String
         let path: String
         let httpMethod: String
+        let hostPrefix: String?
         let deprecated: String?
         let streaming: String?
         let documentationUrl: String?

@@ -166,14 +166,14 @@ extension AwsService {
                 contexts.codingKeys.append(codingKeyContext)
             }
             // member encoding context
-            if let memberEncodingContext = generateMemberEncodingContext(
+            let memberEncodingContext = generateMemberEncodingContext(
                 member.value,
                 name: member.key,
                 isOutputShape: isOutputShape,
                 isPropertyWrapper: memberContext.propertyWrapper != nil && isInputShape
-            ) {
-                contexts.awsShapeMembers.append(memberEncodingContext)
-            }
+            )
+            contexts.awsShapeMembers += memberEncodingContext
+
             // validation context
             if isInputShape {
                 if let validationContext = generateValidationContext(member.value, name: member.key) {
@@ -211,28 +211,29 @@ extension AwsService {
         )
     }
 
-    func generateMemberEncodingContext(_ member: MemberShape, name: String, isOutputShape: Bool, isPropertyWrapper: Bool) -> MemberEncodingContext? {
+    func generateMemberEncodingContext(_ member: MemberShape, name: String, isOutputShape: Bool, isPropertyWrapper: Bool) -> [MemberEncodingContext] {
+        var memberEncoding: [MemberEncodingContext] = []
         // if header
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            return MemberEncodingContext(name: name, location: ".header(locationName: \"\(headerTrait.value)\")")
+            memberEncoding.append(.init(name: name, location: ".header(locationName: \"\(headerTrait.value)\")"))
         // if prefix header
         } else if let headerPrefixTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            return MemberEncodingContext(name: name, location: ".header(locationName: \"\(headerPrefixTrait.value)\")")
+            memberEncoding.append(.init(name: name, location: ".header(locationName: \"\(headerPrefixTrait.value)\")"))
         // if query string
         } else if let queryTrait = member.trait(type: HttpQueryTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            return MemberEncodingContext(name: name, location: ".querystring(locationName: \"\(queryTrait.value)\")")
+            memberEncoding.append(.init(name: name, location: ".querystring(locationName: \"\(queryTrait.value)\")"))
         // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
             let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
-            return MemberEncodingContext(name: labelName, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")")
+            memberEncoding.append(.init(name: labelName, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")"))
         // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            return MemberEncodingContext(name: name, location: ".statusCode")
+            memberEncoding.append(.init(name: name, location: ".statusCode"))
         // if payload and not a blob or shape is an output shape
         } else if member.hasTrait(type: HttpPayloadTrait.self),
                   (!(model.shape(for: member.target) is BlobShape) || isOutputShape) {
@@ -241,10 +242,16 @@ extension AwsService {
             let swiftLabelName = name.toSwiftLabelCase()
             if swiftLabelName != payloadName {
                 let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-                return MemberEncodingContext(name: name, location: ".body(locationName: \"\(payloadName)\")")
+                memberEncoding.append(.init(name: name, location: ".body(locationName: \"\(payloadName)\")"))
             }
         }
-        return nil
+
+        if member.hasTrait(type: HostLabelTrait.self) {
+            let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
+            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
+            memberEncoding.append(.init(name: labelName, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")"))
+        }
+        return memberEncoding
     }
     
     func generateCodingKeyContext(_ member: MemberShape, name: String, isOutputShape: Bool) -> CodingKeysContext? {

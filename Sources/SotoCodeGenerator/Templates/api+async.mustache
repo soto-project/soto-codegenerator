@@ -1,11 +1,11 @@
 {{%CONTENT_TYPE:TEXT}}
 {{>header}}
 
-#if compiler(>=5.5) && $AsyncAwait
+#if compiler(>=5.5)
 
 import SotoCore
 
-@available(macOS 9999, iOS 9999, watchOS 9999, tvOS 9999, *)
+@available(macOS 12.0, iOS 15.0, watchOS 8.0, tvOS 15.0, *)
 extension {{ name }} {
 
     // MARK: Async API Calls
@@ -18,7 +18,7 @@ extension {{ name }} {
     @available(*, deprecated, message:"{{.}}")
 {{/deprecated}}
     public func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
-        return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}, logger: logger, on: eventLoop)
+        return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop)
     }
 {{/operations}}
 {{#first(streamingOperations)}}
@@ -33,10 +33,10 @@ extension {{ name }} {
     @available(*, deprecated, message:"{{.}}")
 {{/deprecated}}
     public func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil, _ stream: @escaping ({{streaming}}, EventLoop) -> EventLoopFuture<Void>) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
-        return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}, logger: logger, on: eventLoop, stream: stream)
+        return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop, stream: stream)
     }
 {{/streamingOperations}}
 {{/first(streamingOperations)}}
 }
 
-#endif // compiler(>=5.5) && $AsyncAwait
+#endif // compiler(>=5.5)
