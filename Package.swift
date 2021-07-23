@@ -8,10 +8,10 @@ let package = Package(
         .executable(name: "SotoCodeGenerator", targets: ["SotoCodeGenerator"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/soto-project/soto-smithy.git", .branch("main")),
-        .package(url: "https://github.com/apple/swift-argument-parser.git", .upToNextMajor(from: "0.3.0")),
-        .package(url: "https://github.com/hummingbird-project/hummingbird-mustache.git", from: "0.5.2"),
-        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", .upToNextMinor(from: "0.47.4")),
+        .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.2.1"),
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "0.3.0"),
+        .package(url: "https://github.com/hummingbird-project/hummingbird-mustache.git", from: "1.0.0"),
+        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", .upToNextMinor(from: "0.47.13")),
     ],
     targets: [
         .target(
