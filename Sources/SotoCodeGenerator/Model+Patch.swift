@@ -77,7 +77,7 @@ extension Model {
                 "com.amazonaws.s3#StreamingBlob": AddTraitPatch(trait: RequiresLengthTrait()),
             ],
             "S3Control": [
-                "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch([
+                "com.amazonaws.s3control#BucketLocationConstraint": MultiplePatch([
                     EditEnumPatch(add: [.init(value: "us-east-1")]),
                     AddTraitPatch(trait: SotoExtensibleEnumTrait())
                 ]),
