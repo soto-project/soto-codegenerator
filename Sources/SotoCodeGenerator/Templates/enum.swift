@@ -1,3 +1,5 @@
+extension Templates {
+    static let enumTemplate = """
 {{%CONTENT_TYPE:TEXT}}
 {{#isExtensible}}
     public struct {{name}}: RawRepresentable, Equatable, Codable {
@@ -26,3 +28,5 @@
         public var description: String { return self.rawValue }
     }
 {{/isExtensible}}
+"""
+}

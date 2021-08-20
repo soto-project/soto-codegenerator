@@ -1,3 +1,5 @@
+extension Templates {
+    static let enumWithValuesTemplate = #"""
 {{! Template for a AWSShape enum with values }}
 {{%CONTENT_TYPE:TEXT}}
     public enum {{name}}: {{shapeProtocol}} {
@@ -127,3 +129,5 @@
 {{/first(codingKeys)}}
 {{/first(members)}}
     }
+"""#
+}

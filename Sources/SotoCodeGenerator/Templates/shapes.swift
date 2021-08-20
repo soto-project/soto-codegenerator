@@ -1,3 +1,5 @@
+extension Templates {
+    static let shapesTemplate = """
 {{%CONTENT_TYPE:TEXT}}
 {{>header}}
 
@@ -26,4 +28,6 @@ extension {{name}} {
 {{>struct}}
 {{/struct}}
 {{/shapes}}
+}
+"""
 }

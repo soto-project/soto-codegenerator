@@ -1,3 +1,5 @@
+extension Templates {
+    static let structTemplate = #"""
 {{%CONTENT_TYPE:TEXT}}
 {{! Template for a AWSShape }}
     public {{object}} {{name}}: {{shapeProtocol}} {
@@ -114,3 +116,5 @@
 {{/first(codingKeys)}}
 {{/first(members)}}
     }
+"""#
+}

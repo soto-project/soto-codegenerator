@@ -1,3 +1,5 @@
+extension Templates {
+    static let paginatorTemplate = #"""
 {{%CONTENT_TYPE:TEXT}}
 {{>header}}
 
@@ -103,3 +105,5 @@ extension {{name}}.{{operation.inputShape}}: {{paginatorProtocol}} {
 
 {{/last()}}
 {{/paginators}}
+"""#
+}

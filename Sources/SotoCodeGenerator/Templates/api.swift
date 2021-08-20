@@ -1,3 +1,6 @@
+extension Templates {
+    static let apiTemplate =
+#"""
 {{%CONTENT_TYPE:TEXT}}
 {{>header}}
 
@@ -123,4 +126,6 @@ extension {{ name }} {
         self.client = from.client
         self.config = from.config.with(patch: patch)
     }
+}
+"""#
 }

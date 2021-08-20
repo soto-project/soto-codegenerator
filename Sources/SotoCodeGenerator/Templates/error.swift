@@ -1,3 +1,5 @@
+extension Templates {
+    static let errorTemplate = #"""
 {{%CONTENT_TYPE:TEXT}}
 {{>header}}
 
@@ -47,4 +49,6 @@ extension {{errorName}}: CustomStringConvertible {
     public var description: String {
         return "\(self.error.rawValue): \(self.message ?? "")"
     }
+}
+"""#
 }

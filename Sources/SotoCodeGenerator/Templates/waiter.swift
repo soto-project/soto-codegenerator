@@ -1,3 +1,5 @@
+extension Templates {
+    static let waiterTemplate = """
 {{%CONTENT_TYPE:TEXT}}
 {{>header}}
 
@@ -58,4 +60,6 @@ extension {{name}} {
 
 {{/last()}}
 {{/waiters}}
+}
+"""
 }

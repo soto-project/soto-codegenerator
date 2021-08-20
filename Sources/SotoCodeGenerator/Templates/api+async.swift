@@ -1,3 +1,5 @@
+extension Templates {
+    static let apiAsyncTemplate = """
 {{%CONTENT_TYPE:TEXT}}
 {{>header}}
 
@@ -40,3 +42,5 @@ extension {{ name }} {
 }
 
 #endif // compiler(>=5.5)
+"""
+}

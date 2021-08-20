@@ -43,9 +43,8 @@ struct SotoCodeGen {
     let library: HBMustacheLibrary
 
     init(command: SotoCodeGenCommand) throws {
-        let path = Bundle.module.resourcePath!
         self.command = command
-        self.library = try .init(directory: path)
+        self.library = try Templates.createLibrary()
         Smithy.registerAWSTraits()
         Smithy.registerTraitTypes(
             SotoInputShapeTrait.self,
