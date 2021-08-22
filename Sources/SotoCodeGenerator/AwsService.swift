@@ -104,6 +104,7 @@ struct AwsService {
         if !self.model.select(with: TraitSelector<ErrorTrait>()).isEmpty {
             context["errorTypes"] = self.serviceName + "ErrorType"
         }
+        context["xmlNamespace"] = service.trait(type: XmlNamespaceTrait.self)?.uri
         context["middlewareClass"] = self.getMiddleware(for: service)
 
         let endpoints = self.getServiceEndpoints()

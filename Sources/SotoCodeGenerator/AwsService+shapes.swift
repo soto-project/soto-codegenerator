@@ -120,7 +120,7 @@ extension AwsService {
             }
         }
         if serviceProtocolTrait is AwsProtocolsRestXmlTrait {
-            xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri ?? service.trait(type: XmlNamespaceTrait.self)?.uri
+            xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri
         }
         let recursive = doesShapeHaveRecursiveOwnReference(shape, shapeId: shapeId)
 

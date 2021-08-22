@@ -90,6 +90,9 @@ extension Templates {
         {{#errorTypes}}
                     errorType: {{.}}.self,
         {{/errorTypes}}
+        {{#xmlNamespace}}
+                    xmlNamespace: "{{.}}",
+        {{/xmlNamespace}}
         {{#middlewareClass}}
                     middlewares: [{{.}}],
         {{/middlewareClass}}
