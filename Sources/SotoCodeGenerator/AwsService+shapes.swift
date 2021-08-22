@@ -21,9 +21,9 @@ extension AwsService {
     func generateShapesContext() throws -> [String: Any] {
         var context: [String: Any] = [:]
         context["name"] = serviceName
-        
+
         markInputOutputShapes(model)
-        
+
         var shapeContexts: [[String: Any]] = []
 
         // generate enums
@@ -32,7 +32,7 @@ extension AwsService {
             guard let enumContext = self.generateEnumContext(e.value, shapeName: e.key) else { continue }
             shapeContexts.append(["enum": enumContext])
         }
-        
+
         // generate structures
         let structures = model.select(type: StructureShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for structure in structures {
@@ -65,7 +65,7 @@ extension AwsService {
         let usedInInput = shape.hasTrait(type: SotoInputShapeTrait.self)
         let usedInOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
         guard usedInInput || usedInOutput else { return nil }
-        
+
         // Operations
         var valueContexts: [EnumMemberContext] = []
         let enumDefinitions = trait.value.sorted { $0.value < $1.value }
@@ -102,11 +102,11 @@ extension AwsService {
         var shapePayloadOptions: [String] = []
         var xmlNamespace: String?
         let payloadMember = getPayloadMember(from: shape)
-        
+
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payloadMember != nil) else { return nil }
-        
-        let contexts = generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: typeIsEnum)
-        
+
+        let contexts = self.generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: typeIsEnum)
+
         // get payload options
         if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
             if payload is BlobShape {
@@ -123,9 +123,9 @@ extension AwsService {
             xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri ?? service.trait(type: XmlNamespaceTrait.self)?.uri
         }
         let recursive = doesShapeHaveRecursiveOwnReference(shape, shapeId: shapeId)
-        
+
         return StructureContext(
-            object: recursive ? "class": "struct",
+            object: recursive ? "class" : "struct",
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
             payload: payloadMember?.key.toSwiftLabelCase(),
@@ -149,24 +149,24 @@ extension AwsService {
         var validation: [ValidationContext] = []
         var encoding: [EncodingPropertiesContext] = []
     }
-    
+
     /// generate shape members context
     func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsEnum: Bool) -> MembersContexts {
         var contexts = MembersContexts()
         guard let members = shape.members else { return contexts }
         let isOutputShape = shape.hasTrait(type: SotoOutputShapeTrait.self)
         let isInputShape = shape.hasTrait(type: SotoInputShapeTrait.self)
-        let sortedMembers = members.map{ $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
+        let sortedMembers = members.map { $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
         for member in sortedMembers {
             // member context
-            let memberContext = generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum)
+            let memberContext = self.generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum)
             contexts.members.append(memberContext)
             // coding key context
             if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, isOutputShape: isOutputShape) {
                 contexts.codingKeys.append(codingKeyContext)
             }
             // member encoding context
-            let memberEncodingContext = generateMemberEncodingContext(
+            let memberEncodingContext = self.generateMemberEncodingContext(
                 member.value,
                 name: member.key,
                 isOutputShape: isOutputShape,
@@ -204,7 +204,7 @@ extension AwsService {
             parameter: name.toSwiftLabelCase(),
             required: member.hasTrait(type: RequiredTrait.self),
             default: defaultValue,
-            propertyWrapper: generatePropertyWrapper(member, name: name, required: required),
+            propertyWrapper: self.generatePropertyWrapper(member, name: name, required: required),
             type: type + ((required || typeIsEnum) ? "" : "?"),
             comment: processMemberDocs(from: member),
             duplicate: false // NEED to catch this
@@ -217,27 +217,28 @@ extension AwsService {
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             memberEncoding.append(.init(name: name, location: ".header(locationName: \"\(headerTrait.value)\")"))
-        // if prefix header
+            // if prefix header
         } else if let headerPrefixTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             memberEncoding.append(.init(name: name, location: ".header(locationName: \"\(headerPrefixTrait.value)\")"))
-        // if query string
+            // if query string
         } else if let queryTrait = member.trait(type: HttpQueryTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             memberEncoding.append(.init(name: name, location: ".querystring(locationName: \"\(queryTrait.value)\")"))
-        // if part of URL
+            // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
             let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
             memberEncoding.append(.init(name: labelName, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")"))
-        // if response status code
+            // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             memberEncoding.append(.init(name: name, location: ".statusCode"))
-        // if payload and not a blob or shape is an output shape
+            // if payload and not a blob or shape is an output shape
         } else if member.hasTrait(type: HttpPayloadTrait.self),
-                  (!(model.shape(for: member.target) is BlobShape) || isOutputShape) {
-            let aliasTrait = member.traits?.first(where: {$0 is AliasTrait}) as? AliasTrait
+                  !(model.shape(for: member.target) is BlobShape) || isOutputShape
+        {
+            let aliasTrait = member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait
             let payloadName = aliasTrait?.alias ?? name
             let swiftLabelName = name.toSwiftLabelCase()
             if swiftLabelName != payloadName {
@@ -253,18 +254,19 @@ extension AwsService {
         }
         return memberEncoding
     }
-    
+
     func generateCodingKeyContext(_ member: MemberShape, name: String, isOutputShape: Bool) -> CodingKeysContext? {
         guard isOutputShape ||
-                (!member.hasTrait(type: HttpHeaderTrait.self) &&
-                    !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
-                    !member.hasTrait(type: HttpQueryTrait.self) &&
-                    !member.hasTrait(type: HttpLabelTrait.self) &&
-                    !(member.hasTrait(type: HttpPayloadTrait.self) && model.shape(for: member.target) is BlobShape)) else {
+            (!member.hasTrait(type: HttpHeaderTrait.self) &&
+                !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
+                !member.hasTrait(type: HttpQueryTrait.self) &&
+                !member.hasTrait(type: HttpLabelTrait.self) &&
+                !(member.hasTrait(type: HttpPayloadTrait.self) && model.shape(for: member.target) is BlobShape))
+        else {
             return nil
         }
         var codingKey: String = name
-        if let aliasTrait = member.traits?.first(where: {$0 is AliasTrait}) as? AliasTrait {
+        if let aliasTrait = member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait {
             codingKey = aliasTrait.alias
         }
         return CodingKeysContext(variable: name.toSwiftVariableCase(), codingKey: codingKey, duplicate: false)
@@ -341,7 +343,7 @@ extension AwsService {
         guard !alreadyProcessed.contains(shapeId) else { return nil }
         guard let shape = model.shape(for: shapeId) else { return nil }
         guard !shape.hasTrait(type: EnumTrait.self) else { return nil }
-        
+
         var requirements: [String: Any] = [:]
         if let lengthTrait = shape.trait(type: LengthTrait.self) {
             if let min = lengthTrait.min, min > 0 {
@@ -361,8 +363,8 @@ extension AwsService {
         if let patternTrait = shape.trait(type: PatternTrait.self) {
             requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
         }
-        
-        var listMember: MemberShape? = nil
+
+        var listMember: MemberShape?
         if let list = shape as? ListShape {
             listMember = list.member
         } else if let set = shape as? SetShape {
@@ -387,18 +389,18 @@ extension AwsService {
                 }
             }
         }
-        
+
         if let map = shape as? MapShape {
             // validation code doesn't support containers inside containers. Only service affected by this is SSM
             if !container {
-                let keyValidationContext = generateValidationContext(
+                let keyValidationContext = self.generateValidationContext(
                     map.key.target,
                     name: name,
                     required: required,
                     container: true,
                     alreadyProcessed: alreadyProcessed
                 )
-                let valueValidationContext = generateValidationContext(
+                let valueValidationContext = self.generateValidationContext(
                     map.value.target,
                     name: name,
                     required: required,
@@ -416,13 +418,13 @@ extension AwsService {
                 }
             }
         }
-        
+
         if let collection = shape as? CollectionShape, let members = collection.members {
             for member in members {
                 let memberRequired = member.value.hasTrait(type: RequiredTrait.self)
                 var alreadyProcessed2 = alreadyProcessed
                 alreadyProcessed2.insert(shapeId)
-                if generateValidationContext(
+                if self.generateValidationContext(
                     member.value.target,
                     name: member.key,
                     required: memberRequired,
@@ -432,16 +434,15 @@ extension AwsService {
                     return ValidationContext(name: name.toSwiftVariableCase(), shape: true, required: required)
                 }
             }
-
         }
         if requirements.count > 0 {
             return ValidationContext(name: name.toSwiftVariableCase(), required: required, reqs: requirements)
         }
         return nil
     }
-    
+
     func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
         let required = member.hasTrait(type: RequiredTrait.self)
-        return generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
+        return self.generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
     }
 }

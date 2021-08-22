@@ -38,12 +38,12 @@ extension AwsService {
         }
         return context
     }
-    
+
     /// Generate waiter context from waiter
     func generateWaiterContext(_ waiter: WaitableTrait.Waiter, name: String, operation: OperationShape, operationName: ShapeId) throws -> WaiterContext {
         var acceptorContexts: [AcceptorContext] = []
         for acceptor in waiter.acceptors {
-            acceptorContexts.append(generateAcceptorContext(acceptor))
+            acceptorContexts.append(self.generateAcceptorContext(acceptor))
         }
         let operationContext = try self.generateOperationContext(operation, operationName: operationName, streaming: false)
         return .init(
@@ -57,12 +57,12 @@ extension AwsService {
             comment: self.processDocs(waiter.documentation)
         )
     }
-    
+
     /// Generate acceptor context from Acceptor
     func generateAcceptorContext(_ acceptor: WaitableTrait.Acceptor) -> AcceptorContext {
         switch acceptor.matcher {
         case .output(let pathMatcher):
-            let expected = generateExpectedValue(expected: pathMatcher.expected)
+            let expected = self.generateExpectedValue(expected: pathMatcher.expected)
             let path = self.generatePathArgument(argument: pathMatcher.path)
             switch pathMatcher.comparator {
             case .stringEquals, .booleanEquals:
@@ -72,13 +72,13 @@ extension AwsService {
             case .allStringEquals:
                 return .init(state: acceptor.state.rawValue, matcher: .jmesAllPath(path: path, expected: expected))
             }
-            
+
         case .errorType(let error):
             return .init(state: acceptor.state.rawValue, matcher: .error(error))
 
         case .success:
             return .init(state: acceptor.state.rawValue, matcher: .success(0))
-            
+
         case .inputOutput:
             preconditionFailure("Waiter inputOutput acceptors are not supported")
         }

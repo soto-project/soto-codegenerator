@@ -1,33 +1,33 @@
 extension Templates {
     static let shapesTemplate = """
-{{%CONTENT_TYPE:TEXT}}
-{{>header}}
+    {{%CONTENT_TYPE:TEXT}}
+    {{>header}}
 
-import Foundation
-import SotoCore
+    import Foundation
+    import SotoCore
 
-extension {{name}} {
-    // MARK: Enums
-{{#shapes}}
-{{#enum}}
+    extension {{name}} {
+        // MARK: Enums
+    {{#shapes}}
+    {{#enum}}
 
-{{>enum}}
-{{/enum}}
-{{/shapes}}
-{{#shapes}}
-{{#enumWithValues}}
+    {{>enum}}
+    {{/enum}}
+    {{/shapes}}
+    {{#shapes}}
+    {{#enumWithValues}}
 
-{{>enumWithValues}}
-{{/enumWithValues}}
-{{/shapes}}
+    {{>enumWithValues}}
+    {{/enumWithValues}}
+    {{/shapes}}
 
-    // MARK: Shapes
-{{#shapes}}
-{{#struct}}
+        // MARK: Shapes
+    {{#shapes}}
+    {{#struct}}
 
-{{>struct}}
-{{/struct}}
-{{/shapes}}
-}
-"""
+    {{>struct}}
+    {{/struct}}
+    {{/shapes}}
+    }
+    """
 }

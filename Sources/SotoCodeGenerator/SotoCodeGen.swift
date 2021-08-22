@@ -23,7 +23,7 @@ struct SotoCodeGen {
         let filename: String
         let error: Error
     }
-    
+
     enum SwiftFormatConfig {
         static let disabledRules = FormatRules.disabledByDefault + ["redundantReturn", "redundantBackticks", "trailingCommas", "extensionAccessControl"]
         static let ruleNames = Set(FormatRules.byName.keys).subtracting(disabledRules)
@@ -39,6 +39,7 @@ struct SotoCodeGen {
             noSpaceOperators: ["...", "..<"]
         )
     }
+
     let command: SotoCodeGenCommand
     let library: HBMustacheLibrary
 
@@ -83,7 +84,7 @@ struct SotoCodeGen {
             } catch {
                 throw FileError(filename: $0, error: error)
             }
-        }) { left, right in left }
+        }) { left, _ in left }
     }
 
     func loadSmithy() throws -> [String: SotoSmithy.Model] {
@@ -99,7 +100,7 @@ struct SotoCodeGen {
             } catch {
                 throw FileError(filename: $0, error: error)
             }
-        }) { left, right in left }
+        }) { left, _ in left }
     }
 
     /// Run swift format on String
@@ -120,9 +121,10 @@ struct SotoCodeGen {
 
         let apiContext = try service.generateServiceContext()
         let api = self.library.render(apiContext, withTemplate: "api")!
-        if try format(api)
-            .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_API.swift") {
-                print("Wrote: \(service.serviceName)_API.swift")
+        if try self.format(api)
+            .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_API.swift")
+        {
+            print("Wrote: \(service.serviceName)_API.swift")
         }
         if exportAsync {
             let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
@@ -132,7 +134,7 @@ struct SotoCodeGen {
                 print("Wrote: \(service.serviceName)_API+async.swift")
             }
         }
-        
+
         let shapesContext = try service.generateShapesContext()
         let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
         if self.command.output, try self.format(shapes).writeIfChanged(
@@ -186,7 +188,7 @@ struct SotoCodeGen {
                 }
             }
         }
-        //print("Succesfully Generated \(service.serviceName)")
+        // print("Succesfully Generated \(service.serviceName)")
     }
 
     func generate() throws {
@@ -195,10 +197,10 @@ struct SotoCodeGen {
         // load JSON
         let endpoints = try loadEndpointJSON()
         let models: [String: SotoSmithy.Model]
-        if command.smithy {
-            models = try loadSmithy()
+        if self.command.smithy {
+            models = try self.loadSmithy()
         } else {
-            models = try loadModelJSON()
+            models = try self.loadModelJSON()
         }
         let group = DispatchGroup()
 

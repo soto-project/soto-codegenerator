@@ -33,7 +33,7 @@ protocol AwsServiceProtocol: SotoOutput {
 extension JsonNameTrait: AliasTrait { var alias: String { return value } }
 extension XmlNameTrait: AliasTrait { var alias: String { return value } }
 // going to have to assume EC2 name isn't used and use Header name
-//extension AwsProtocolsEc2QueryNameTrait: AliasTrait { var alias: String { return value } }
+// extension AwsProtocolsEc2QueryNameTrait: AliasTrait { var alias: String { return value } }
 extension HttpHeaderTrait: AliasTrait { var alias: String { return value } }
 extension HttpPrefixHeadersTrait: AliasTrait { var alias: String { return value } }
 extension HttpQueryTrait: AliasTrait { var alias: String { return value } }
@@ -45,32 +45,36 @@ extension AwsProtocolsRestJson1Trait: AwsServiceProtocol {
     var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
     var requiresCollectionCoders: Bool { return false }
 }
+
 extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.0\")" }
     var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
     var requiresCollectionCoders: Bool { return false }
 }
+
 extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.1\")" }
     var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
     var requiresCollectionCoders: Bool { return false }
 }
+
 extension AwsProtocolsAwsQueryTrait: AwsServiceProtocol {
     var output: String { ".query" }
     var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
     var requiresCollectionCoders: Bool { return true }
 }
+
 extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol {
     var output: String { ".ec2" }
     var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
     var requiresCollectionCoders: Bool { return true }
 }
+
 extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
     var output: String { ".restxml" }
     var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
     var requiresCollectionCoders: Bool { return true }
 }
-
 
 // MARK: Shape types
 
@@ -137,15 +141,14 @@ extension MemberShape {
 
 protocol SotoEquatableShape {}
 
-extension BooleanShape: SotoEquatableShape { }
-extension ByteShape: SotoEquatableShape { }
-extension ShortShape: SotoEquatableShape { }
-extension IntegerShape: SotoEquatableShape { }
-extension LongShape: SotoEquatableShape { }
-extension FloatShape: SotoEquatableShape { }
-extension DoubleShape: SotoEquatableShape { }
-extension BigIntegerShape: SotoEquatableShape { }
-extension BigDecimalShape: SotoEquatableShape { }
-extension StringShape: SotoEquatableShape { }
-extension TimestampShape: SotoEquatableShape { }
-
+extension BooleanShape: SotoEquatableShape {}
+extension ByteShape: SotoEquatableShape {}
+extension ShortShape: SotoEquatableShape {}
+extension IntegerShape: SotoEquatableShape {}
+extension LongShape: SotoEquatableShape {}
+extension FloatShape: SotoEquatableShape {}
+extension DoubleShape: SotoEquatableShape {}
+extension BigIntegerShape: SotoEquatableShape {}
+extension BigDecimalShape: SotoEquatableShape {}
+extension StringShape: SotoEquatableShape {}
+extension TimestampShape: SotoEquatableShape {}

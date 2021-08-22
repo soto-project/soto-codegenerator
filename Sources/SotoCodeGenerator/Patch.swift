@@ -30,14 +30,14 @@ struct EditShapePatch<S: Shape>: ShapePatch {
 
     func patch(shape: Shape) -> Shape? {
         guard let shape = shape as? S else { return nil }
-        return edit(shape)
+        return self.edit(shape)
     }
 }
 
 struct AddTraitPatch: ShapePatch {
     let trait: Trait
     func patch(shape: Shape) -> Shape? {
-        shape.add(trait: trait)
+        shape.add(trait: self.trait)
         return nil
     }
 }
@@ -45,7 +45,7 @@ struct AddTraitPatch: ShapePatch {
 struct RemoveTraitPatch: ShapePatch {
     let trait: StaticTrait.Type
     func patch(shape: Shape) -> Shape? {
-        shape.removeTrait(named: trait.staticName)
+        shape.removeTrait(named: self.trait.staticName)
         return nil
     }
 }
@@ -54,7 +54,7 @@ struct EditTraitPatch<T: StaticTrait>: ShapePatch {
     let edit: (T) -> (T)
     func patch(shape: Shape) -> Shape? {
         guard let trait = shape.trait(type: T.self) else { return nil }
-        let newTrait = edit(trait)
+        let newTrait = self.edit(trait)
         shape.remove(trait: T.self)
         shape.add(trait: newTrait)
         return nil
@@ -64,17 +64,17 @@ struct EditTraitPatch<T: StaticTrait>: ShapePatch {
 struct EditEnumPatch: ShapePatch {
     let add: [EnumTrait.EnumDefinition]
     let remove: [String]
-    
+
     init(add: [EnumTrait.EnumDefinition] = [], remove: [String] = []) {
         self.add = add
         self.remove = remove
     }
-    
+
     func patch(shape: Shape) -> Shape? {
         guard let enumTrait = shape.trait(type: EnumTrait.self) else { return nil }
         var enums = enumTrait.value
         enums.removeAll { remove.contains($0.value) }
-        enums += add
+        enums += self.add
         let newEnumTrait = EnumTrait(value: enums)
         shape.remove(trait: EnumTrait.self)
         shape.add(trait: newEnumTrait)
@@ -88,9 +88,10 @@ struct MultiplePatch: ShapePatch {
     init(_ patches: [ShapePatch]) {
         self.patches = patches
     }
+
     func patch(shape: Shape) -> Shape? {
         var shape = shape
-        for patch in patches {
+        for patch in self.patches {
             if let newShape = patch.patch(shape: shape) {
                 shape = newShape
             }

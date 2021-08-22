@@ -22,10 +22,10 @@ enum Templates {
         "waiter": waiterTemplate,
         "waiter+async": waiterAsyncTemplate
     ]
-    
+
     static func createLibrary() throws -> HBMustacheLibrary {
         let library = HBMustacheLibrary()
-        for v in values {
+        for v in self.values {
             let template = try HBMustacheTemplate(string: v.value)
             library.register(template, named: v.key)
         }

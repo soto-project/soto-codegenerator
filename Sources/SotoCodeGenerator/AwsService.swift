@@ -29,7 +29,7 @@ struct AwsService {
     var outputHTMLComments: Bool
 
     init(_ model: SotoSmithy.Model, endpoints: Endpoints, outputHTMLComments: Bool) throws {
-        guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
+        guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object") }
 
         self.model = model
         self.serviceId = service.key
@@ -42,7 +42,7 @@ struct AwsService {
         try model.patch(serviceName: serviceName)
 
         self.operations = Self.getOperations(service.value, model: model)
-        
+
         self.endpoints = endpoints
         self.outputHTMLComments = outputHTMLComments
     }
@@ -64,10 +64,10 @@ struct AwsService {
         }
         // Strip out suffix names not reflected in service client symbol names.
         /* not convinced by this
-        let stripServiceNameSuffixes: [String] = ["Service", "Client", "API", "Api"]
-        for suffix in stripServiceNameSuffixes {
-            serviceName.deleteSuffix(suffix)
-        }*/
+         let stripServiceNameSuffixes: [String] = ["Service", "Client", "API", "Api"]
+         for suffix in stripServiceNameSuffixes {
+             serviceName.deleteSuffix(suffix)
+         }*/
         serviceName.removeCharacterSet(in: CharacterSet.alphanumerics.inverted)
         serviceName.removeWhitespaces()
         serviceName.capitalizeFirstLetter()
@@ -80,39 +80,39 @@ struct AwsService {
         let awsService = try Self.getTrait(from: service, trait: AwsServiceTrait.self, id: id)
         return awsService.endpointPrefix
     }
-    
+
     /// Generate context for rendering service template
     func generateServiceContext() throws -> [String: Any] {
         var context: [String: Any] = [:]
-        guard let serviceEntry = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object")}
+        guard let serviceEntry = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object") }
         let serviceId = serviceEntry.key
         let service = serviceEntry.value
         let authSigV4 = try Self.getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
         let operations = try generateOperationContexts()
 
-        context["name"] = serviceName
-        context["description"] = processDocs(from: service)
+        context["name"] = self.serviceName
+        context["description"] = self.processDocs(from: service)
         context["endpointPrefix"] = self.serviceEndpointPrefix
         if authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
         }
-        context["protocol"] = serviceProtocolTrait.output
+        context["protocol"] = self.serviceProtocolTrait.output
         context["apiVersion"] = service.version
-        if serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait {
+        if self.serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || self.serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait {
             context["amzTarget"] = serviceId.shapeName
         }
-        if !model.select(with: TraitSelector<ErrorTrait>()).isEmpty {
-            context["errorTypes"] = serviceName + "ErrorType"
+        if !self.model.select(with: TraitSelector<ErrorTrait>()).isEmpty {
+            context["errorTypes"] = self.serviceName + "ErrorType"
         }
-        context["middlewareClass"] = getMiddleware(for: service)
-        
+        context["middlewareClass"] = self.getMiddleware(for: service)
+
         let endpoints = self.getServiceEndpoints()
             .sorted { $0.key < $1.key }
             .map { "\"\($0.key)\": \"\($0.value)\"" }
         if endpoints.count > 0 {
             context["serviceEndpoints"] = endpoints
         }
-        
+
         let isRegionalized: Bool? = self.endpoints.partitions.reduce(nil) {
             guard let regionalized = $1.services[self.serviceEndpointPrefix]?.isRegionalized else { return $0 }
             return ($0 ?? false) || regionalized
@@ -127,7 +127,7 @@ struct AwsService {
 
         context["operations"] = operations.operations
         context["streamingOperations"] = operations.streamingOperations
-        context["logger"] = getSymbol(for: "Logger", from: "Logging", model: model, namespace: serviceId.namespace ?? "")
+        context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
         return context
     }
 
@@ -150,11 +150,11 @@ struct AwsService {
             guard let output = operationShape.output?.target else { continue }
             guard let outputShape = model.shape(for: output) as? StructureShape else { continue }
             guard let outputToken = paginatedTrait.outputToken else { continue }
-            let inputMemberShapeName = inputMember.output(model, withServiceName: serviceName)
+            let inputMemberShapeName = inputMember.output(self.model, withServiceName: self.serviceName)
 
             // construct array of input shape parameters to use in `usingPaginationToken` function
             var initParams: [String: String] = [:]
-            for member in (inputShape.members ?? [:]) {
+            for member in inputShape.members ?? [:] {
                 initParams[member.key.toSwiftLabelCase()] = "self.\(member.key.toSwiftLabelCase())"
             }
             initParams[inputToken.toSwiftLabelCase()] = "token"
@@ -169,9 +169,9 @@ struct AwsService {
 
             paginatorContexts.append(
                 PaginatorContext(
-                    operation: try generateOperationContext(operationShape, operationName: operation.key, streaming: false),
+                    operation: try self.generateOperationContext(operationShape, operationName: operation.key, streaming: false),
                     inputKey: inputKeyToken.map { self.toKeyPath(token: $0, structure: inputShape) },
-                    outputKey: toKeyPath(token: outputToken, structure: outputShape),
+                    outputKey: self.toKeyPath(token: outputToken, structure: outputShape),
                     moreResults: nil,
                     initParams: initParamsArray,
                     paginatorProtocol: "AWSPaginateToken",
@@ -183,7 +183,7 @@ struct AwsService {
         if paginatorContexts.count > 0 {
             context["paginators"] = paginatorContexts
         }
-        context["logger"] = getSymbol(for: "Logger", from: "Logging", model: model, namespace: namespace ?? "")
+        context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: namespace ?? "")
         return context
     }
 
@@ -191,11 +191,11 @@ struct AwsService {
     func generateErrorContext() throws -> [String: Any] {
         let errorShapes = try model.select(from: "structure [trait|error]")
         guard errorShapes.count > 0 else { return [:] }
-        
+
         var context: [String: Any] = [:]
-        context["name"] = serviceName
-        context["errorName"] = serviceName + "ErrorType"
-        
+        context["name"] = self.serviceName
+        context["errorName"] = self.serviceName + "ErrorType"
+
         var errorContexts: [ErrorContext] = []
         for error in errorShapes {
             let queryError = error.value.trait(type: AwsProtocolsAwsQueryErrorTrait.self)
@@ -203,7 +203,7 @@ struct AwsService {
             let errorContext = ErrorContext(
                 enum: error.key.shapeName.toSwiftVariableCase(),
                 string: name,
-                comment: processDocs(from: error.value)
+                comment: self.processDocs(from: error.value)
             )
             errorContexts.append(errorContext)
         }
@@ -228,7 +228,8 @@ struct AwsService {
                let payloadMember = getPayloadMember(from: outputShape),
                let payloadShape = model.shape(for: payloadMember.value.target),
                payloadShape.trait(type: StreamingTrait.self) != nil,
-               payloadShape is BlobShape {
+               payloadShape is BlobShape
+            {
                 let operationContext = try generateOperationContext(operation.value, operationName: operation.key, streaming: true)
                 streamingOperationContexts.append(operationContext)
             }
@@ -246,7 +247,7 @@ struct AwsService {
         let endpointTrait = operation.trait(type: EndpointTrait.self)
 
         return OperationContext(
-            comment: processDocs(from: operation),
+            comment: self.processDocs(from: operation),
             funcName: operationName.shapeName.toSwiftVariableCase(),
             inputShape: operation.input?.target.shapeName,
             outputShape: operation.output?.target.shapeName,
@@ -255,11 +256,10 @@ struct AwsService {
             httpMethod: httpTrait?.method ?? "POST",
             hostPrefix: endpointTrait?.hostPrefix,
             deprecated: deprecatedTrait?.message,
-            streaming: streaming ? "ByteBuffer": nil,
-            documentationUrl: nil //operation.trait(type: ExternalDocumentationTrait.self)?.value["API Reference"]
+            streaming: streaming ? "ByteBuffer" : nil,
+            documentationUrl: nil // operation.trait(type: ExternalDocumentationTrait.self)?.value["API Reference"]
         )
     }
-
 
     static func getTrait<T: StaticTrait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
         guard let trait = shape.trait(type: T.self) else {
@@ -279,8 +279,7 @@ struct AwsService {
         }
         throw Error(reason: "No service protocol trait")
     }
-    
-    
+
     /// Get list operations service uses. Slightly more complex than just asking for all the operation shapes in the fle. Instead to do
     /// this properly you need to ask the services for all its operations and resources and then combine the operations with all the
     /// operations from the resources
@@ -300,9 +299,8 @@ struct AwsService {
                 guard let resource = model.shape(for: resourceMember.target) as? ResourceShape else { return }
                 addResourceOperations(resource)
             }
-
         }
-        
+
         if let resources = service.resources {
             resources.forEach { resourceMember in
                 guard let resource = model.shape(for: resourceMember.target) as? ResourceShape else { return }
@@ -318,18 +316,18 @@ struct AwsService {
         }
         return .init(operationsWithId) { lhs, _ in lhs }
     }
-    
+
     func getListEntryName(member: MemberShape, list: ListShape) -> String? {
         guard !member.hasTrait(type: XmlFlattenedTrait.self) else { return nil }
-        guard let memberName = list.member.traits?.first(where: { $0 is AliasTrait}) as? AliasTrait else { return "member" }
+        guard let memberName = list.member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait else { return "member" }
         return memberName.alias
     }
 
     func getMapEntryNames(member: MemberShape, map: MapShape) -> (entry: String?, key: String, value: String) {
         let flattened = member.hasTrait(type: XmlFlattenedTrait.self)
-        let keyTrait = map.key.traits?.first(where: { $0 is AliasTrait}) as? AliasTrait
-        let valueTrait = map.value.traits?.first(where: { $0 is AliasTrait}) as? AliasTrait
-        return (entry: flattened ? nil: "entry", key: keyTrait?.alias ?? "key", value: valueTrait?.alias ?? "value")
+        let keyTrait = map.key.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait
+        let valueTrait = map.value.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait
+        return (entry: flattened ? nil : "entry", key: keyTrait?.alias ?? "key", value: valueTrait?.alias ?? "value")
     }
 
     /// process documenation string
@@ -337,14 +335,14 @@ struct AwsService {
         var docs: [String.SubSequence]
 
         let documentation = shape.trait(type: DocumentationTrait.self)?.value
-        if outputHTMLComments {
+        if self.outputHTMLComments {
             docs = documentation?.split(separator: "\n") ?? []
         } else {
             docs = documentation?
                 .tagStriped()
                 .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
                 .split(separator: "\n")
-                .compactMap { $0.isEmpty ? nil: $0 } ?? []
+                .compactMap { $0.isEmpty ? nil : $0 } ?? []
         }
 
         if let externalDocumentation = shape.trait(type: ExternalDocumentationTrait.self)?.value {
@@ -362,7 +360,7 @@ struct AwsService {
             .tagStriped()
             .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
             .split(separator: "\n")
-            .compactMap { $0.isEmpty ? nil: $0 } ?? []
+            .compactMap { $0.isEmpty ? nil : $0 } ?? []
     }
 
     /// process documentation string
@@ -371,12 +369,12 @@ struct AwsService {
             .tagStriped()
             .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
             .split(separator: "\n")
-            .compactMap { $0.isEmpty ? nil: $0 } ?? []
+            .compactMap { $0.isEmpty ? nil : $0 } ?? []
     }
 
     /// return middleware name given a service name
     func getMiddleware(for service: ServiceShape) -> String? {
-        switch serviceName {
+        switch self.serviceName {
         case "APIGateway":
             return "APIGatewayMiddleware()"
         case "Glacier":
@@ -434,7 +432,7 @@ struct AwsService {
                         return true
                     }
                 case let structure as StructureShape:
-                    return structure.members?.first{ $0.value.target == shapeId } != nil
+                    return structure.members?.first { $0.value.target == shapeId } != nil
                 default:
                     break
                 }
@@ -483,7 +481,7 @@ struct AwsService {
             }
         }
     }
-    
+
     /// convert paginator token to KeyPath
     func toKeyPath(token: String, structure: StructureShape) -> String {
         var split = token.split(separator: ".")
@@ -504,7 +502,7 @@ struct AwsService {
 
         if let member = structure.members?[String(split[0])],
            !member.hasTrait(type: RequiredTrait.self),
-            split.count > 1
+           split.count > 1
         {
             split[0] += "?"
         }
@@ -548,7 +546,8 @@ struct AwsService {
             if let partitionEndpoint = $0.services[self.serviceEndpointPrefix]?.partitionEndpoint {
                 guard let service = $0.services[self.serviceEndpointPrefix],
                       let endpoint = service.endpoints[partitionEndpoint],
-                      let region = endpoint.credentialScope?.region else {
+                      let region = endpoint.credentialScope?.region
+                else {
                     preconditionFailure("Found partition endpoint without a credential scope region")
                 }
                 partitionEndpoints[$0.partition] = (endpoint: partitionEndpoint, region: region)
@@ -693,16 +692,16 @@ extension AwsService {
         }
 
         func transform(_ name: String) -> Any? {
-             switch name {
-             case "withDictionaryContexts":
-                 if (keyValidation != nil || valueValidation != nil) {
-                     return self
-                 }
-             default:
-                 break
-             }
-             return nil
-         }
+            switch name {
+            case "withDictionaryContexts":
+                if self.keyValidation != nil || self.valueValidation != nil {
+                    return self
+                }
+            default:
+                break
+            }
+            return nil
+        }
     }
 
     struct CodingKeysContext {
@@ -727,7 +726,7 @@ extension AwsService {
         let validation: [ValidationContext]
         let requiresDefaultValidation: Bool
     }
-    
+
     struct WaiterContext {
         let waiterName: String
         let operation: OperationContext
