@@ -1,9 +1,16 @@
+//===----------------------------------------------------------------------===//
 //
-//  File.swift
-//  File
+// This source file is part of the Soto for AWS open source project
 //
-//  Created by Adam Fowler on 20/08/2021.
+// Copyright (c) 2017-2021 the Soto project authors
+// Licensed under Apache License v2.0
 //
+// See LICENSE.txt for license information
+// See CONTRIBUTORS.txt for the list of Soto project authors
+//
+// SPDX-License-Identifier: Apache-2.0
+//
+//===----------------------------------------------------------------------===//
 
 import HummingbirdMustache
 
