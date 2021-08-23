@@ -717,7 +717,7 @@ extension AwsService {
         let name: String
         let shapeProtocol: String
         let payload: String?
-        var payloadOptions: String?
+        var options: String?
         let namespace: String?
         let isEncodable: Bool
         let isDecodable: Bool

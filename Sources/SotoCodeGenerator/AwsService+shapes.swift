@@ -99,7 +99,7 @@ extension AwsService {
     /// Generate the context information for outputting a shape
     func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId, typeIsEnum: Bool) -> StructureContext? {
         let shapeName = shapeId.shapeName
-        var shapePayloadOptions: [String] = []
+        var shapeOptions: [String] = []
         var xmlNamespace: String?
         let payloadMember = getPayloadMember(from: shape)
 
@@ -108,15 +108,19 @@ extension AwsService {
         let contexts = self.generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: typeIsEnum)
 
         // get payload options
+        let operationShape = shape.trait(type: SotoRequestShapeTrait.self)?.operationShape
+        if operationShape?.hasTrait(type: HttpChecksumRequiredTrait.self) == true {
+            shapeOptions.append("md5ChecksumRequired")
+        }
         if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
             if payload is BlobShape {
-                shapePayloadOptions.append("rawPayload")
+                shapeOptions.append("rawPayload")
                 if payload.hasTrait(type: StreamingTrait.self) {
-                    shapePayloadOptions.append("allowStreaming")
+                    shapeOptions.append("allowStreaming")
                     if !payload.hasTrait(type: RequiresLengthTrait.self),
-                       let operationShape = shape.trait(type: SotoRequestShapeTrait.self)?.operationShape,
+                       let operationShape = operationShape,
                        operationShape.hasTrait(type: AwsAuthUnsignedPayloadTrait.self) {
-                        shapePayloadOptions.append("allowChunkedStreaming")
+                        shapeOptions.append("allowChunkedStreaming")
                     }
                 }
             }
@@ -131,7 +135,7 @@ extension AwsService {
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
             payload: payloadMember?.key.toSwiftLabelCase(),
-            payloadOptions: shapePayloadOptions.count > 0 ? shapePayloadOptions.map { ".\($0)" }.joined(separator: ", ") : nil,
+            options: shapeOptions.count > 0 ? shapeOptions.map { ".\($0)" }.joined(separator: ", ") : nil,
             namespace: xmlNamespace,
             isEncodable: shape.hasTrait(type: SotoInputShapeTrait.self),
             isDecodable: shape.hasTrait(type: SotoOutputShapeTrait.self),

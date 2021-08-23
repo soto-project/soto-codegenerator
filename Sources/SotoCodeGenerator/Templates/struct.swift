@@ -21,9 +21,9 @@ extension Templates {
             /// The key for the payload
             public static let _payloadPath: String = "{{.}}"
     {{/payload}}
-    {{#payloadOptions}}
+    {{#options}}
             public static let _options: AWSShapeOptions = [{{.}}]
-    {{/payloadOptions}}
+    {{/options}}
     {{#namespace}}
             public static let _xmlNamespace: String? = "{{.}}"
     {{/namespace}}
