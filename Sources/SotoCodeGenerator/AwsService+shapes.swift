@@ -110,7 +110,7 @@ extension AwsService {
         // get payload options
         if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
             if payload is BlobShape {
-                shapePayloadOptions.append("raw")
+                shapePayloadOptions.append("rawPayload")
                 if payload.hasTrait(type: StreamingTrait.self) {
                     shapePayloadOptions.append("allowStreaming")
                     if !payload.hasTrait(type: RequiresLengthTrait.self),
