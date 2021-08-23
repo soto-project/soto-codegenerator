@@ -470,14 +470,15 @@ struct AwsService {
 
         for operation in self.operations {
             if let input = operation.value.input {
-                addTrait(to: input.target, trait: SotoInputShapeTrait())
-                // need to add SotoAuthUnsignedPayloadTrait to input shape as we don't know the operation when
-                // processing shapes
-                if let shape = model.shape(for: input.target), operation.value.hasTrait(type: AwsAuthUnsignedPayloadTrait.self) {
-                    shape.add(trait: SotoAuthUnsignedPayloadTrait())
+                if let shape = model.shape(for: input.target) {
+                    shape.add(trait: SotoRequestShapeTrait(operationShape: operation.value))
                 }
+                addTrait(to: input.target, trait: SotoInputShapeTrait())
             }
             if let output = operation.value.output {
+                if let shape = model.shape(for: output.target) {
+                    shape.add(trait: SotoResponseShapeTrait(operationShape: operation.value))
+                }
                 addTrait(to: output.target, trait: SotoOutputShapeTrait())
             }
         }

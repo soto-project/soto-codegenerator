@@ -113,7 +113,9 @@ extension AwsService {
                 shapePayloadOptions.append("raw")
                 if payload.hasTrait(type: StreamingTrait.self) {
                     shapePayloadOptions.append("allowStreaming")
-                    if shape.hasTrait(type: SotoAuthUnsignedPayloadTrait.self) {
+                    if !payload.hasTrait(type: RequiresLengthTrait.self),
+                       let operationShape = shape.trait(type: SotoRequestShapeTrait.self)?.operationShape,
+                       operationShape.hasTrait(type: AwsAuthUnsignedPayloadTrait.self) {
                         shapePayloadOptions.append("allowChunkedStreaming")
                     }
                 }

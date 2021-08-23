@@ -24,6 +24,22 @@ struct SotoOutputShapeTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#outputShape"
 }
 
+struct SotoRequestShapeTrait: StaticTrait {
+    static let staticName: ShapeId = "soto.api#requestShape"
+    public let operationShape: OperationShape
+    public init(operationShape: OperationShape) {
+        self.operationShape = operationShape
+    }
+}
+
+struct SotoResponseShapeTrait: StaticTrait {
+    static let staticName: ShapeId = "soto.api#responseShape"
+    public let operationShape: OperationShape
+    public init(operationShape: OperationShape) {
+        self.operationShape = operationShape
+    }
+}
+
 struct SotoAuthUnsignedPayloadTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#unsignedPayload"
     var selector: Selector { TypeSelector<StructureShape>() }
