@@ -1,3 +1,3 @@
-# SotoCodeGen
+# SotoCodeGenerator
 
-Code Generator for Soto using Smithy models from aws-sdk-go-v2 repository
+Code Generator for Soto using AWS Smithy models
