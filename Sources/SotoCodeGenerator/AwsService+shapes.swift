@@ -226,7 +226,7 @@ extension AwsService {
             // if prefix header
         } else if let headerPrefixTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            memberEncoding.append(.init(name: name, location: ".header(locationName: \"\(headerPrefixTrait.value)\")"))
+            memberEncoding.append(.init(name: name, location: ".headerPrefix(prefix: \"\(headerPrefixTrait.value)\")"))
             // if query string
         } else if let queryTrait = member.trait(type: HttpQueryTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
