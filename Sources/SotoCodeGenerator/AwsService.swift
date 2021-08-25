@@ -106,7 +106,8 @@ struct AwsService {
         }
         context["xmlNamespace"] = service.trait(type: XmlNamespaceTrait.self)?.uri
         context["middlewareClass"] = self.getMiddleware(for: service)
-
+        context["endpointDiscovery"] = service.trait(type: AwsClientEndpointDiscoveryTrait.self)?.operation.shapeName.toSwiftVariableCase()
+        
         let endpoints = self.getServiceEndpoints()
             .sorted { $0.key < $1.key }
             .map { "\"\($0.key)\": \"\($0.value)\"" }
@@ -246,6 +247,7 @@ struct AwsService {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         let endpointTrait = operation.trait(type: EndpointTrait.self)
+        let requireEndpointDiscovery = operation.trait(type: AwsClientDiscoveredEndpointTrait.self)?.required
 
         return OperationContext(
             comment: self.processDocs(from: operation),
@@ -258,7 +260,8 @@ struct AwsService {
             hostPrefix: endpointTrait?.hostPrefix,
             deprecated: deprecatedTrait?.message,
             streaming: streaming ? "ByteBuffer" : nil,
-            documentationUrl: nil // operation.trait(type: ExternalDocumentationTrait.self)?.value["API Reference"]
+            documentationUrl: nil, // added to comment
+            endpointRequired: requireEndpointDiscovery.map { OperationContext.DiscoverableEndpoint(required: $0) }
         )
     }
 
@@ -596,6 +599,9 @@ extension AwsService {
     }
 
     struct OperationContext {
+        struct DiscoverableEndpoint {
+            let required: Bool
+        }
         let comment: [String.SubSequence]
         let funcName: String
         let inputShape: String?
@@ -607,6 +613,7 @@ extension AwsService {
         let deprecated: String?
         let streaming: String?
         let documentationUrl: String?
+        let endpointRequired: DiscoverableEndpoint?
     }
 
     struct PaginatorContext {
