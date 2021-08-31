@@ -49,3 +49,19 @@ struct SotoExtensibleEnumTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#extensibleEnum"
     var selector: Selector { TraitSelector<EnumTrait>() }
 }
+
+/// Indicates that associated PaginatedTrait requires to check a `IsTruncated` flag
+public struct SotoPaginationTruncatedTrait: StaticTrait {
+    public static var staticName: ShapeId = "soto.api#paginationTruncated"
+    public var selector: Selector {
+        AndSelector(
+            TraitSelector<PaginatedTrait>(),
+            OrSelector(TypeSelector<OperationShape>(), TypeSelector<ServiceShape>())
+        )
+    }
+    public let isTruncated: String
+
+    public init(isTruncated: String) {
+        self.isTruncated = isTruncated
+    }
+}

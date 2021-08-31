@@ -151,6 +151,7 @@ struct AwsService {
             guard let output = operationShape.output?.target else { continue }
             guard let outputShape = model.shape(for: output) as? StructureShape else { continue }
             guard let outputToken = paginatedTrait.outputToken else { continue }
+            let paginatedTruncatedTrait = operationShape.trait(type: SotoPaginationTruncatedTrait.self)
             let inputMemberShapeName = inputMember.output(self.model, withServiceName: self.serviceName)
 
             // construct array of input shape parameters to use in `usingPaginationToken` function
@@ -167,13 +168,17 @@ struct AwsService {
             if !(inputKeyShape is SotoEquatableShape) {
                 inputKeyToken = nil
             }
+            // if we have a `isTruncated` flag then don't output input
+            if paginatedTruncatedTrait != nil {
+                inputKeyToken = nil
+            }
 
             paginatorContexts.append(
                 PaginatorContext(
                     operation: try self.generateOperationContext(operationShape, operationName: operation.key, streaming: false),
                     inputKey: inputKeyToken.map { self.toKeyPath(token: $0, structure: inputShape) },
                     outputKey: self.toKeyPath(token: outputToken, structure: outputShape),
-                    moreResults: nil,
+                    moreResults: paginatedTruncatedTrait.map { self.toKeyPath(token: $0.isTruncated, structure: outputShape) },
                     initParams: initParamsArray,
                     paginatorProtocol: "AWSPaginateToken",
                     tokenType: inputMemberShapeName

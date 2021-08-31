@@ -36,7 +36,6 @@ extension Model {
                 "com.amazonaws.comprehendmedical#EntitySubType": EditEnumPatch(add: [.init(value: "DX_NAME")]),
             ],
             "DynamoDB": [
-                "com.amazonaws.dynamodb#AttributeValue": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
                 "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
             ],
             "EC2": [
@@ -74,6 +73,7 @@ extension Model {
                     EditEnumPatch(add: [.init(value: "us-east-1")]),
                     AddTraitPatch(trait: SotoExtensibleEnumTrait())
                 ]),
+                "com.amazonaws.s3#ListParts": AddTraitPatch(trait: SotoPaginationTruncatedTrait(isTruncated: "IsTruncated"))
             ],
             "S3Control": [
                 "com.amazonaws.s3control#BucketLocationConstraint": MultiplePatch([
