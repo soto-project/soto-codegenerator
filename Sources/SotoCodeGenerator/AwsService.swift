@@ -179,7 +179,7 @@ struct AwsService {
                     operation: try self.generateOperationContext(operationShape, operationName: operation.key, streaming: false),
                     inputKey: inputKeyToken.map { self.toKeyPath(token: $0, structure: inputShape) },
                     outputKey: self.toKeyPath(token: outputToken, structure: outputShape),
-                    moreResults: paginatedTruncatedTrait.map { self.toKeyPath(token: $0.isTruncated, structure: outputShape) },
+                    moreResultsKey: paginatedTruncatedTrait.map { self.toKeyPath(token: $0.isTruncated, structure: outputShape) },
                     initParams: initParamsArray,
                     paginatorProtocol: "AWSPaginateToken",
                     tokenType: inputMemberShapeName
@@ -625,7 +625,7 @@ extension AwsService {
         let operation: OperationContext
         let inputKey: String?
         let outputKey: String
-        let moreResults: String?
+        let moreResultsKey: String?
         let initParams: [String]
         let paginatorProtocol: String
         let tokenType: String

@@ -69,11 +69,11 @@ extension Model {
                 "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
                 "com.amazonaws.s3#CopySource": EditTraitPatch { _ in return PatternTrait(value: ".+\\/.+") },
                 "com.amazonaws.s3#LifecycleRule$Filter": AddTraitPatch(trait: RequiredTrait()),
-                "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch([
+                "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch(
                     EditEnumPatch(add: [.init(value: "us-east-1")]),
                     AddTraitPatch(trait: SotoExtensibleEnumTrait())
-                ]),
-                "com.amazonaws.s3#ListParts": AddTraitPatch(trait: SotoPaginationTruncatedTrait(isTruncated: "IsTruncated"))
+                ),
+                "com.amazonaws.s3#ListParts": AddTraitPatch(trait: SotoPaginationTruncatedTrait(isTruncated: "IsTruncated")),
             ],
             "S3Control": [
                 "com.amazonaws.s3control#BucketLocationConstraint": MultiplePatch([
