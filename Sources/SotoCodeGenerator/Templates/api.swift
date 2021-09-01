@@ -40,7 +40,7 @@ extension Templates {
             public let config: AWSServiceConfig
         {{#endpointDiscovery}}
             /// endpoint storage
-            let endpointStorage: EndpointStorage
+            let endpointStorage: AWSEndpointStorage
         {{/endpointDiscovery}}
 
             // MARK: Initialization
@@ -105,7 +105,7 @@ extension Templates {
                     options: options
                 )
                 {{#endpointDiscovery}}
-                    self.endpointStorage = .init()
+                    self.endpointStorage = .init(endpoint: self.config.endpoint)
                 {{/endpointDiscovery}}
             }
 
@@ -160,7 +160,7 @@ extension Templates {
                 self.client = from.client
                 self.config = from.config.with(patch: patch)
             {{#endpointDiscovery}}
-                self.endpointStorage = .init()
+                self.endpointStorage = .init(endpoint: self.config.endpoint)
             {{/endpointDiscovery}}
             }
         }
