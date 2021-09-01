@@ -38,6 +38,10 @@ extension Templates {
             public let client: AWSClient
             /// Service configuration
             public let config: AWSServiceConfig
+        {{#endpointDiscovery}}
+            /// endpoint storage
+            let endpointStorage: AWSEndpointStorage
+        {{/endpointDiscovery}}
 
             // MARK: Initialization
 
@@ -100,6 +104,9 @@ extension Templates {
                     byteBufferAllocator: byteBufferAllocator,
                     options: options
                 )
+                {{#endpointDiscovery}}
+                    self.endpointStorage = .init(endpoint: self.config.endpoint)
+                {{/endpointDiscovery}}
             }
 
             // MARK: API Calls
@@ -115,7 +122,7 @@ extension Templates {
             @available(*, deprecated, message:"{{.}}")
         {{/deprecated}}
             {{^outputShape}}@discardableResult {{/outputShape}}public func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
-                return self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop)
+                return self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop)
             }
         {{/operations}}
         {{#first(streamingOperations)}}
@@ -134,6 +141,16 @@ extension Templates {
             }
         {{/streamingOperations}}
         {{/first(streamingOperations)}}
+        {{#endpointDiscovery}}
+        
+            func getEndpoint(logger: Logger, eventLoop: EventLoop) -> EventLoopFuture<AWSEndpoints> {
+                return describeEndpoints(.init(), logger: logger, on: eventLoop).map {
+                    .init(endpoints: $0.endpoints.map {
+                        .init(address: "https://\($0.address)", cachePeriodInMinutes: $0.cachePeriodInMinutes)
+                    })
+                }
+            }
+        {{/endpointDiscovery}}
         }
 
         extension {{ name }} {
@@ -142,6 +159,9 @@ extension Templates {
             public init(from: {{ name }}, patch: AWSServiceConfig.Patch) {
                 self.client = from.client
                 self.config = from.config.with(patch: patch)
+            {{#endpointDiscovery}}
+                self.endpointStorage = .init(endpoint: self.config.endpoint)
+            {{/endpointDiscovery}}
             }
         }
         """#
