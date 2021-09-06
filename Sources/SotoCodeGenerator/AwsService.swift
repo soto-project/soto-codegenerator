@@ -34,12 +34,13 @@ struct AwsService {
         self.model = model
         self.serviceId = service.key
         self.service = service.value
-        let serviceName = try Self.getServiceName(service.value, id: service.key)
+        var serviceName = try Self.getServiceName(service.value, id: service.key)
+        try model.patch(serviceName: serviceName)
+        serviceName = try Self.getServiceName(service.value, id: service.key)
         self.serviceName = serviceName
         self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(service: service.value, id: service.key) ?? serviceName.lowercased()
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
 
-        try model.patch(serviceName: serviceName)
 
         self.operations = Self.getOperations(service.value, model: model)
 
@@ -55,23 +56,21 @@ struct AwsService {
 
         // https://awslabs.github.io/smithy/1.0/spec/aws/aws-core.html#choosing-an-sdk-service-id
 
-        var serviceName = awsService.sdkId
+        var sdkId = awsService.sdkId
 
         // Strip out prefix names not reflected in service client symbol names.
         let stripServiceNamePrefixes: [String] = ["Amazon", "AWS"]
         for prefix in stripServiceNamePrefixes {
-            serviceName.deletePrefix(prefix)
+            sdkId.deletePrefix(prefix)
         }
-        // Strip out suffix names not reflected in service client symbol names.
-        /* not convinced by this
-         let stripServiceNameSuffixes: [String] = ["Service", "Client", "API", "Api"]
-         for suffix in stripServiceNameSuffixes {
-             serviceName.deleteSuffix(suffix)
-         }*/
-        serviceName.removeCharacterSet(in: CharacterSet.alphanumerics.inverted)
-        serviceName.removeWhitespaces()
-        serviceName.capitalizeFirstLetter()
 
+        // separate by non-alphanumeric character, then capitalize the first letter of each component
+        // and join back together
+        let serviceName = sdkId
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .map { $0.prefix(1).capitalized + $0.dropFirst() }
+            .joined()
+        
         return serviceName
     }
 

@@ -29,6 +29,9 @@ extension Model {
             "CloudWatch": [
                 "com.amazonaws.cloudwatch#DashboardNotFoundError": RemoveTraitPatch(trait: AwsProtocolsAwsQueryErrorTrait.self),
             ],
+            "Codeartifact": [
+                "com.amazonaws.codeartifact#CodeArtifactControlPlaneService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "CodeArtifact") },
+            ],
             "CognitoIdentityProvider": [
                 "com.amazonaws.cognitoidentityprovider#UserStatusType": EditEnumPatch(add: [.init(value: "EXTERNAL_PROVIDER")]),
             ],
@@ -46,16 +49,31 @@ extension Model {
             "ECS": [
                 "com.amazonaws.ecs#PropagateTags": EditEnumPatch(add: [.init(value: "NONE")]),
             ],
+            "ECRPUBLIC": [
+                "com.amazonaws.ecrpublic#SpencerFrontendService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "ECRPublic") },
+            ],
             "ElasticLoadBalancing": [
                 "com.amazonaws.elasticloadbalancing#SecurityGroupOwnerAlias": ShapeTypePatch(shape: IntegerShape()),
             ],
+            "Fis": [
+                "com.amazonaws.fis#FaultInjectionSimulator": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "FIS") },
+            ],
             "IAM": [
                 "com.amazonaws.iam#PolicySourceType": EditEnumPatch(add: [.init(value: "IAM Policy")]),
+            ],
+            "Identitystore": [
+                "com.amazonaws.identitystore#AWSIdentityStore": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IdentityStore") },
+            ],
+            "Ivs": [
+                "com.amazonaws.ivs#AmazonInteractiveVideoService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IVS") },
             ],
             /* "Lambda": [
                     //AddDictionaryPatch(PatchKeyPath1(\.shapes), key: "SotoCore.Region", value: Shape(type: .stub, name: "SotoCore.Region")),
                     //ReplacePatch(PatchKeyPath4(\.shapes["ListFunctionsRequest"], \.type.structure, \.members["MasterRegion"], \.shapeName), value: "SotoCore.Region", originalValue: "MasterRegion"),
                 ], */
+            "Mq": [
+                "com.amazonaws.mq#mq": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "MQ") },
+            ],
             "RDSData": [
                 "com.amazonaws.rdsdata#Arn": EditTraitPatch { trait in return LengthTrait(min: trait.min, max: 2048) },
             ],
@@ -84,6 +102,9 @@ extension Model {
             "SageMaker": [
                 "com.amazonaws.sagemaker#ListFeatureGroupsResponse$NextToken": RemoveTraitPatch(trait: RequiredTrait.self),
             ],
+            "Savingsplans": [
+                "com.amazonaws.savingsplans#AWSSavingsPlan": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "SavingsPlans") },
+            ],
         ]
         if let servicePatches = patches[serviceName] {
             for patch in servicePatches {
@@ -98,5 +119,17 @@ extension Model {
                 shapes[shapeId] = newShape
             }
         }
+    }
+}
+
+extension AwsServiceTrait {
+    func with(sdkId: String) -> AwsServiceTrait {
+        .init(
+            sdkId: sdkId,
+            arnNamespace: self.arnNamespace,
+            cloudFormationName: self.cloudFormationName,
+            cloudTrailEventSource: self.cloudTrailEventSource,
+            endpointPrefix: self.endpointPrefix
+        )
     }
 }
