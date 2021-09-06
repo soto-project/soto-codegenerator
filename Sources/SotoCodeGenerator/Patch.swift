@@ -15,7 +15,7 @@
 import SotoSmithy
 
 protocol ShapePatch {
-    func patch(shape: Shape) -> Shape?
+    func patch(shape: Shape) throws -> Shape?
 }
 
 struct ShapeTypePatch: ShapePatch {
@@ -44,7 +44,10 @@ struct AddTraitPatch: ShapePatch {
 
 struct RemoveTraitPatch: ShapePatch {
     let trait: StaticTrait.Type
-    func patch(shape: Shape) -> Shape? {
+    func patch(shape: Shape) throws -> Shape? {
+        guard shape.trait(named: self.trait.staticName) != nil else {
+            throw PatchError(message: "Does not have trait \(self.trait.staticName)")
+        }
         shape.removeTrait(named: self.trait.staticName)
         return nil
     }
@@ -52,8 +55,10 @@ struct RemoveTraitPatch: ShapePatch {
 
 struct EditTraitPatch<T: StaticTrait>: ShapePatch {
     let edit: (T) -> (T)
-    func patch(shape: Shape) -> Shape? {
-        guard let trait = shape.trait(type: T.self) else { return nil }
+    func patch(shape: Shape) throws -> Shape? {
+        guard let trait = shape.trait(type: T.self) else {
+            throw PatchError(message: "Does not have trait \(T.staticName)")
+        }
         let newTrait = self.edit(trait)
         shape.remove(trait: T.self)
         shape.add(trait: newTrait)
@@ -70,8 +75,10 @@ struct EditEnumPatch: ShapePatch {
         self.remove = remove
     }
 
-    func patch(shape: Shape) -> Shape? {
-        guard let enumTrait = shape.trait(type: EnumTrait.self) else { return nil }
+    func patch(shape: Shape) throws -> Shape? {
+        guard let enumTrait = shape.trait(type: EnumTrait.self) else {
+            throw PatchError(message: "Does not have Enum trait")
+        }
         var enums = enumTrait.value
         enums.removeAll { remove.contains($0.value) }
         enums += self.add
@@ -93,13 +100,17 @@ struct MultiplePatch: ShapePatch {
         self.init(patches)
     }
     
-    func patch(shape: Shape) -> Shape? {
+    func patch(shape: Shape) throws -> Shape? {
         var shape = shape
         for patch in self.patches {
-            if let newShape = patch.patch(shape: shape) {
+            if let newShape = try patch.patch(shape: shape) {
                 shape = newShape
             }
         }
         return shape
     }
+}
+
+struct PatchError: Error {
+    public let message: String
 }

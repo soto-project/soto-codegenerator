@@ -67,6 +67,9 @@ extension Model {
             "Identitystore": [
                 "com.amazonaws.identitystore#AWSIdentityStore": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IdentityStore") },
             ],
+            "IotDeviceAdvisor": [
+                "com.amazonaws.iotdeviceadvisor#IotSenateService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IoTDeviceAdvisor") },
+            ],
             "Ivs": [
                 "com.amazonaws.ivs#AmazonInteractiveVideoService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IVS") },
             ],
@@ -99,7 +102,7 @@ extension Model {
             "S3Control": [
                 "com.amazonaws.s3control#BucketLocationConstraint": MultiplePatch([
                     EditEnumPatch(add: [.init(value: "us-east-1")]),
-                    AddTraitPatch(trait: SotoExtensibleEnumTrait())
+                    AddTraitPatch(trait: SotoExtensibleEnumTrait()),
                 ]),
             ],
             "SageMaker": [
@@ -118,9 +121,15 @@ extension Model {
 
     func apply(patch: ShapePatch, to shapeId: ShapeId) throws {
         if let shape = shape(for: shapeId) {
-            if let newShape = patch.patch(shape: shape) {
-                shapes[shapeId] = newShape
+            do {
+                if let newShape = try patch.patch(shape: shape) {
+                    shapes[shapeId] = newShape
+                }
+            } catch let error as PatchError {
+                throw PatchError(message: "\(shapeId): \(error.message)")
             }
+        } else {
+            throw PatchError(message: "Shape \(shapeId) does not exist")
         }
     }
 }
