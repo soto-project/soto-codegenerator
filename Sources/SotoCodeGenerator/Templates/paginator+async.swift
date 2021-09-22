@@ -17,7 +17,7 @@ extension Templates {
     {{%CONTENT_TYPE:TEXT}}
     {{>header}}
 
-    #if compiler(>=5.5) && $AsyncAwait
+    #if compiler(>=5.5) && canImport(_Concurrency)
 
     import SotoCore
 
@@ -63,6 +63,6 @@ extension Templates {
     {{/paginators}}
     }
 
-    #endif // compiler(>=5.5) && $AsyncAwait
+    #endif // compiler(>=5.5) && canImport(_Concurrency)
     """#
 }
