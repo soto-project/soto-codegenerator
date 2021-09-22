@@ -115,7 +115,6 @@ struct SotoCodeGen {
     /// Generate service files from AWSService
     /// - Parameter codeGenerator: service generated from JSON
     func generateFiles(with service: AwsService) throws {
-        let exportAsync = false
         let basePath = "\(command.outputFolder)/\(service.serviceName)/"
         try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
 
@@ -126,13 +125,11 @@ struct SotoCodeGen {
         {
             print("Wrote: \(service.serviceName)_API.swift")
         }
-        if exportAsync {
-            let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
-            if self.command.output, try self.format(apiAsync).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_API+async.swift"
-            ) {
-                print("Wrote: \(service.serviceName)_API+async.swift")
-            }
+        let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
+        if self.command.output, try self.format(apiAsync).writeIfChanged(
+            toFile: "\(basePath)/\(service.serviceName)_API+async.swift"
+        ) {
+            print("Wrote: \(service.serviceName)_API+async.swift")
         }
 
         let shapesContext = try service.generateShapesContext()
@@ -161,13 +158,11 @@ struct SotoCodeGen {
             ) {
                 print("Wrote: \(service.serviceName)_Paginator.swift")
             }
-            if exportAsync {
-                let paginatorsAsync = self.library.render(paginatorContext, withTemplate: "paginator+async")!
-                if self.command.output, try self.format(paginatorsAsync).writeIfChanged(
-                    toFile: "\(basePath)/\(service.serviceName)_Paginator+async.swift"
-                ) {
-                    print("Wrote: \(service.serviceName)_Paginator+async.swift")
-                }
+            let paginatorsAsync = self.library.render(paginatorContext, withTemplate: "paginator+async")!
+            if self.command.output, try self.format(paginatorsAsync).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_Paginator+async.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_Paginator+async.swift")
             }
         }
 
@@ -179,13 +174,11 @@ struct SotoCodeGen {
             ) {
                 print("Wrote: \(service.serviceName)_Waiter.swift")
             }
-            if exportAsync {
-                let waitersAsync = self.library.render(waiterContexts, withTemplate: "waiter+async")!
-                if self.command.output, try self.format(waitersAsync).writeIfChanged(
-                    toFile: "\(basePath)/\(service.serviceName)_Waiter+async.swift"
-                ) {
-                    print("Wrote: \(service.serviceName)_Waiter+async.swift")
-                }
+            let waitersAsync = self.library.render(waiterContexts, withTemplate: "waiter+async")!
+            if self.command.output, try self.format(waitersAsync).writeIfChanged(
+                toFile: "\(basePath)/\(service.serviceName)_Waiter+async.swift"
+            ) {
+                print("Wrote: \(service.serviceName)_Waiter+async.swift")
             }
         }
         // print("Succesfully Generated \(service.serviceName)")
