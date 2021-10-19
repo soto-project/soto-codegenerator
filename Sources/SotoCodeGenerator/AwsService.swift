@@ -197,6 +197,7 @@ struct AwsService {
     func generateErrorContext() throws -> [String: Any] {
         let errorShapes = try model.select(from: "structure [trait|error]")
         guard errorShapes.count > 0 else { return [:] }
+        let isQueryProtocol = self.service.hasTrait(type: AwsProtocolsAwsQueryTrait.self)
 
         var context: [String: Any] = [:]
         context["name"] = self.serviceName
@@ -204,7 +205,7 @@ struct AwsService {
 
         var errorContexts: [ErrorContext] = []
         for error in errorShapes {
-            let queryError = error.value.trait(type: AwsProtocolsAwsQueryErrorTrait.self)
+            let queryError = isQueryProtocol ? error.value.trait(type: AwsProtocolsAwsQueryErrorTrait.self) : nil
             let name: String = queryError?.code ?? error.key.shapeName
             let errorContext = ErrorContext(
                 enum: error.key.shapeName.toSwiftVariableCase(),
