@@ -133,11 +133,14 @@ extension Templates {
         {{#comment}}
             /// {{.}}
         {{/comment}}
+        {{#documentationUrl}}
+            /// {{.}}
+        {{/documentationUrl}}
         {{#deprecated}}
             @available(*, deprecated, message:"{{.}}")
         {{/deprecated}}
             {{^outputShape}}@discardableResult {{/outputShape}}public func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil{{#streaming}}, _ stream: @escaping ({{.}}, EventLoop)->EventLoopFuture<Void>{{/streaming}}) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
-                return self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop{{#streaming}}, stream: stream{{/streaming}})
+                return self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop{{#streaming}}, stream: stream{{/streaming}})
             }
         {{/streamingOperations}}
         {{/first(streamingOperations)}}
