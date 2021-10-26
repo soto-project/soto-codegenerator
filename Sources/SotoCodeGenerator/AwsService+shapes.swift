@@ -222,20 +222,20 @@ extension AwsService {
         // if header
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            memberEncoding.append(.init(name: name, location: ".header(locationName: \"\(headerTrait.value)\")"))
+            memberEncoding.append(.init(name: name, location: ".header(\"\(headerTrait.value)\")"))
             // if prefix header
         } else if let headerPrefixTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            memberEncoding.append(.init(name: name, location: ".headerPrefix(prefix: \"\(headerPrefixTrait.value)\")"))
+            memberEncoding.append(.init(name: name, location: ".headerPrefix(\"\(headerPrefixTrait.value)\")"))
             // if query string
         } else if let queryTrait = member.trait(type: HttpQueryTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            memberEncoding.append(.init(name: name, location: ".querystring(locationName: \"\(queryTrait.value)\")"))
+            memberEncoding.append(.init(name: name, location: ".querystring(\"\(queryTrait.value)\")"))
             // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
             let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
-            memberEncoding.append(.init(name: labelName, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")"))
+            memberEncoding.append(.init(name: labelName, location: ".uri(\"\(aliasTrait?.alias ?? name)\")"))
             // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
             let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
@@ -249,14 +249,14 @@ extension AwsService {
             let swiftLabelName = name.toSwiftLabelCase()
             if swiftLabelName != payloadName {
                 let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-                memberEncoding.append(.init(name: name, location: ".body(locationName: \"\(payloadName)\")"))
+                memberEncoding.append(.init(name: name, location: ".body(\"\(payloadName)\")"))
             }
         }
 
         if member.hasTrait(type: HostLabelTrait.self) {
             let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
-            memberEncoding.append(.init(name: labelName, location: ".uri(locationName: \"\(aliasTrait?.alias ?? name)\")"))
+            memberEncoding.append(.init(name: labelName, location: ".hostname(\"\(aliasTrait?.alias ?? name)\")"))
         }
         return memberEncoding
     }
