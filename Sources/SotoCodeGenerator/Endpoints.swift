@@ -42,6 +42,7 @@ enum Region: String, Decodable {
     case usgovwest1 = "us-gov-west-1"
     case usisoeast1 = "us-iso-east-1"
     case usisobeast1 = "us-isob-east-1"
+    case usisowest1 = "us-iso-west-1"
 }
 
 enum SignatureVersion: String, Decodable {
@@ -53,7 +54,7 @@ enum SignatureVersion: String, Decodable {
 
 struct Endpoints: Decodable {
     struct CredentialScope: Decodable {
-        var region: String?
+        var region: Region?
         var service: String?
     }
 
