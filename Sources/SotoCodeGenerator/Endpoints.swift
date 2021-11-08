@@ -53,7 +53,7 @@ enum SignatureVersion: String, Decodable {
 
 struct Endpoints: Decodable {
     struct CredentialScope: Decodable {
-        var region: Region?
+        var region: String?
         var service: String?
     }
 

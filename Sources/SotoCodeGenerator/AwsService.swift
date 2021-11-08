@@ -123,7 +123,7 @@ struct AwsService {
             context["partitionEndpoints"] = self.getPartitionEndpoints()
                 .map { (partition: $0.key, endpoint: $0.value.endpoint, region: $0.value.region) }
                 .sorted { $0.partition < $1.partition }
-                .map { ".\($0.partition.toSwiftRegionEnumCase()): (endpoint: \"\($0.endpoint)\", region: .\($0.region.rawValue.toSwiftRegionEnumCase()))" }
+                .map { ".\($0.partition.toSwiftRegionEnumCase()): (endpoint: \"\($0.endpoint)\", region: .\($0.region.toSwiftRegionEnumCase()))" }
         }
 
         context["operations"] = operations.operations
@@ -550,8 +550,8 @@ struct AwsService {
     }
 
     // return dictionary of partition endpoints keyed by endpoint name
-    func getPartitionEndpoints() -> [String: (endpoint: String, region: Region)] {
-        var partitionEndpoints: [String: (endpoint: String, region: Region)] = [:]
+    func getPartitionEndpoints() -> [String: (endpoint: String, region: String)] {
+        var partitionEndpoints: [String: (endpoint: String, region: String)] = [:]
         endpoints.partitions.forEach {
             if let partitionEndpoint = $0.services[self.serviceEndpointPrefix]?.partitionEndpoint {
                 guard let service = $0.services[self.serviceEndpointPrefix],
