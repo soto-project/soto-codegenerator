@@ -112,6 +112,17 @@ extension AwsService {
         if operationShape?.hasTrait(type: HttpChecksumRequiredTrait.self) == true {
             shapeOptions.append("md5ChecksumRequired")
         }
+        // search for content-md5 header
+        if let members = shape.members {
+            for member in members.values {
+                if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
+                    if headerTrait.value.lowercased() == "content-md5" {
+                        shapeOptions.append("md5ChecksumHeader")
+                    }
+                }
+            }
+        }
+        // check streaming traits
         if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
             if payload is BlobShape {
                 shapeOptions.append("rawPayload")
