@@ -57,11 +57,25 @@ extension Templates {
     {{/members}}
 
     {{! init() function }}
+            public init({{#initParameters}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/initParameters}}) {
+    {{#members}}
+    {{^deprecated}}
+                self.{{variable}} = {{variable}}
+    {{/deprecated}}
+    {{#deprecated}}
+                self.{{variable}} = {{default}}
+    {{/deprecated}}
+    {{/members}}
+            }
+    {{! deprecated init() function }}
+    {{^empty(deprecatedMembers)}}
+            @available(*, deprecated, message:"Members {{#deprecatedMembers}}{{.}}{{^last()}}, {{/last()}}{{/deprecatedMembers}} have been deprecated")
             public init({{#members}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/members}}) {
     {{#members}}
                 self.{{variable}} = {{variable}}
     {{/members}}
             }
+    {{/empty(deprecatedMembers)}}
     {{! validate() function }}
     {{#first(validation)}}
 

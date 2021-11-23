@@ -157,6 +157,8 @@ struct AwsService {
             // construct array of input shape parameters to use in `usingPaginationToken` function
             var initParams: [String: String] = [:]
             for member in inputShape.members ?? [:] {
+                // don't include deprecated members
+                guard !member.value.hasTrait(type: DeprecatedTrait.self) else { continue }
                 initParams[member.key.toSwiftLabelCase()] = "self.\(member.key.toSwiftLabelCase())"
             }
             initParams[inputToken.toSwiftLabelCase()] = "token"
@@ -670,7 +672,14 @@ extension AwsService {
         let propertyWrapper: String?
         let type: String
         let comment: [String.SubSequence]
+        let deprecated: Bool
         var duplicate: Bool
+    }
+
+    struct InitParamContext {
+        let parameter: String
+        let type: String
+        let `default`: String?
     }
 
     struct MemberEncodingContext {
@@ -735,10 +744,12 @@ extension AwsService {
         let isDecodable: Bool
         let encoding: [EncodingPropertiesContext]
         let members: [MemberContext]
+        let initParameters: [InitParamContext]
         let awsShapeMembers: [MemberEncodingContext]
         let codingKeys: [CodingKeysContext]
         let validation: [ValidationContext]
         let requiresDefaultValidation: Bool
+        let deprecatedMembers: [String]
     }
 
     struct WaiterContext {
