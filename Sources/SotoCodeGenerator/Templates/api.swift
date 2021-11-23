@@ -145,7 +145,7 @@ extension Templates {
         {{/streamingOperations}}
         {{/first(streamingOperations)}}
         {{#endpointDiscovery}}
-        
+
             func getEndpoint(logger: Logger, eventLoop: EventLoop) -> EventLoopFuture<AWSEndpoints> {
                 return describeEndpoints(.init(), logger: logger, on: eventLoop).map {
                     .init(endpoints: $0.endpoints.map {

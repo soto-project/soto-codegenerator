@@ -119,7 +119,8 @@ extension AwsService {
                     shapeOptions.append("allowStreaming")
                     if !payload.hasTrait(type: RequiresLengthTrait.self),
                        let operationShape = operationShape,
-                       operationShape.hasTrait(type: AwsAuthUnsignedPayloadTrait.self) {
+                       operationShape.hasTrait(type: AwsAuthUnsignedPayloadTrait.self)
+                    {
                         shapeOptions.append("allowChunkedStreaming")
                     }
                 }
