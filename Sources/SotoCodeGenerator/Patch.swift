@@ -99,7 +99,7 @@ struct MultiplePatch: ShapePatch {
     init(_ patches: ShapePatch...) {
         self.init(patches)
     }
-    
+
     func patch(shape: Shape) throws -> Shape? {
         var shape = shape
         for patch in self.patches {

@@ -59,6 +59,7 @@ public struct SotoPaginationTruncatedTrait: StaticTrait {
             OrSelector(TypeSelector<OperationShape>(), TypeSelector<ServiceShape>())
         )
     }
+
     public let isTruncated: String
 
     public init(isTruncated: String) {

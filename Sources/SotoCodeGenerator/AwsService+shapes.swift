@@ -130,7 +130,8 @@ extension AwsService {
                     shapeOptions.append("allowStreaming")
                     if !payload.hasTrait(type: RequiresLengthTrait.self),
                        let operationShape = operationShape,
-                       operationShape.hasTrait(type: AwsAuthUnsignedPayloadTrait.self) {
+                       operationShape.hasTrait(type: AwsAuthUnsignedPayloadTrait.self)
+                    {
                         shapeOptions.append("allowChunkedStreaming")
                     }
                 }
@@ -140,7 +141,9 @@ extension AwsService {
             xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri
         }
         let recursive = doesShapeHaveRecursiveOwnReference(shape, shapeId: shapeId)
-
+        let initParameters = contexts.members.compactMap {
+            !$0.deprecated ? InitParamContext(parameter: $0.parameter, type: $0.type, default: $0.default) : nil
+        }
         return StructureContext(
             object: recursive ? "class" : "struct",
             name: shapeName.toSwiftClassCase(),
@@ -152,10 +155,12 @@ extension AwsService {
             isDecodable: shape.hasTrait(type: SotoOutputShapeTrait.self),
             encoding: contexts.encoding,
             members: contexts.members,
+            initParameters: initParameters,
             awsShapeMembers: contexts.awsShapeMembers,
             codingKeys: contexts.codingKeys,
             validation: contexts.validation,
-            requiresDefaultValidation: contexts.validation.count != contexts.members.count
+            requiresDefaultValidation: contexts.validation.count != contexts.members.count,
+            deprecatedMembers: contexts.members.compactMap { $0.deprecated ? $0.parameter : nil }
         )
     }
 
@@ -207,6 +212,9 @@ extension AwsService {
     func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsEnum: Bool) -> MemberContext {
         let required = member.hasTrait(type: RequiredTrait.self)
         let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
+        let deprecated = member.hasTrait(type: DeprecatedTrait.self)
+        precondition((required && deprecated) == false, "Member cannot be required and deprecated")
+
         let defaultValue: String?
         if idempotencyToken == true {
             defaultValue = "\(shapeName.toSwiftClassCase()).idempotencyToken()"
@@ -224,7 +232,8 @@ extension AwsService {
             propertyWrapper: self.generatePropertyWrapper(member, name: name, required: required),
             type: type + ((required || typeIsEnum) ? "" : "?"),
             comment: processMemberDocs(from: member),
-            duplicate: false // NEED to catch this
+            deprecated: deprecated,
+            duplicate: false // TODO: NEED to catch this
         )
     }
 

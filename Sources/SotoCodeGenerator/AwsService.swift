@@ -41,7 +41,6 @@ struct AwsService {
         self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(service: service.value, id: service.key) ?? serviceName.lowercased()
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
 
-
         self.operations = Self.getOperations(service.value, model: model)
 
         self.endpoints = endpoints
@@ -70,7 +69,7 @@ struct AwsService {
             .components(separatedBy: CharacterSet.alphanumerics.inverted)
             .map { $0.prefix(1).capitalized + $0.dropFirst() }
             .joined()
-        
+
         return serviceName
     }
 
@@ -106,7 +105,7 @@ struct AwsService {
         context["xmlNamespace"] = service.trait(type: XmlNamespaceTrait.self)?.uri
         context["middlewareClass"] = self.getMiddleware(for: service)
         context["endpointDiscovery"] = service.trait(type: AwsClientEndpointDiscoveryTrait.self)?.operation.shapeName.toSwiftVariableCase()
-        
+
         let endpoints = self.getServiceEndpoints()
             .sorted { $0.key < $1.key }
             .map { "\"\($0.key)\": \"\($0.value)\"" }
@@ -157,6 +156,8 @@ struct AwsService {
             // construct array of input shape parameters to use in `usingPaginationToken` function
             var initParams: [String: String] = [:]
             for member in inputShape.members ?? [:] {
+                // don't include deprecated members
+                guard !member.value.hasTrait(type: DeprecatedTrait.self) else { continue }
                 initParams[member.key.toSwiftLabelCase()] = "self.\(member.key.toSwiftLabelCase())"
             }
             initParams[inputToken.toSwiftLabelCase()] = "token"
@@ -552,7 +553,7 @@ struct AwsService {
     // return dictionary of partition endpoints keyed by endpoint name
     func getPartitionEndpoints() -> [String: (endpoint: String, region: Region)] {
         var partitionEndpoints: [String: (endpoint: String, region: Region)] = [:]
-        endpoints.partitions.forEach {
+        self.endpoints.partitions.forEach {
             if let partitionEndpoint = $0.services[self.serviceEndpointPrefix]?.partitionEndpoint {
                 guard let service = $0.services[self.serviceEndpointPrefix],
                       let endpoint = service.endpoints[partitionEndpoint],
@@ -607,6 +608,7 @@ extension AwsService {
         struct DiscoverableEndpoint {
             let required: Bool
         }
+
         let comment: [String.SubSequence]
         let funcName: String
         let inputShape: String?
@@ -670,7 +672,14 @@ extension AwsService {
         let propertyWrapper: String?
         let type: String
         let comment: [String.SubSequence]
+        let deprecated: Bool
         var duplicate: Bool
+    }
+
+    struct InitParamContext {
+        let parameter: String
+        let type: String
+        let `default`: String?
     }
 
     struct MemberEncodingContext {
@@ -735,10 +744,12 @@ extension AwsService {
         let isDecodable: Bool
         let encoding: [EncodingPropertiesContext]
         let members: [MemberContext]
+        let initParameters: [InitParamContext]
         let awsShapeMembers: [MemberEncodingContext]
         let codingKeys: [CodingKeysContext]
         let validation: [ValidationContext]
         let requiresDefaultValidation: Bool
+        let deprecatedMembers: [String]
     }
 
     struct WaiterContext {
