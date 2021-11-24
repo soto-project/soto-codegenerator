@@ -52,19 +52,11 @@ let swiftReservedWords: Set<String> = [
 ]
 
 extension String {
-    public func lowerFirst() -> String {
-        return String(self[startIndex]).lowercased() + self[index(after: startIndex)...]
-    }
-
-    public func upperFirst() -> String {
-        return String(self[self.startIndex]).uppercased() + self[index(after: startIndex)...]
-    }
-
     public func toSwiftLabelCase() -> String {
-        if self.allLetterIsUppercasedAlnum() {
-            return self.lowercased()
+        if self.allLetterIsSnakeUppercased() {
+            return self.replacingOccurrences(of: "-", with: "_").lowercased().camelCased(capitalize: false)
         }
-        return self.replacingOccurrences(of: "-", with: "_").camelCased()
+        return self.replacingOccurrences(of: "-", with: "_").camelCased(capitalize: false)
     }
 
     public func reservedwordEscaped() -> String {
@@ -84,8 +76,7 @@ extension String {
         }
 
         return self.replacingOccurrences(of: "-", with: "_")
-            .camelCased()
-            .upperFirst()
+            .camelCased(capitalize: true)
     }
 
     // for some reason the Region and Partition enum are not camel cased
@@ -93,44 +84,30 @@ extension String {
         return self.replacingOccurrences(of: "-", with: "")
     }
 
-    public func camelCased(separator: Character = "_") -> String {
-        let items = self.split(separator: separator)
-        var camelCase = ""
-        items.enumerated().forEach {
-            camelCase += 0 == $0 ? String($1) : $1.capitalized
+    public func camelCased(capitalize: Bool) -> String {
+        let items = self.split(separator: "_")
+        let firstWord = items.first!
+        let firstWordProcessed: String
+        if capitalize {
+            firstWordProcessed = firstWord.upperFirst()
+        } else {
+            firstWordProcessed = firstWord.lowerFirstWord()
         }
-        return camelCase.lowerFirst()
+        let remainingItems = items.dropFirst().map { word -> String in
+            if word.allLetterIsSnakeUppercased() {
+                return String(word)
+            }
+            return word.capitalized
+        }
+        return firstWordProcessed + remainingItems.joined()
     }
 
     public func toSwiftEnumCase() -> String {
         return self.toSwiftLabelCase().reservedwordEscaped()
     }
 
-    private func allLetterIsUppercasedAlnum() -> Bool {
-        for character in self {
-            guard let ascii = character.unicodeScalars.first?.value else {
-                return false
-            }
-            if !(0x30..<0x39).contains(ascii), !(0x41..<0x5A).contains(ascii) {
-                return false
-            }
-        }
-        return true
-    }
-
-    public func tagStriped() -> String {
+   public func tagStriped() -> String {
         return self.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression, range: nil)
-    }
-
-    func allLetterIsNumeric() -> Bool {
-        for character in self {
-            if let ascii = character.unicodeScalars.first?.value, (0x30..<0x39).contains(ascii) {
-                continue
-            } else {
-                return false
-            }
-        }
-        return true
     }
 
     private static let backslashEncodeMap: [String.Element: String] = [
@@ -198,5 +175,65 @@ extension String {
 
     mutating func trimCharacters(in characterset: CharacterSet) {
         self = self.trimmingCharacters(in: characterset)
+    }
+}
+
+extension StringProtocol {
+    public func lowerFirst() -> String {
+        return String(self[startIndex]).lowercased() + self[index(after: startIndex)...]
+    }
+
+    public func upperFirst() -> String {
+        return String(self[self.startIndex]).uppercased() + self[index(after: startIndex)...]
+    }
+
+    /// Lowercase first letter, or if first word is an uppercase acronym then lowercase the whole of the acronym
+    public func lowerFirstWord() -> String {
+        var firstLowercase = self.startIndex
+        var lastUppercase: Self.Index? = nil
+        // get last uppercase character, first lowercase character
+        while firstLowercase != self.endIndex, self[firstLowercase].isSnakeUppercase() {
+            lastUppercase = firstLowercase
+            firstLowercase = self.index(after: firstLowercase)
+        }
+        // if first character was never set first character must be lowercase
+        guard let lastUppercase = lastUppercase else {
+            return String(self)
+        }
+        if firstLowercase == self.endIndex {
+            // if first lowercase letter is the end index then whole word is uppercase and
+            // should be wholly lowercased
+            return self.lowercased()
+        } else if lastUppercase == self.startIndex {
+            // if last uppercase letter is the first letter then only lower that character
+            return self.lowerFirst()
+        } else {
+            // We have an acronym at the start, lowercase the whole of it
+            return self[startIndex..<lastUppercase].lowercased() + self[lastUppercase...]
+        }
+    }
+
+    func allLetterIsSnakeUppercased() -> Bool {
+        for c in self {
+            if !c.isSnakeUppercase() {
+                return false
+            }
+        }
+        return true
+    }
+
+    func allLetterIsNumeric() -> Bool {
+        for c in self {
+            if !c.isNumber {
+                return false
+            }
+        }
+        return true
+    }
+}
+
+extension Character {
+    fileprivate func isSnakeUppercase() -> Bool {
+        return self.isNumber || ("A"..."Z").contains(self) || self == "_"
     }
 }
