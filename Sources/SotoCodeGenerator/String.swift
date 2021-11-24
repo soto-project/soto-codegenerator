@@ -190,14 +190,14 @@ extension StringProtocol {
     /// Lowercase first letter, or if first word is an uppercase acronym then lowercase the whole of the acronym
     public func lowerFirstWord() -> String {
         var firstLowercase = self.startIndex
-        var lastUppercase: Self.Index? = nil
+        var lastUppercaseOptional: Self.Index? = nil
         // get last uppercase character, first lowercase character
         while firstLowercase != self.endIndex, self[firstLowercase].isSnakeUppercase() {
-            lastUppercase = firstLowercase
+            lastUppercaseOptional = firstLowercase
             firstLowercase = self.index(after: firstLowercase)
         }
         // if first character was never set first character must be lowercase
-        guard let lastUppercase = lastUppercase else {
+        guard let lastUppercase = lastUppercaseOptional else {
             return String(self)
         }
         if firstLowercase == self.endIndex {
