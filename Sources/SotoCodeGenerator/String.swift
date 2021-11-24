@@ -16,6 +16,8 @@ import Foundation
 
 let swiftReservedWords: Set<String> = [
     "as",
+    "async",
+    "await",
     "break",
     "case",
     "catch",
