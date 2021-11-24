@@ -80,7 +80,19 @@ struct EditEnumPatch: ShapePatch {
             throw PatchError(message: "Does not have Enum trait")
         }
         var enums = enumTrait.value
+        // remove values
+        for value in self.remove {
+            guard enums.first(where: { $0.value == value }) != nil else {
+                throw PatchError(message: "Trying to remove enum \"\(value)\" that does not exist")
+            }
+        }
         enums.removeAll { remove.contains($0.value) }
+        // add values
+        for value in self.add {
+            guard enums.first(where: { $0.value == value.value }) == nil else {
+                throw PatchError(message: "Trying to add enum \"\(value.value)\" that already exists")
+            }
+        }
         enums += self.add
         let newEnumTrait = EnumTrait(value: enums)
         shape.remove(trait: EnumTrait.self)
