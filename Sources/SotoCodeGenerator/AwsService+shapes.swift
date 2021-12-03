@@ -90,7 +90,7 @@ extension AwsService {
             valueContexts.append(EnumMemberContext(case: key, documentation: processDocs(value.documentation), string: value.value))
         }
         return EnumContext(
-            name: shapeName.toSwiftClassCase().reservedwordEscaped(),
+            name: shapeName.toSwiftClassCase(),
             documentation: processDocs(from: shape),
             values: valueContexts,
             isExtensible: shape.hasTrait(type: SotoExtensibleEnumTrait.self)
