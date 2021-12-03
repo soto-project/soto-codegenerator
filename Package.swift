@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 
 import PackageDescription
 
@@ -14,7 +14,7 @@ let package = Package(
         .package(url: "https://github.com/nicklockwood/SwiftFormat.git", .exact("0.48.17")),
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: "SotoCodeGenerator",
             dependencies: [
                 .product(name: "SotoSmithy", package: "soto-smithy"),
@@ -24,5 +24,9 @@ let package = Package(
                 .product(name: "SwiftFormat", package: "SwiftFormat")
             ]
         ),
+        .testTarget(
+            name: "SotoCodeGeneratorTests",
+            dependencies: [.byName(name: "SotoCodeGenerator")]
+        )
     ]
 )
