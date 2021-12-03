@@ -84,9 +84,6 @@ extension AwsService {
             if key.allLetterIsNumeric() {
                 key = "\(shapeName.toSwiftVariableCase())\(key)"
             }
-            if key.first?.isNumber == true {
-                key = "_" + key
-            }
             valueContexts.append(EnumMemberContext(case: key, documentation: processDocs(value.documentation), string: value.value))
         }
         return EnumContext(
