@@ -70,7 +70,7 @@ extension AwsService {
         var valueContexts: [EnumMemberContext] = []
         let enumDefinitions = trait.value.sorted { $0.value < $1.value }
         for value in enumDefinitions {
-            var key = value.value.lowercased()
+            var key = value.value
                 .replacingOccurrences(of: ".", with: "_")
                 .replacingOccurrences(of: ":", with: "_")
                 .replacingOccurrences(of: "-", with: "_")
@@ -79,17 +79,15 @@ extension AwsService {
                 .replacingOccurrences(of: "(", with: "_")
                 .replacingOccurrences(of: ")", with: "_")
                 .replacingOccurrences(of: "*", with: "all")
+                .toSwiftEnumCase()
 
-            if Int(String(key[key.startIndex])) != nil { key = "_" + key }
-
-            var caseName = key.camelCased().reservedwordEscaped()
-            if caseName.allLetterIsNumeric() {
-                caseName = "\(shapeName.toSwiftVariableCase())\(caseName)"
+            if key.allLetterIsNumeric() {
+                key = "\(shapeName.toSwiftVariableCase())\(key)"
             }
-            valueContexts.append(EnumMemberContext(case: caseName, documentation: processDocs(value.documentation), string: value.value))
+            valueContexts.append(EnumMemberContext(case: key, documentation: processDocs(value.documentation), string: value.value))
         }
         return EnumContext(
-            name: shapeName.toSwiftClassCase().reservedwordEscaped(),
+            name: shapeName.toSwiftClassCase(),
             documentation: processDocs(from: shape),
             values: valueContexts,
             isExtensible: shape.hasTrait(type: SotoExtensibleEnumTrait.self)

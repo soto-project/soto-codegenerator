@@ -24,5 +24,9 @@ let package = Package(
                 .product(name: "SwiftFormat", package: "SwiftFormat")
             ]
         ),
+        .testTarget(
+            name: "SotoCodeGeneratorTests",
+            dependencies: [.byName(name: "SotoCodeGenerator")]
+        )
     ]
 )
