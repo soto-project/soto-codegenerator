@@ -110,9 +110,6 @@ extension Model {
         "Savingsplans": [
             "com.amazonaws.savingsplans#AWSSavingsPlan": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "SavingsPlans") },
         ],
-        "SQS": [
-            "com.amazonaws.sqs#QueueAttributeName": EditEnumPatch(add: [.init(value: "SqsManagedSseEnabled")]),
-        ],
     ]
     func patch(serviceName: String) throws {
         if let servicePatches = Self.patches[serviceName] {

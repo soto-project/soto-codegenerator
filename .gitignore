@@ -4,5 +4,6 @@
 /*.xcodeproj
 xcuserdata/
 /.swiftpm
+/.vscode
 Package.resolved
 /aws/services
