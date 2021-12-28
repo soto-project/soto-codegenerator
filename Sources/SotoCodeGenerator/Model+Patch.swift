@@ -37,9 +37,6 @@ extension Model {
         "CognitoIdentityProvider": [
             "com.amazonaws.cognitoidentityprovider#UserStatusType": EditEnumPatch(add: [.init(value: "EXTERNAL_PROVIDER")]),
         ],
-        "ComprehendMedical": [
-            "com.amazonaws.comprehendmedical#EntitySubType": EditEnumPatch(add: [.init(value: "DX_NAME")]),
-        ],
         "DynamoDB": [
             "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
         ],
