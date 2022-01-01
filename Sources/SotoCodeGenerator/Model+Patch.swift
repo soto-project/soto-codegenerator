@@ -23,7 +23,16 @@ extension Model {
             "com.amazonaws.amplify#App$repository": RemoveTraitPatch(trait: RequiredTrait.self),
         ],
         "CloudFront": [
-            "com.amazonaws.cloudfront#HttpVersion": EditEnumPatch(add: [.init(value: "HTTP1_1"), .init(value: "HTTP2")], remove: ["http1.1", "http2"]),
+            // `DistributionConfig` and `DistributionSummary` both use `HttpVersion`. One expects it to be lowercase
+            // and the other expects it to be uppercase. Solution create new enum `UppercaseHttpVersion` for
+            // `DistributionSummary` to use. See https://github.com/soto-project/soto/issues/567
+            "com.amazonaws.cloudfront#UppercaseHttpVersion": CreateShapePatch(
+                shape: StringShape(), 
+                patch: AddTraitPatch(trait: EnumTrait(value: .init([.init(value: "HTTP1_1"), .init(value: "HTTP2")])))
+            ),
+            "com.amazonaws.cloudfront#DistributionSummary$HttpVersion": EditShapePatch { (shape: MemberShape) in 
+                return MemberShape(target: "com.amazonaws.cloudfront#UppercaseHttpVersion", traits: shape.traits)
+            }
         ],
         "CloudWatch": [
             "com.amazonaws.cloudwatch#DashboardNotFoundError": RemoveTraitPatch(trait: AwsProtocolsAwsQueryErrorTrait.self),
@@ -120,10 +129,20 @@ extension Model {
         if let shape = shape(for: shapeId) {
             do {
                 if let newShape = try patch.patch(shape: shape) {
-                    shapes[shapeId] = newShape
+                    if let member = shapeId.member, 
+                        let collectionShape = shapes[shapeId.rootShapeId] as? CollectionShape,
+                        let newMemberShape = newShape as? MemberShape {
+                        collectionShape.members?[member] = newMemberShape
+                    } else {
+                        shapes[shapeId] = newShape
+                    }
                 }
             } catch let error as PatchError {
                 throw PatchError(message: "\(shapeId): \(error.message)")
+            }
+        } else if let patch = patch as? CreateShapePatch {
+            if let shape = try patch.create() {
+                self.shapes[shapeId] = shape
             }
         } else {
             throw PatchError(message: "Shape \(shapeId) does not exist")
