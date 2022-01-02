@@ -79,6 +79,7 @@ extension Model {
             "com.amazonaws.fis#FaultInjectionSimulator": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "FIS") },
         ],
         "IAM": [
+            // Missing Enum value
             "com.amazonaws.iam#PolicySourceType": EditEnumPatch(add: [.init(value: "IAM Policy")]),
         ],
         "Identitystore": [
