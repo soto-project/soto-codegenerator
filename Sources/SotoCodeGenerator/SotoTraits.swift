@@ -50,6 +50,10 @@ struct SotoExtensibleEnumTrait: StaticTrait {
     var selector: Selector { TraitSelector<EnumTrait>() }
 }
 
+struct SotoStubTrait: StaticTrait {
+    static let staticName: ShapeId = "soto.api#stub"
+}
+
 /// Indicates that associated PaginatedTrait requires to check a `IsTruncated` flag
 public struct SotoPaginationTruncatedTrait: StaticTrait {
     public static var staticName: ShapeId = "soto.api#paginationTruncated"

@@ -78,10 +78,19 @@ extension Model {
         "Ivs": [
             "com.amazonaws.ivs#AmazonInteractiveVideoService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IVS") },
         ],
-        /* "Lambda": [
-                //AddDictionaryPatch(PatchKeyPath1(\.shapes), key: "SotoCore.Region", value: Shape(type: .stub, name: "SotoCore.Region")),
-                //ReplacePatch(PatchKeyPath4(\.shapes["ListFunctionsRequest"], \.type.structure, \.members["MasterRegion"], \.shapeName), value: "SotoCore.Region", originalValue: "MasterRegion"),
-            ], */
+        "Lambda": [
+            // Replace lambda ListFunctionsRequest.MasterRegion with SotoCore.Region 
+            "com.amazonaws.lambda#SotoCore.Region": CreateShapePatch(
+                shape: StringShape(),
+                patch: MultiplePatch(
+                    AddTraitPatch(trait: SotoStubTrait()),
+                    AddTraitPatch(trait: EnumTrait(value: .init([])))
+                )
+            ),
+            "com.amazonaws.lambda#ListFunctionsRequest$MasterRegion": EditShapePatch { (shape: MemberShape) in 
+                return MemberShape(target: "com.amazonaws.lambda#SotoCore.Region", traits: shape.traits)
+            }
+        ],
         "Mq": [
             "com.amazonaws.mq#mq": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "MQ") },
         ],
