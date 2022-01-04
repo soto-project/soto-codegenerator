@@ -457,6 +457,8 @@ struct AwsService {
     func markInputOutputShapes(_ model: Model) {
         func addTrait<T: StaticTrait>(to shapeId: ShapeId, trait: T) {
             guard let shape = model.shape(for: shapeId) else { return }
+            // don't mark shapes that are marked as stubs
+            guard shape.trait(type: SotoStubTrait.self) == nil else { return }
             // if shape already has trait then don't apply it again
             guard shape.trait(type: T.self) == nil else { return }
 

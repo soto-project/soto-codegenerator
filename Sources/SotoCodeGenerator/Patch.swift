@@ -36,14 +36,19 @@ struct EditShapePatch<S: Shape>: ShapePatch {
 
 struct CreateShapePatch: ShapePatch {
     let shape: Shape
-    let patch: ShapePatch
+    let patch: ShapePatch?
+
+    init(shape: Shape, patch: ShapePatch? = nil) {
+        self.shape = shape
+        self.patch = patch
+    }
 
     func create() throws -> Shape? {
         return try patch(shape: self.shape)
     }
 
     func patch(shape: Shape) throws -> Shape? {
-        return try patch.patch(shape: shape) ?? shape
+        return try patch?.patch(shape: shape) ?? shape
     }
 }
 
