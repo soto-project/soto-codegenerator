@@ -17,7 +17,7 @@ extension Templates {
     {{%CONTENT_TYPE:TEXT}}
     {{>header}}
 
-    #if compiler(>=5.5) && canImport(_Concurrency)
+    #if compiler(>=5.5.2) && canImport(_Concurrency)
 
     import SotoCore
 
@@ -61,6 +61,6 @@ extension Templates {
     {{/first(streamingOperations)}}
     }
 
-    #endif // compiler(>=5.5) && canImport(_Concurrency)
+    #endif // compiler(>=5.5.2) && canImport(_Concurrency)
     """
 }
