@@ -32,7 +32,7 @@ extension Templates {
 
     {{/isExtensible}}
     {{^isExtensible}}
-        public enum {{name}}: String, CustomStringConvertible, Codable {
+        public enum {{name}}: String, CustomStringConvertible, Codable, SotoSendable {
     {{#values}}
     {{#documentation}}
             /// {{.}}
