@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-@testable import SotoCodeGenerator
+@testable import SotoCodeGeneratorLib
 import XCTest
 
 final class TypeNameTests: XCTestCase {

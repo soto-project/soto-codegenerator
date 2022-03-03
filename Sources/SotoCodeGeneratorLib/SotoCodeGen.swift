@@ -18,7 +18,18 @@ import SotoSmithy
 import SotoSmithyAWS
 import SwiftFormat
 
-struct SotoCodeGen {
+public protocol SotoCodeGenCommand {
+    var outputFolder: String { get }
+    var inputFolder: String { get }
+    var endpoints: String { get }
+    var module: String? { get }
+    var output: Bool { get }
+    var swiftFormat: Bool { get }
+    var htmlComments: Bool { get }
+    var smithy: Bool { get }
+}
+
+public struct SotoCodeGen {
     struct FileError: Error {
         let filename: String
         let error: Error
@@ -43,7 +54,7 @@ struct SotoCodeGen {
     let command: SotoCodeGenCommand
     let library: HBMustacheLibrary
 
-    init(command: SotoCodeGenCommand) throws {
+    public init(command: SotoCodeGenCommand) throws {
         self.command = command
         self.library = try Templates.createLibrary()
         Smithy.registerAWSTraits()
@@ -51,6 +62,42 @@ struct SotoCodeGen {
             SotoInputShapeTrait.self,
             SotoOutputShapeTrait.self
         )
+    }
+
+    public func generate() throws {
+        let startTime = Date()
+
+        // load JSON
+        let endpoints = try loadEndpointJSON()
+        let models: [String: SotoSmithy.Model]
+        if self.command.smithy {
+            models = try self.loadSmithy()
+        } else {
+            models = try self.loadModelJSON()
+        }
+        let group = DispatchGroup()
+
+        models.forEach { model in
+            group.enter()
+
+            DispatchQueue.global().async {
+                defer { group.leave() }
+                do {
+                    let service = try AwsService(model.value, endpoints: endpoints, outputHTMLComments: command.htmlComments)
+                    if self.command.output {
+                        try self.generateFiles(with: service)
+                    }
+                } catch {
+                    print("\(model.key): \(error)")
+                    exit(1)
+                }
+            }
+        }
+
+        group.wait()
+
+        print("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
+        print("Done.")
     }
 
     func getModelFiles() -> [String] {
@@ -182,42 +229,6 @@ struct SotoCodeGen {
             }
         }
         // print("Succesfully Generated \(service.serviceName)")
-    }
-
-    func generate() throws {
-        let startTime = Date()
-
-        // load JSON
-        let endpoints = try loadEndpointJSON()
-        let models: [String: SotoSmithy.Model]
-        if self.command.smithy {
-            models = try self.loadSmithy()
-        } else {
-            models = try self.loadModelJSON()
-        }
-        let group = DispatchGroup()
-
-        models.forEach { model in
-            group.enter()
-
-            DispatchQueue.global().async {
-                defer { group.leave() }
-                do {
-                    let service = try AwsService(model.value, endpoints: endpoints, outputHTMLComments: command.htmlComments)
-                    if self.command.output {
-                        try self.generateFiles(with: service)
-                    }
-                } catch {
-                    print("\(model.key): \(error)")
-                    exit(1)
-                }
-            }
-        }
-
-        group.wait()
-
-        print("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
-        print("Done.")
     }
 }
 
