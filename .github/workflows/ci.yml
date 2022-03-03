@@ -17,7 +17,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: SPM tests
-      run: swift build
+      run: |
+        swift --version
+        swift test
 
   linux:
     runs-on: ubuntu-latest
@@ -33,4 +35,4 @@ jobs:
     - name: Test
       run: |
         swift --version
-        swift build
+        swift test
