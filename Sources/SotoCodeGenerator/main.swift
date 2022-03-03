@@ -14,8 +14,9 @@
 
 import ArgumentParser
 import Foundation
+import SotoCodeGeneratorLib
 
-struct SotoCodeGenCommand: ParsableCommand {
+struct Command: ParsableCommand, SotoCodeGenCommand {
     @Option(name: .shortAndLong, help: "Folder to output service files to")
     var outputFolder: String = Self.defaultOutputFolder
 
@@ -57,4 +58,4 @@ struct SotoCodeGenCommand: ParsableCommand {
     }
 }
 
-SotoCodeGenCommand.main()
+Command.main()

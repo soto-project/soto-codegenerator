@@ -17,16 +17,22 @@ let package = Package(
         .target(
             name: "SotoCodeGenerator",
             dependencies: [
+                .byName(name: "SotoCodeGeneratorLib"),
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]
+        ),
+        .target(
+            name: "SotoCodeGeneratorLib",
+            dependencies: [
                 .product(name: "SotoSmithy", package: "soto-smithy"),
                 .product(name: "SotoSmithyAWS", package: "soto-smithy"),
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "HummingbirdMustache", package: "hummingbird-mustache"),
                 .product(name: "SwiftFormat", package: "SwiftFormat")
             ]
         ),
         .testTarget(
             name: "SotoCodeGeneratorTests",
-            dependencies: [.byName(name: "SotoCodeGenerator")]
+            dependencies: [.byName(name: "SotoCodeGeneratorLib")]
         )
     ]
 )
