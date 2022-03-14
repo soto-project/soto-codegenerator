@@ -143,7 +143,7 @@ extension AwsService {
             !$0.deprecated ? InitParamContext(parameter: $0.parameter, type: $0.type, default: $0.default) : nil
         }
         return StructureContext(
-            object: recursive ? "class" : "struct",
+            object: recursive ? "final class" : "struct",
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
             payload: payloadMember?.key.toSwiftLabelCase(),
