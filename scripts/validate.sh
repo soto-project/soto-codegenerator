@@ -3,7 +3,7 @@
 ##
 ## This source file is part of the SwiftNIO open source project
 ##
-## Copyright (c) 2017-2019 Apple Inc. and the SwiftNIO project authors
+## Copyright (c) 2017-2021 Apple Inc. and the SwiftNIO project authors
 ## Licensed under Apache License v2.0
 ##
 ## See LICENSE.txt for license information
@@ -13,35 +13,24 @@
 ##
 ##===----------------------------------------------------------------------===##
 
-SWIFT_FORMAT_VERSION=0.48.17
+SWIFT_VERSION=5.2
+SWIFTFORMAT_VERSION=0.48.17
 
 set -eu
 here="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-function check_all_services_in_package() {
-    for folder in $here/../Sources/Soto/Services/*; do
-        service=$(basename $folder)
-        if [ -z "$(grep ".target(name: \"Soto$service\"" $here/../Package.swift)" ]; then
-            printf "\033[0;31m$service is not in Package.swift\033[0m\n"
-            exit -1
-        fi
-    done
-}
+which swiftformat > /dev/null 2>&1 || (echo "swiftformat not installed. You can install it using 'mint install swiftformat'" ; exit -1)
 
 function replace_acceptable_years() {
     # this needs to replace all acceptable forms with 'YEARS'
     sed -e 's/20[12][78901]-20[12][8901]/YEARS/' -e 's/20[12][8901]/YEARS/' -e '/^#!/ d'
 }
 
-printf "=> Checking services in Package.swift... "
-check_all_services_in_package
-printf "\033[0;32mokay.\033[0m\n"
-
 printf "=> Checking format... "
 FIRST_OUT="$(git status --porcelain)"
 if [[ -n "${CI-""}" ]]; then
-  printf "(using v$(mint run NickLockwood/SwiftFormat@$SWIFT_FORMAT_VERSION --version)) "
-  mint run NickLockwood/SwiftFormat@$SWIFT_FORMAT_VERSION . > /dev/null 2>&1
+  printf "(using v$(mint run NickLockwood/SwiftFormat@$SWIFTFORMAT_VERSION --version)) "
+  mint run NickLockwood/SwiftFormat@$SWIFTFORMAT_VERSION . > /dev/null 2>&1
 else
   printf "(using v$(swiftformat --version)) "
   swiftformat . > /dev/null 2>&1
@@ -55,7 +44,6 @@ else
   printf "\033[0;32mokay.\033[0m\n"
 fi
 
-
 printf "=> Checking license headers... "
 tmp=$(mktemp /tmp/.soto-core-sanity_XXXXXX)
 
@@ -66,7 +54,7 @@ for language in swift-or-c; do
   matching_files=( -name '*' )
   case "$language" in
       swift-or-c)
-        exceptions=( -name 'Package.swift' -o -path '*templates/*' -o -path '*scripts/*')
+        exceptions=( -path '*Sources/INIParser/*' -o -path '*Sources/CSotoExpat/*' -o -path '*Benchmark/.build/*' -o -name Package.swift)
         matching_files=( -name '*.swift' -o -name '*.c' -o -name '*.h' )
         cat > "$tmp" <<"EOF"
 //===----------------------------------------------------------------------===//
@@ -115,10 +103,10 @@ EOF
   (
     cd "$here/.."
     find . \
-      \( \! -path '*/.build/*' -a \
+      \( \! -path './.build/*' -a \
       \( "${matching_files[@]}" \) -a \
       \( \! \( "${exceptions[@]}" \) \) \) | while read line; do
-      if [[ "$(head -n $lines_to_read "$line" | replace_acceptable_years | head -n $lines_to_compare | shasum)" != "$expected_sha" ]]; then
+      if [[ "$(cat "$line" | head -n $lines_to_read | replace_acceptable_years | head -n $lines_to_compare | shasum)" != "$expected_sha" ]]; then
         printf "\033[0;31mmissing headers in file '$line'!\033[0m\n"
         diff -u <(cat "$line" | head -n $lines_to_read | replace_acceptable_years | head -n $lines_to_compare) "$tmp"
         exit 1

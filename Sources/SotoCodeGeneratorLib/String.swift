@@ -126,11 +126,11 @@ extension String {
         self = self.removingCharacterSet(in: characterset)
     }
 
-    fileprivate func capitalizingFirstLetter() -> String {
+    private func capitalizingFirstLetter() -> String {
         return prefix(1).capitalized + dropFirst()
     }
 
-    fileprivate mutating func capitalizeFirstLetter() {
+    private mutating func capitalizeFirstLetter() {
         self = self.capitalizingFirstLetter()
     }
 
@@ -148,8 +148,8 @@ extension StringProtocol {
         }
         return true
     }
-    
-    fileprivate func lowerFirst() -> String {
+
+    private func lowerFirst() -> String {
         return String(self[startIndex]).lowercased() + self[index(after: startIndex)...]
     }
 
@@ -160,7 +160,7 @@ extension StringProtocol {
     /// Lowercase first letter, or if first word is an uppercase acronym then lowercase the whole of the acronym
     fileprivate func lowerFirstWord() -> String {
         var firstLowercase = self.startIndex
-        var lastUppercaseOptional: Self.Index? = nil
+        var lastUppercaseOptional: Self.Index?
         // get last uppercase character, first lowercase character
         while firstLowercase != self.endIndex, self[firstLowercase].isSnakeUppercase() {
             lastUppercaseOptional = firstLowercase
@@ -199,7 +199,7 @@ extension Character {
     }
 }
 
-fileprivate let swiftReservedWords: Set<String> = [
+private let swiftReservedWords: Set<String> = [
     "as",
     "async",
     "await",
