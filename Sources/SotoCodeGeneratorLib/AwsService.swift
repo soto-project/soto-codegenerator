@@ -254,12 +254,22 @@ struct AwsService {
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         let endpointTrait = operation.trait(type: EndpointTrait.self)
         let requireEndpointDiscovery = operation.trait(type: AwsClientDiscoveredEndpointTrait.self)?.required
-
+        var inputShapeTarget = operation.input?.target
+        var outputShapeTarget = operation.output?.target
+        // Check if target shape is a unit shape and thus Void. I could go and find the shape and check if it is a unit
+        // shape or I could just check its name. Spec is pretty clear there is only one unit type
+        // https://awslabs.github.io/smithy/1.0/spec/core/model.html#unit-type
+        if inputShapeTarget == "smithy.api#Unit" {
+            inputShapeTarget = nil
+        }
+        if outputShapeTarget == "smithy.api#Unit" {
+            outputShapeTarget = nil
+        }
         return OperationContext(
             comment: self.processDocs(from: operation),
             funcName: operationName.shapeName.toSwiftVariableCase(),
-            inputShape: operation.input?.target.shapeName,
-            outputShape: operation.output?.target.shapeName,
+            inputShape: inputShapeTarget?.shapeName,
+            outputShape: outputShapeTarget?.shapeName,
             name: operationName.shapeName,
             path: httpTrait?.uri ?? "/",
             httpMethod: httpTrait?.method ?? "POST",
