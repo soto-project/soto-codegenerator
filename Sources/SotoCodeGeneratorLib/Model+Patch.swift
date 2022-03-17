@@ -28,10 +28,10 @@ extension Model {
             // and the other expects it to be uppercase. Solution create new enum `UppercaseHttpVersion` for
             // `DistributionSummary` to use. See https://github.com/soto-project/soto/issues/567
             "com.amazonaws.cloudfront#UppercaseHttpVersion": CreateShapePatch(
-                shape: StringShape(), 
+                shape: StringShape(),
                 patch: AddTraitPatch(trait: EnumTrait(value: .init([.init(value: "HTTP1_1"), .init(value: "HTTP2")])))
             ),
-            "com.amazonaws.cloudfront#DistributionSummary$HttpVersion": EditShapePatch { (shape: MemberShape) in 
+            "com.amazonaws.cloudfront#DistributionSummary$HttpVersion": EditShapePatch { (shape: MemberShape) in
                 return MemberShape(target: "com.amazonaws.cloudfront#UppercaseHttpVersion", traits: shape.traits)
             }
         ],
@@ -62,10 +62,6 @@ extension Model {
             "com.amazonaws.ec2#InstanceType": AddTraitPatch(trait: SotoExtensibleEnumTrait()),
             "com.amazonaws.ec2#ArchitectureType": AddTraitPatch(trait: SotoExtensibleEnumTrait()),
         ],
-        "ECS": [
-            // https://github.com/soto-project/soto/issues/109
-            "com.amazonaws.ecs#PropagateTags": EditEnumPatch(add: [.init(value: "NONE")]),
-        ],
         "ECRPUBLIC": [
             // service name change
             "com.amazonaws.ecrpublic#SpencerFrontendService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "ECRPublic") },
@@ -95,8 +91,8 @@ extension Model {
             "com.amazonaws.ivs#AmazonInteractiveVideoService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IVS") },
         ],
         "Lambda": [
-            // Replace lambda ListFunctionsRequest.MasterRegion with SotoCore.Region. 
-            // See https://github.com/soto-project/soto/issues/382 
+            // Replace lambda ListFunctionsRequest.MasterRegion with SotoCore.Region.
+            // See https://github.com/soto-project/soto/issues/382
             "com.amazonaws.lambda#SotoCore.Region": CreateShapePatch(
                 shape: StringShape(),
                 patch: MultiplePatch(
@@ -104,7 +100,7 @@ extension Model {
                     AddTraitPatch(trait: EnumTrait(value: .init([])))
                 )
             ),
-            "com.amazonaws.lambda#ListFunctionsRequest$MasterRegion": EditShapePatch { (shape: MemberShape) in 
+            "com.amazonaws.lambda#ListFunctionsRequest$MasterRegion": EditShapePatch { (shape: MemberShape) in
                 return MemberShape(target: "com.amazonaws.lambda#SotoCore.Region", traits: shape.traits)
             }
         ],
@@ -166,9 +162,10 @@ extension Model {
         if let shape = shape(for: shapeId) {
             do {
                 if let newShape = try patch.patch(shape: shape) {
-                    if let member = shapeId.member, 
-                        let collectionShape = shapes[shapeId.rootShapeId] as? CollectionShape,
-                        let newMemberShape = newShape as? MemberShape {
+                    if let member = shapeId.member,
+                       let collectionShape = shapes[shapeId.rootShapeId] as? CollectionShape,
+                       let newMemberShape = newShape as? MemberShape
+                    {
                         collectionShape.members?[member] = newMemberShape
                     } else {
                         shapes[shapeId] = newShape
