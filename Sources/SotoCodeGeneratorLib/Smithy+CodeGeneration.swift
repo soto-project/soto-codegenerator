@@ -89,6 +89,7 @@ extension BigIntegerShape: SotoOutput { var output: String { "Int64" } }
 extension BigDecimalShape: SotoOutput { var output: String { "Double" } }
 extension TimestampShape: SotoOutput { var output: String { "Date" }}
 extension DocumentShape: SotoOutput { var output: String { "String" }}
+extension UnitShape: SotoOutput { var output: String { "Void" }}
 
 extension MemberShape {
     func output(_ model: Model) -> String {
