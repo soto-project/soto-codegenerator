@@ -41,7 +41,7 @@ final class TypeNameTests: XCTestCase {
         XCTAssertEqual("while".toSwiftVariableCase(), "`while`")
         XCTAssertEqual("repeat".toSwiftVariableCase(), "`repeat`")
     }
-    
+
     func testClassNames() {
         XCTAssertEqual("testLabel".toSwiftClassCase(), "TestLabel")
         XCTAssertEqual("test-label".toSwiftClassCase(), "TestLabel")

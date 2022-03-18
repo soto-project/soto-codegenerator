@@ -44,11 +44,11 @@ struct CreateShapePatch: ShapePatch {
     }
 
     func create() throws -> Shape? {
-        return try patch(shape: self.shape)
+        return try self.patch(shape: self.shape)
     }
 
     func patch(shape: Shape) throws -> Shape? {
-        return try patch?.patch(shape: shape) ?? shape
+        return try self.patch?.patch(shape: shape) ?? shape
     }
 }
 

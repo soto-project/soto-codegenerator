@@ -304,7 +304,7 @@ struct AwsService {
     /// this properly you need to ask the services for all its operations and resources and then combine the operations with all the
     /// operations from the resources
     static func getOperations(_ service: ServiceShape, model: Model) -> [ShapeId: OperationShape] {
-        var operations: [ShapeId] = service.operations?.map { $0.target } ?? []
+        var operations: [ShapeId] = service.operations?.map(\.target) ?? []
 
         func addResourceOperations(_ resource: ResourceShape) {
             resource.create.map { operations.append($0.target) }
@@ -544,7 +544,7 @@ struct AwsService {
             return value + (endpoints?.map { (key: $0.key, value: EndpointInfo(endpoint: $0.value, partition: partition.partition)) } ?? [])
         }
         let partitionEndpoints = self.getPartitionEndpoints()
-        let partitionEndpointSet = Set<String>(partitionEndpoints.map { $0.value.endpoint })
+        let partitionEndpointSet = Set<String>(partitionEndpoints.map(\.value.endpoint))
         return serviceEndpoints.compactMap {
             // if service endpoint isn't in the set of partition endpoints or a region name return nil
             if partitionEndpointSet.contains($0.key) == false, Region(rawValue: $0.key) == nil {
