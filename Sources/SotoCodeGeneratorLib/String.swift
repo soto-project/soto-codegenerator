@@ -78,6 +78,9 @@ extension String {
     }
 
     func reservedwordEscaped() -> String {
+        if self == "self" {
+            return "_self"
+        }
         if swiftReservedWords.contains(self) {
             return "`\(self)`"
         }
