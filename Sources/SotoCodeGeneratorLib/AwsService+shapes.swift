@@ -111,7 +111,8 @@ extension AwsService {
             shapeOptions.append("checksumHeader")
         }
         if operationShape?.hasTrait(type: HttpChecksumRequiredTrait.self) == true ||
-            operationShape?.trait(type: AwsHttpChecksumTrait.self)?.requestChecksumRequired == true {
+            operationShape?.trait(type: AwsHttpChecksumTrait.self)?.requestChecksumRequired == true
+        {
             shapeOptions.append("checksumRequired")
         }
         // search for content-md5 header
