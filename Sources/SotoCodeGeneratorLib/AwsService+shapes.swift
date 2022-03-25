@@ -107,8 +107,13 @@ extension AwsService {
 
         // get payload options
         let operationShape = shape.trait(type: SotoRequestShapeTrait.self)?.operationShape
-        if operationShape?.hasTrait(type: HttpChecksumRequiredTrait.self) == true {
-            shapeOptions.append("md5ChecksumRequired")
+        if operationShape?.hasTrait(type: AwsHttpChecksumTrait.self) == true {
+            shapeOptions.append("checksumHeader")
+        }
+        if operationShape?.hasTrait(type: HttpChecksumRequiredTrait.self) == true ||
+            operationShape?.trait(type: AwsHttpChecksumTrait.self)?.requestChecksumRequired == true
+        {
+            shapeOptions.append("checksumRequired")
         }
         // search for content-md5 header
         if let members = shape.members {
