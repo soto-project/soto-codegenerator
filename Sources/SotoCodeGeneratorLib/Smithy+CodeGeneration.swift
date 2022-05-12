@@ -100,7 +100,7 @@ extension MemberShape {
             return "String"
         } else if memberShape is BlobShape {
             if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSPayload" }
-            return "AWSBlob"
+            return "AWSBase64Data"
         } else if memberShape is CollectionShape {
             return self.target.shapeName.toSwiftClassCase()
         } else if let listShape = memberShape as? ListShape {
@@ -124,7 +124,7 @@ extension MemberShape {
             return "String"
         } else if memberShape is BlobShape {
             if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSPayload" }
-            return "AWSBlob"
+            return "AWSBase64Data"
         } else if memberShape is CollectionShape {
             return "\(withServiceName).\(self.target.shapeName.toSwiftClassCase())"
         } else if let listShape = memberShape as? ListShape {
