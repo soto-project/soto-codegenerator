@@ -14,21 +14,23 @@
 
 import Foundation
 import HummingbirdMustache
+import Logging
 import SotoSmithy
 import SotoSmithyAWS
 
 struct AwsService {
-    var model: Model
-    var serviceName: String
-    var serviceEndpointPrefix: String
-    var serviceId: ShapeId
-    var service: ServiceShape
-    var serviceProtocolTrait: AwsServiceProtocol
-    var endpoints: Endpoints
-    var operations: [ShapeId: OperationShape]
-    var outputHTMLComments: Bool
+    let model: Model
+    let serviceName: String
+    let serviceEndpointPrefix: String
+    let serviceId: ShapeId
+    let service: ServiceShape
+    let serviceProtocolTrait: AwsServiceProtocol
+    let endpoints: Endpoints
+    let operations: [ShapeId: OperationShape]
+    let outputHTMLComments: Bool
+    let logger: Logger
 
-    init(_ model: SotoSmithy.Model, endpoints: Endpoints, outputHTMLComments: Bool) throws {
+    init(_ model: SotoSmithy.Model, endpoints: Endpoints, outputHTMLComments: Bool, logger: Logger) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object") }
 
         self.model = model
@@ -45,6 +47,7 @@ struct AwsService {
 
         self.endpoints = endpoints
         self.outputHTMLComments = outputHTMLComments
+        self.logger = logger
     }
 
     /// Return service name from API
@@ -566,15 +569,17 @@ struct AwsService {
     func getPartitionEndpoints() -> [String: (endpoint: String, region: Region)] {
         var partitionEndpoints: [String: (endpoint: String, region: Region)] = [:]
         self.endpoints.partitions.forEach {
-            if let partitionEndpoint = $0.services[self.serviceEndpointPrefix]?.partitionEndpoint {
-                guard let service = $0.services[self.serviceEndpointPrefix],
-                      let endpoint = service.endpoints[partitionEndpoint],
-                      let region = endpoint.credentialScope?.region
-                else {
-                    preconditionFailure("Found partition endpoint without a credential scope region")
-                }
-                partitionEndpoints[$0.partition] = (endpoint: partitionEndpoint, region: region)
+            guard let service = $0.services[self.serviceEndpointPrefix] else { return }
+            guard let partitionEndpoint = service.partitionEndpoint else { return }
+            guard let endpoint = service.endpoints[partitionEndpoint] else {
+                self.logger.error("Partition endpoint \(partitionEndpoint) for service \(self.serviceEndpointPrefix) in \($0.partitionName) does not exist")
+                return
             }
+            guard let region = endpoint.credentialScope?.region else {
+                self.logger.error("Partition endpoint \(partitionEndpoint) for service \(self.serviceEndpointPrefix) in \($0.partitionName) has no credential scope region")
+                return
+            }
+            partitionEndpoints[$0.partition] = (endpoint: partitionEndpoint, region: region)
         }
         return partitionEndpoints
     }

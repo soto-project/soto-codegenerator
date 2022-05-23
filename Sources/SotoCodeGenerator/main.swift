@@ -14,6 +14,7 @@
 
 import ArgumentParser
 import Foundation
+import Logging
 import SotoCodeGeneratorLib
 
 struct Command: ParsableCommand, SotoCodeGenCommand {
@@ -40,6 +41,9 @@ struct Command: ParsableCommand, SotoCodeGenCommand {
 
     @Flag(name: .long, help: "Load smithy")
     var smithy: Bool = false
+
+    @Option(name: .long, help: "Log Level (trace, debug, info, error)")
+    var logLevel: String?
 
     static var rootPath: String {
         return #file

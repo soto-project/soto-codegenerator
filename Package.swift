@@ -12,6 +12,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "0.3.0"),
         .package(url: "https://github.com/hummingbird-project/hummingbird-mustache.git", from: "1.0.0"),
         .package(url: "https://github.com/nicklockwood/SwiftFormat.git", .exact("0.48.17")),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
     ],
     targets: [
         .target(
@@ -19,6 +20,7 @@ let package = Package(
             dependencies: [
                 .byName(name: "SotoCodeGeneratorLib"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "Logging", package: "swift-log")
             ]
         ),
         .target(
@@ -27,7 +29,8 @@ let package = Package(
                 .product(name: "SotoSmithy", package: "soto-smithy"),
                 .product(name: "SotoSmithyAWS", package: "soto-smithy"),
                 .product(name: "HummingbirdMustache", package: "hummingbird-mustache"),
-                .product(name: "SwiftFormat", package: "SwiftFormat")
+                .product(name: "SwiftFormat", package: "SwiftFormat"),
+                .product(name: "Logging", package: "swift-log")
             ]
         ),
         .testTarget(
