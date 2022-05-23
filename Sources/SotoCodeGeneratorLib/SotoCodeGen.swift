@@ -14,6 +14,7 @@
 
 import Foundation
 import HummingbirdMustache
+import Logging
 import SotoSmithy
 import SotoSmithyAWS
 import SwiftFormat
@@ -27,6 +28,7 @@ public protocol SotoCodeGenCommand {
     var swiftFormat: Bool { get }
     var htmlComments: Bool { get }
     var smithy: Bool { get }
+    var logLevel: String? { get }
 }
 
 public struct SotoCodeGen {
@@ -53,10 +55,14 @@ public struct SotoCodeGen {
 
     let command: SotoCodeGenCommand
     let library: HBMustacheLibrary
+    let logger: Logging.Logger
 
     public init(command: SotoCodeGenCommand) throws {
         self.command = command
         self.library = try Templates.createLibrary()
+        var logger = Logging.Logger(label: "")
+        logger.logLevel = self.command.logLevel.map { Logging.Logger.Level(rawValue: $0) ?? .info } ?? .info
+        self.logger = logger
         Smithy.registerAWSTraits()
         Smithy.registerTraitTypes(
             SotoInputShapeTrait.self,
@@ -83,12 +89,17 @@ public struct SotoCodeGen {
             DispatchQueue.global().async {
                 defer { group.leave() }
                 do {
-                    let service = try AwsService(model.value, endpoints: endpoints, outputHTMLComments: command.htmlComments)
+                    let service = try AwsService(
+                        model.value,
+                        endpoints: endpoints,
+                        outputHTMLComments: command.htmlComments,
+                        logger: self.logger
+                    )
                     if self.command.output {
                         try self.generateFiles(with: service)
                     }
                 } catch {
-                    print("\(model.key): \(error)")
+                    self.logger.error("\(model.key): \(error)")
                     exit(1)
                 }
             }
@@ -96,8 +107,8 @@ public struct SotoCodeGen {
 
         group.wait()
 
-        print("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
-        print("Done.")
+        self.logger.info("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
+        self.logger.info("Done.")
     }
 
     func getModelFiles() -> [String] {
@@ -170,13 +181,13 @@ public struct SotoCodeGen {
         if try self.format(api)
             .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_API.swift")
         {
-            print("Wrote: \(service.serviceName)_API.swift")
+            self.logger.info("Wrote \(service.serviceName)_API.swift")
         }
         let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
         if self.command.output, try self.format(apiAsync).writeIfChanged(
             toFile: "\(basePath)/\(service.serviceName)_API+async.swift"
         ) {
-            print("Wrote: \(service.serviceName)_API+async.swift")
+            self.logger.info("Wrote \(service.serviceName)_API+async.swift")
         }
 
         let shapesContext = try service.generateShapesContext()
@@ -184,7 +195,7 @@ public struct SotoCodeGen {
         if self.command.output, try self.format(shapes).writeIfChanged(
             toFile: "\(basePath)/\(service.serviceName)_Shapes.swift"
         ) {
-            print("Wrote: \(service.serviceName)_Shapes.swift")
+            self.logger.info("Wrote \(service.serviceName)_Shapes.swift")
         }
 
         let errorContext = try service.generateErrorContext()
@@ -193,7 +204,7 @@ public struct SotoCodeGen {
             if self.command.output, try self.format(errors).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Error.swift"
             ) {
-                print("Wrote: \(service.serviceName)_Error.swift")
+                self.logger.info("Wrote \(service.serviceName)_Error.swift")
             }
         }
 
@@ -203,13 +214,13 @@ public struct SotoCodeGen {
             if self.command.output, try self.format(paginators).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Paginator.swift"
             ) {
-                print("Wrote: \(service.serviceName)_Paginator.swift")
+                self.logger.info("Wrote \(service.serviceName)_Paginator.swift")
             }
             let paginatorsAsync = self.library.render(paginatorContext, withTemplate: "paginator+async")!
             if self.command.output, try self.format(paginatorsAsync).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Paginator+async.swift"
             ) {
-                print("Wrote: \(service.serviceName)_Paginator+async.swift")
+                self.logger.info("Wrote \(service.serviceName)_Paginator+async.swift")
             }
         }
 
@@ -219,16 +230,16 @@ public struct SotoCodeGen {
             if self.command.output, try self.format(waiters).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Waiter.swift"
             ) {
-                print("Wrote: \(service.serviceName)_Waiter.swift")
+                self.logger.info("Wrote \(service.serviceName)_Waiter.swift")
             }
             let waitersAsync = self.library.render(waiterContexts, withTemplate: "waiter+async")!
             if self.command.output, try self.format(waitersAsync).writeIfChanged(
                 toFile: "\(basePath)/\(service.serviceName)_Waiter+async.swift"
             ) {
-                print("Wrote: \(service.serviceName)_Waiter+async.swift")
+                self.logger.info("Wrote \(service.serviceName)_Waiter+async.swift")
             }
         }
-        // print("Succesfully Generated \(service.serviceName)")
+        self.logger.debug("Succesfully Generated \(service.serviceName)")
     }
 }
 
