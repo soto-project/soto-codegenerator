@@ -378,12 +378,15 @@ struct AwsService {
 
     /// process documenation string
     func processMemberDocs(from shape: MemberShape) -> [String.SubSequence] {
-        let documentation = shape.trait(type: DocumentationTrait.self)?.value
-        return documentation?
+        guard var documentation = shape.trait(type: DocumentationTrait.self)?.value else { return [] }
+        if let recommendation = shape.trait(type: RecommendedTrait.self)?.reason {
+            documentation += "\n\(recommendation)"
+        }
+        return documentation
             .tagStriped()
             .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
             .split(separator: "\n")
-            .compactMap { $0.isEmpty ? nil : $0 } ?? []
+            .compactMap { $0.isEmpty ? nil : $0 }
     }
 
     /// process documentation string
