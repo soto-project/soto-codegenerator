@@ -133,6 +133,8 @@ extension Model {
             ),
             // ListParts uses the IsTruncated flags to indicate when to finish pagination
             "com.amazonaws.s3#ListParts": AddTraitPatch(trait: SotoPaginationTruncatedTrait(isTruncated: "IsTruncated")),
+            //
+            "com.amazonaws.s3#StorageClass": EditEnumPatch(add: [.init(value: "NONE")]),
         ],
         "S3Control": [
             // Similar to the same issue in S3
