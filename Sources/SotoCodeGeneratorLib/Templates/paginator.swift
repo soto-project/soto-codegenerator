@@ -105,9 +105,9 @@ extension Templates {
     {{/paginators}}
     }
 
-    {{#paginators}}
-    extension {{name}}.{{operation.inputShape}}: {{paginatorProtocol}} {
-        public func usingPaginationToken(_ token: {{tokenType}}) -> {{name}}.{{operation.inputShape}} {
+    {{#paginatorShapes}}
+    extension {{name}}.{{inputShape}}: {{paginatorProtocol}} {
+        public func usingPaginationToken(_ token: {{tokenType}}) -> {{name}}.{{inputShape}} {
             return .init(
     {{#initParams}}
                 {{.}}{{^last()}},{{/last()}}
@@ -118,6 +118,6 @@ extension Templates {
     {{^last()}}
 
     {{/last()}}
-    {{/paginators}}
+    {{/paginatorShapes}}
     """#
 }

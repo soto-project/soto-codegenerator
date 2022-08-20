@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2022 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -131,69 +131,6 @@ struct AwsService {
         context["operations"] = operations.operations
         context["streamingOperations"] = operations.streamingOperations
         context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
-        return context
-    }
-
-    /// Generate paginator context
-    func generatePaginatorContext() throws -> [String: Any] {
-        let paginatorOperations = try model.select(from: "operation [trait|paginated]")
-        guard paginatorOperations.count > 0 else { return [:] }
-        var context: [String: Any] = ["name": serviceName]
-        let namespace = paginatorOperations.first?.key.namespace
-
-        var paginatorContexts: [PaginatorContext] = []
-
-        for operation in paginatorOperations {
-            guard let operationShape = operation.value as? OperationShape else { continue }
-            guard let paginatedTrait = operationShape.trait(type: PaginatedTrait.self) else { continue }
-            guard let input = operationShape.input?.target else { continue }
-            guard let inputShape = model.shape(for: input) as? StructureShape else { continue }
-            guard let inputToken = paginatedTrait.inputToken else { continue }
-            guard let inputMember = inputShape.members?[inputToken] else { continue }
-            guard let output = operationShape.output?.target else { continue }
-            guard let outputShape = model.shape(for: output) as? StructureShape else { continue }
-            guard let outputToken = paginatedTrait.outputToken else { continue }
-            let paginatedTruncatedTrait = operationShape.trait(type: SotoPaginationTruncatedTrait.self)
-            let inputMemberShapeName = inputMember.output(self.model, withServiceName: self.serviceName)
-
-            // construct array of input shape parameters to use in `usingPaginationToken` function
-            var initParams: [String: String] = [:]
-            for member in inputShape.members ?? [:] {
-                // don't include deprecated members
-                guard !member.value.hasTrait(type: DeprecatedTrait.self) else { continue }
-                initParams[member.key.toSwiftLabelCase()] = "self.\(member.key.toSwiftLabelCase())"
-            }
-            initParams[inputToken.toSwiftLabelCase()] = "token"
-            let initParamsArray = initParams.map { "\($0.key): \($0.value)" }.sorted { $0.lowercased() < $1.lowercased() }
-
-            var inputKeyToken: String? = inputToken
-            guard let inputKeyShape = model.shape(for: inputMember.target) else { continue }
-            // if input key shape is not equatable then don't output input key
-            if !(inputKeyShape is SotoEquatableShape) {
-                inputKeyToken = nil
-            }
-            // if we have a `isTruncated` flag then don't output input
-            if paginatedTruncatedTrait != nil {
-                inputKeyToken = nil
-            }
-
-            paginatorContexts.append(
-                PaginatorContext(
-                    operation: try self.generateOperationContext(operationShape, operationName: operation.key, streaming: false),
-                    inputKey: inputKeyToken.map { self.toKeyPath(token: $0, structure: inputShape) },
-                    outputKey: self.toKeyPath(token: outputToken, structure: outputShape),
-                    moreResultsKey: paginatedTruncatedTrait.map { self.toKeyPath(token: $0.isTruncated, structure: outputShape) },
-                    initParams: initParamsArray,
-                    paginatorProtocol: "AWSPaginateToken",
-                    tokenType: inputMemberShapeName
-                )
-            )
-        }
-        paginatorContexts.sort { $0.operation.funcName < $1.operation.funcName }
-        if paginatorContexts.count > 0 {
-            context["paginators"] = paginatorContexts
-        }
-        context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: namespace ?? "")
         return context
     }
 
@@ -648,6 +585,10 @@ extension AwsService {
         let inputKey: String?
         let outputKey: String
         let moreResultsKey: String?
+    }
+
+    struct PaginatorShapeContext {
+        let inputShape: String
         let initParams: [String]
         let paginatorProtocol: String
         let tokenType: String
