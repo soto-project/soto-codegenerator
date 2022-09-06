@@ -184,7 +184,7 @@ extension AwsService {
         let sortedMembers = members.map { $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
         for member in sortedMembers {
             // member context
-            let memberContext = self.generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum)
+            let memberContext = self.generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum, isOutputShape: isOutputShape)
             contexts.members.append(memberContext)
             // coding key context
             if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, isOutputShape: isOutputShape) {
@@ -212,8 +212,8 @@ extension AwsService {
         return contexts
     }
 
-    func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsEnum: Bool) -> MemberContext {
-        let required = member.hasTrait(type: RequiredTrait.self)
+    func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsEnum: Bool, isOutputShape: Bool) -> MemberContext {
+        var required = member.hasTrait(type: RequiredTrait.self)
         let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
         let deprecated = member.hasTrait(type: DeprecatedTrait.self)
         precondition((required && deprecated) == false, "Member cannot be required and deprecated")
@@ -221,6 +221,16 @@ extension AwsService {
         let defaultValue: String?
         if idempotencyToken == true {
             defaultValue = "\(shapeName.toSwiftClassCase()).idempotencyToken()"
+        } else if let defaultTrait = member.trait(type: DefaultTrait.self), !isOutputShape {
+            switch defaultTrait.value {
+            case .boolean(let b):
+                defaultValue = b.description
+            case .number(let d):
+                defaultValue = String(format: "%g", d)
+            case .string(let s):
+                defaultValue = "\"\(s)\""
+            }
+            required = true
         } else if !required {
             defaultValue = "nil"
         } else {
@@ -230,7 +240,7 @@ extension AwsService {
         return MemberContext(
             variable: name.toSwiftVariableCase(),
             parameter: name.toSwiftLabelCase(),
-            required: member.hasTrait(type: RequiredTrait.self),
+            required: required,
             default: defaultValue,
             propertyWrapper: self.generatePropertyWrapper(member, name: name, required: required),
             type: type + ((required || typeIsEnum) ? "" : "?"),
