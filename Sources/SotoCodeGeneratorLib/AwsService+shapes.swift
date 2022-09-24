@@ -71,17 +71,7 @@ extension AwsService {
         var valueContexts: [EnumMemberContext] = []
         let enumDefinitions = trait.value.sorted { $0.value < $1.value }
         for value in enumDefinitions {
-            var key = value.value
-                .replacingOccurrences(of: ".", with: "_")
-                .replacingOccurrences(of: ":", with: "_")
-                .replacingOccurrences(of: "-", with: "_")
-                .replacingOccurrences(of: " ", with: "_")
-                .replacingOccurrences(of: "/", with: "_")
-                .replacingOccurrences(of: "(", with: "_")
-                .replacingOccurrences(of: ")", with: "_")
-                .replacingOccurrences(of: "*", with: "all")
-                .toSwiftEnumCase()
-
+            var key = value.value.toSwiftEnumCase()
             if key.allLetterIsNumeric() {
                 key = "\(shapeName.toSwiftVariableCase())\(key)"
             }
@@ -103,16 +93,7 @@ extension AwsService {
         guard let members = enumShape.members else { return nil }
         // Operations
         let valueContexts: [EnumMemberContext] = members.enumerated().map { enumerated -> EnumMemberContext in
-            var key = enumerated.element.key
-                .replacingOccurrences(of: ".", with: "_")
-                .replacingOccurrences(of: ":", with: "_")
-                .replacingOccurrences(of: "-", with: "_")
-                .replacingOccurrences(of: " ", with: "_")
-                .replacingOccurrences(of: "/", with: "_")
-                .replacingOccurrences(of: "(", with: "_")
-                .replacingOccurrences(of: ")", with: "_")
-                .replacingOccurrences(of: "*", with: "all")
-                .toSwiftEnumCase()
+            var key = enumerated.element.key.toSwiftEnumCase()
             if key.allLetterIsNumeric() {
                 key = "\(shapeName.toSwiftVariableCase())\(key)"
             }
@@ -277,7 +258,15 @@ extension AwsService {
             case .number(let d):
                 defaultValue = String(format: "%g", d)
             case .string(let s):
-                defaultValue = "\"\(s)\""
+                let shape = self.model.shape(for: member.target)
+                if let enumShape = shape as? EnumShape {
+                    guard let enumCase = self.getEnumCaseFromRawValue(enumShape: enumShape, value: .string(s)) else {
+                        preconditionFailure("Default enum value does not exist")
+                    }
+                    defaultValue = ".\(enumCase.toSwiftEnumCase())"
+                } else {
+                    defaultValue = "\"\(s)\""
+                }
             case .none:
                 required = false
                 defaultValue = "nil"
@@ -534,5 +523,17 @@ extension AwsService {
     func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
         let required = member.hasTrait(type: RequiredTrait.self)
         return self.generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
+    }
+
+    /// return Enum case string from enum value
+    func getEnumCaseFromRawValue(enumShape: EnumShape, value: EnumValueTrait.EnumValue) -> String? {
+        guard let members = enumShape.members else { return nil }
+        for e in members.enumerated() {
+            let enumValue = e.element.value.trait(type: EnumValueTrait.self)
+            if value == enumValue?.value {
+                return e.element.key
+            }
+        }
+        return nil
     }
 }

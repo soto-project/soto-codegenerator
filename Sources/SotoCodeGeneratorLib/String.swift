@@ -39,7 +39,17 @@ extension String {
     }
 
     public func toSwiftEnumCase() -> String {
-        return self.toSwiftLabelCase().reservedwordEscaped()
+        return self
+            .replacingOccurrences(of: ".", with: "_")
+            .replacingOccurrences(of: ":", with: "_")
+            .replacingOccurrences(of: "-", with: "_")
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "(", with: "_")
+            .replacingOccurrences(of: ")", with: "_")
+            .replacingOccurrences(of: "*", with: "all")
+            .toSwiftLabelCase()
+            .reservedwordEscaped()
     }
 
     public func tagStriped() -> String {
