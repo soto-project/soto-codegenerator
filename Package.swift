@@ -15,7 +15,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: "SotoCodeGenerator",
             dependencies: [
                 .byName(name: "SotoCodeGeneratorLib"),
