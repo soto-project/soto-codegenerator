@@ -84,7 +84,7 @@ struct EditTraitPatch<T: StaticTrait>: ShapePatch {
     }
 }
 
-struct EditEnumPatch: ShapePatch {
+struct EditEnumTraitPatch: ShapePatch {
     let add: [EnumTrait.EnumDefinition]
     let remove: [String]
 

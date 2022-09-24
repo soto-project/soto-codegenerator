@@ -24,14 +24,15 @@ extension AwsService {
 
         markInputOutputShapes(model)
 
-        var shapeContexts: [[String: Any]] = []
-
         // generate enums
-        let enums = try model.select(from: "[trait|enum]").map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
-        for e in enums {
-            guard let enumContext = self.generateEnumContext(e.value, shapeName: e.key) else { continue }
-            shapeContexts.append(["enum": enumContext])
-        }
+        let traitEnums: [EnumContext] = try model
+            .select(from: "[trait|enum]")
+            .compactMap { self.generateEnumTraitContext($0.value, shapeName: $0.key.shapeName) }
+        let shapeEnums: [EnumContext] = model
+            .select(type: EnumShape.self)
+            .compactMap { self.generateEnumContext($0.value, shapeName: $0.key.shapeName) }
+        let enums = (traitEnums + shapeEnums).sorted { $0.name < $1.name }
+        var shapeContexts: [[String: Any]] = enums.map { ["enum": $0] }
 
         // generate structures
         let structures = model.select(type: StructureShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
@@ -59,8 +60,8 @@ extension AwsService {
         return context
     }
 
-    /// Generate the context information for outputting an enum
-    func generateEnumContext(_ shape: Shape, shapeName: String) -> EnumContext? {
+    /// Generate the context information for outputting an enum from strings with enum traits
+    func generateEnumTraitContext(_ shape: Shape, shapeName: String) -> EnumContext? {
         guard let trait = shape.trait(type: EnumTrait.self) else { return nil }
         let usedInInput = shape.hasTrait(type: SotoInputShapeTrait.self)
         let usedInOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
@@ -91,6 +92,53 @@ extension AwsService {
             documentation: processDocs(from: shape),
             values: valueContexts,
             isExtensible: shape.hasTrait(type: SotoExtensibleEnumTrait.self)
+        )
+    }
+
+    /// Generate the context information for outputting an enum from strings with enum traits
+    func generateEnumContext(_ enumShape: EnumShape, shapeName: String) -> EnumContext? {
+        let usedInInput = enumShape.hasTrait(type: SotoInputShapeTrait.self)
+        let usedInOutput = enumShape.hasTrait(type: SotoOutputShapeTrait.self)
+        guard usedInInput || usedInOutput else { return nil }
+        guard let members = enumShape.members else { return nil }
+        // Operations
+        let valueContexts: [EnumMemberContext] = members.enumerated().map { enumerated -> EnumMemberContext in
+            var key = enumerated.element.key
+                .replacingOccurrences(of: ".", with: "_")
+                .replacingOccurrences(of: ":", with: "_")
+                .replacingOccurrences(of: "-", with: "_")
+                .replacingOccurrences(of: " ", with: "_")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "(", with: "_")
+                .replacingOccurrences(of: ")", with: "_")
+                .replacingOccurrences(of: "*", with: "all")
+                .toSwiftEnumCase()
+            if key.allLetterIsNumeric() {
+                key = "\(shapeName.toSwiftVariableCase())\(key)"
+            }
+            let value: String
+            if let enumValueTrait = enumerated.element.value.trait(type: EnumValueTrait.self) {
+                switch enumValueTrait.value {
+                case .string(let name):
+                    value = name
+                case .integer(let integer):
+                    value = integer.description
+                }
+            } else {
+                value = key
+            }
+            let documentation = enumerated.element.value.trait(type: DocumentationTrait.self)
+            return EnumMemberContext(
+                case: key,
+                documentation: documentation.map { processDocs($0.value) } ?? [],
+                string: value
+            )
+        }
+        return EnumContext(
+            name: shapeName.toSwiftClassCase(),
+            documentation: processDocs(from: enumShape),
+            values: valueContexts,
+            isExtensible: enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
     }
 
@@ -222,6 +270,7 @@ extension AwsService {
         if idempotencyToken == true {
             defaultValue = "\(shapeName.toSwiftClassCase()).idempotencyToken()"
         } else if let defaultTrait = member.trait(type: DefaultTrait.self), !isOutputShape {
+            required = true
             switch defaultTrait.value {
             case .boolean(let b):
                 defaultValue = b.description
@@ -229,8 +278,10 @@ extension AwsService {
                 defaultValue = String(format: "%g", d)
             case .string(let s):
                 defaultValue = "\"\(s)\""
+            case .none:
+                required = false
+                defaultValue = "nil"
             }
-            required = true
         } else if !required {
             defaultValue = "nil"
         } else {
