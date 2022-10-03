@@ -106,7 +106,7 @@ extension AwsService {
                     value = integer.description
                 }
             } else {
-                value = key
+                value = enumerated.element.key
             }
             let documentation = enumerated.element.value.trait(type: DocumentationTrait.self)
             return EnumMemberContext(
@@ -118,7 +118,7 @@ extension AwsService {
         return EnumContext(
             name: shapeName.toSwiftClassCase(),
             documentation: processDocs(from: enumShape),
-            values: valueContexts,
+            values: valueContexts.sorted { $0.case < $1.case },
             isExtensible: enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
     }
