@@ -34,6 +34,24 @@ struct EditShapePatch<S: Shape>: ShapePatch {
     }
 }
 
+struct AddShapeMemberPatch<S: CollectionShape>: ShapePatch {
+    let name: String
+    let shapeId: ShapeId
+    let traits: TraitList?
+
+    func patch(shape: Shape) -> Shape? {
+        guard let shape = shape as? S else { return nil }
+        let memberShape = MemberShape(target: self.shapeId, traits: self.traits)
+        if var members = shape.members {
+            members[self.name] = memberShape
+            shape.members = members
+        } else {
+            shape.members = [self.name: memberShape]
+        }
+        return shape
+    }
+}
+
 struct CreateShapePatch: ShapePatch {
     let shape: Shape
     let patch: ShapePatch?

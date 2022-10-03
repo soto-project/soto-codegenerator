@@ -140,7 +140,7 @@ extension Model {
         "S3Control": [
             // Similar to the same issue in S3
             "com.amazonaws.s3control#BucketLocationConstraint": MultiplePatch([
-                EditEnumTraitPatch(add: [.init(value: "us-east-1")]),
+                AddShapeMemberPatch<EnumShape>(name: "us_east_1", shapeId: "smithy.api#Unit", traits: [EnumValueTrait(value: .string("us-east-1"))]),
                 AddTraitPatch(trait: SotoExtensibleEnumTrait()),
             ]),
         ],
