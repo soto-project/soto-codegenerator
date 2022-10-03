@@ -426,23 +426,25 @@ extension AwsService {
         guard !shape.hasTrait(type: EnumTrait.self) else { return nil }
 
         var requirements: [String: Any] = [:]
-        if let lengthTrait = shape.trait(type: LengthTrait.self) {
-            if let min = lengthTrait.min, min > 0 {
-                requirements["min"] = min
+        if !(shape is EnumShape) {
+            if let lengthTrait = shape.trait(type: LengthTrait.self) {
+                if let min = lengthTrait.min, min > 0 {
+                    requirements["min"] = min
+                }
+                requirements["max"] = lengthTrait.max
             }
-            requirements["max"] = lengthTrait.max
-        }
-        if let rangeTrait = shape.trait(type: RangeTrait.self) {
-            if shape is FloatShape || shape is DoubleShape || shape is BigDecimalShape {
-                requirements["min"] = rangeTrait.min
-                requirements["max"] = rangeTrait.max
-            } else {
-                requirements["min"] = rangeTrait.min.map { NSNumber(value: $0).int64Value }
-                requirements["max"] = rangeTrait.max.map { NSNumber(value: $0).int64Value }
+            if let rangeTrait = shape.trait(type: RangeTrait.self) {
+                if shape is FloatShape || shape is DoubleShape || shape is BigDecimalShape {
+                    requirements["min"] = rangeTrait.min
+                    requirements["max"] = rangeTrait.max
+                } else {
+                    requirements["min"] = rangeTrait.min.map { NSNumber(value: $0).int64Value }
+                    requirements["max"] = rangeTrait.max.map { NSNumber(value: $0).int64Value }
+                }
             }
-        }
-        if let patternTrait = shape.trait(type: PatternTrait.self) {
-            requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
+            if let patternTrait = shape.trait(type: PatternTrait.self) {
+                requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
+            }
         }
 
         var listMember: MemberShape?
