@@ -104,6 +104,7 @@ extension AwsService {
                     value = name
                 case .integer(let integer):
                     value = integer.description
+                    fatalError("intEnum is currently not supported")
                 }
             } else {
                 value = enumerated.element.key
