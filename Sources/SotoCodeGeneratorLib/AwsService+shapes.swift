@@ -37,7 +37,7 @@ extension AwsService {
         // generate structures
         let structures = model.select(type: StructureShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for structure in structures {
-            guard let shapeContext = self.generateStructureContext(structure.value, shapeId: structure.key, typeIsEnum: false) else { continue }
+            guard let shapeContext = self.generateStructureContext(structure.value, shapeId: structure.key, typeIsUnion: false) else { continue }
             shapeContexts.append(["struct": shapeContext])
         }
 
@@ -45,9 +45,9 @@ extension AwsService {
         let unions = model.select(type: UnionShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for union in unions {
             // if union has one member then treat type as struct
-            let typeIsEnum = union.value.members?.count == 1 ? false : true
-            guard let shapeContext = self.generateStructureContext(union.value, shapeId: union.key, typeIsEnum: typeIsEnum) else { continue }
-            if typeIsEnum {
+            let typeIsUnion = union.value.members?.count == 1 ? false : true
+            guard let shapeContext = self.generateStructureContext(union.value, shapeId: union.key, typeIsUnion: typeIsUnion) else { continue }
+            if typeIsUnion {
                 shapeContexts.append(["enumWithValues": shapeContext])
             } else {
                 shapeContexts.append(["struct": shapeContext])
@@ -124,7 +124,7 @@ extension AwsService {
     }
 
     /// Generate the context information for outputting a shape
-    func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId, typeIsEnum: Bool) -> StructureContext? {
+    func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId, typeIsUnion: Bool) -> StructureContext? {
         let shapeName = shapeId.shapeName
         var shapeOptions: [String] = []
         var xmlNamespace: String?
@@ -132,7 +132,7 @@ extension AwsService {
 
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payloadMember != nil) else { return nil }
 
-        let contexts = self.generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: typeIsEnum)
+        let contexts = self.generateMembersContexts(shape, shapeName: shapeName, typeIsUnion: typeIsUnion)
 
         // get payload options
         let operationShape = shape.trait(type: SotoRequestShapeTrait.self)?.operationShape
@@ -205,7 +205,7 @@ extension AwsService {
     }
 
     /// generate shape members context
-    func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsEnum: Bool) -> MembersContexts {
+    func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsUnion: Bool) -> MembersContexts {
         var contexts = MembersContexts()
         guard let members = shape.members else { return contexts }
         let isOutputShape = shape.hasTrait(type: SotoOutputShapeTrait.self)
@@ -213,7 +213,7 @@ extension AwsService {
         let sortedMembers = members.map { $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
         for member in sortedMembers {
             // member context
-            let memberContext = self.generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum, isOutputShape: isOutputShape)
+            let memberContext = self.generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsUnion: typeIsUnion, isOutputShape: isOutputShape)
             contexts.members.append(memberContext)
             // coding key context
             if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, isOutputShape: isOutputShape) {
@@ -241,7 +241,7 @@ extension AwsService {
         return contexts
     }
 
-    func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsEnum: Bool, isOutputShape: Bool) -> MemberContext {
+    func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsUnion: Bool, isOutputShape: Bool) -> MemberContext {
         var required = member.hasTrait(type: RequiredTrait.self)
         let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
         let deprecated = member.hasTrait(type: DeprecatedTrait.self)
@@ -277,13 +277,14 @@ extension AwsService {
             defaultValue = nil
         }
         let type = member.output(model)
+        let optional = (!required && !typeIsUnion) || member.hasTrait(type: ClientOptionalTrait.self)
         return MemberContext(
             variable: name.toSwiftVariableCase(),
             parameter: name.toSwiftLabelCase(),
             required: required,
             default: defaultValue,
-            propertyWrapper: self.generatePropertyWrapper(member, name: name, required: required),
-            type: type + ((required || typeIsEnum) ? "" : "?"),
+            propertyWrapper: self.generatePropertyWrapper(member, name: name, optional: optional),
+            type: type + (optional ? "?" : ""),
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
             duplicate: false // TODO: NEED to catch this
@@ -370,10 +371,10 @@ extension AwsService {
         }
     }
 
-    func generatePropertyWrapper(_ member: MemberShape, name: String, required: Bool) -> String? {
+    func generatePropertyWrapper(_ member: MemberShape, name: String, optional: Bool) -> String? {
         let memberShape = model.shape(for: member.target)
         let codingWrapper: String
-        if required {
+        if !optional {
             codingWrapper = "@CustomCoding"
         } else {
             codingWrapper = "@OptionalCustomCoding"
@@ -500,7 +501,7 @@ extension AwsService {
 
         if let collection = shape as? CollectionShape, let members = collection.members {
             for member in members {
-                let memberRequired = member.value.hasTrait(type: RequiredTrait.self)
+                let memberRequired = member.value.hasTrait(type: RequiredTrait.self) && !member.value.hasTrait(type: ClientOptionalTrait.self)
                 var alreadyProcessed2 = alreadyProcessed
                 alreadyProcessed2.insert(shapeId)
                 if self.generateValidationContext(
@@ -521,7 +522,7 @@ extension AwsService {
     }
 
     func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
-        let required = member.hasTrait(type: RequiredTrait.self)
+        let required = member.hasTrait(type: RequiredTrait.self) && !member.hasTrait(type: ClientOptionalTrait.self)
         return self.generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
     }
 
