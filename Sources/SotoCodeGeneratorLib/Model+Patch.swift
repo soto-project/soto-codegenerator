@@ -57,7 +57,6 @@ extension Model {
         ],
         "EC2": [
             "com.amazonaws.ec2#PlatformValues$Windows": EditTraitPatch { _ in EnumValueTrait(value: .string("windows")) },
-//            "com.amazonaws.ec2#PlatformValues": EditEnumTraitPatch(add: [.init(value: "windows")], remove: ["Windows"]),
             // make InstanceType and ArchitectureType extensible enums to avoid the situation where the
             // sdk service files cannot keep up with the changes coming from the services
             "com.amazonaws.ec2#InstanceType": AddTraitPatch(trait: SotoExtensibleEnumTrait()),
