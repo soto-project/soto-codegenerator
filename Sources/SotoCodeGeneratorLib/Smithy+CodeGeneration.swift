@@ -128,7 +128,11 @@ extension MemberShape {
         } else if memberShape is CollectionShape {
             return "\(withServiceName).\(self.target.shapeName.toSwiftClassCase())"
         } else if let listShape = memberShape as? ListShape {
-            return "[\(listShape.member.output(model, withServiceName: withServiceName))]"
+            if listShape.hasTrait(type: UniqueItemsTrait.self) {
+                return "Set<\(listShape.member.output(model, withServiceName: withServiceName))>"
+            } else {
+                return "[\(listShape.member.output(model, withServiceName: withServiceName))]"
+            }
         } else if let setShape = memberShape as? SetShape {
             return "Set<\(setShape.member.output(model, withServiceName: withServiceName))>"
         } else if let mapShape = memberShape as? MapShape {

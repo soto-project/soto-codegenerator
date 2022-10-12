@@ -49,14 +49,14 @@ extension Model {
         ],
         "CognitoIdentityProvider": [
             // https://github.com/soto-project/soto/issues/478
-            "com.amazonaws.cognitoidentityprovider#UserStatusType": EditEnumPatch(add: [.init(value: "EXTERNAL_PROVIDER")]),
+            "com.amazonaws.cognitoidentityprovider#UserStatusType": EditEnumTraitPatch(add: [.init(value: "EXTERNAL_PROVIDER")]),
         ],
         "DynamoDB": [
             // Make TransactWriteItem an enum with associated values
             "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
         ],
         "EC2": [
-            "com.amazonaws.ec2#PlatformValues": EditEnumPatch(add: [.init(value: "windows")], remove: ["Windows"]),
+            "com.amazonaws.ec2#PlatformValues$Windows": EditTraitPatch { _ in EnumValueTrait(value: .string("windows")) },
             // make InstanceType and ArchitectureType extensible enums to avoid the situation where the
             // sdk service files cannot keep up with the changes coming from the services
             "com.amazonaws.ec2#InstanceType": AddTraitPatch(trait: SotoExtensibleEnumTrait()),
@@ -76,7 +76,7 @@ extension Model {
         ],
         "IAM": [
             // Missing Enum value
-            "com.amazonaws.iam#PolicySourceType": EditEnumPatch(add: [.init(value: "IAM Policy")]),
+            "com.amazonaws.iam#PolicySourceType": EditEnumTraitPatch(add: [.init(value: "IAM Policy")]),
         ],
         "Identitystore": [
             // service name change
@@ -120,7 +120,7 @@ extension Model {
         ],
         "S3": [
             // https://github.com/soto-project/soto/issues/68
-            "com.amazonaws.s3#ReplicationStatus": EditEnumPatch(add: [.init(value: "COMPLETED")], remove: ["COMPLETE"]),
+            "com.amazonaws.s3#ReplicationStatus": EditEnumTraitPatch(add: [.init(value: "COMPLETED")], remove: ["COMPLETE"]),
             // should be 64 bit number
             "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
             // https://github.com/soto-project/soto/issues/311
@@ -128,18 +128,18 @@ extension Model {
             "com.amazonaws.s3#LifecycleRule$Filter": AddTraitPatch(trait: RequiredTrait()),
             // https://github.com/soto-project/soto/issues/502
             "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch(
-                EditEnumPatch(add: [.init(value: "us-east-1")]),
+                EditEnumTraitPatch(add: [.init(value: "us-east-1")]),
                 AddTraitPatch(trait: SotoExtensibleEnumTrait())
             ),
             // ListParts uses the IsTruncated flags to indicate when to finish pagination
             "com.amazonaws.s3#ListParts": AddTraitPatch(trait: SotoPaginationTruncatedTrait(isTruncated: "IsTruncated")),
             //
-            "com.amazonaws.s3#StorageClass": EditEnumPatch(add: [.init(value: "NONE")]),
+            "com.amazonaws.s3#StorageClass": EditEnumTraitPatch(add: [.init(value: "NONE")]),
         ],
         "S3Control": [
             // Similar to the same issue in S3
             "com.amazonaws.s3control#BucketLocationConstraint": MultiplePatch([
-                EditEnumPatch(add: [.init(value: "us-east-1")]),
+                AddShapeMemberPatch<EnumShape>(name: "us_east_1", shapeId: "smithy.api#Unit", traits: [EnumValueTrait(value: .string("us-east-1"))]),
                 AddTraitPatch(trait: SotoExtensibleEnumTrait()),
             ]),
         ],

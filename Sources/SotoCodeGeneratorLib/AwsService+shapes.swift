@@ -24,19 +24,20 @@ extension AwsService {
 
         markInputOutputShapes(model)
 
-        var shapeContexts: [[String: Any]] = []
-
         // generate enums
-        let enums = try model.select(from: "[trait|enum]").map { (key: $0.key.shapeName, value: $0.value) }.sorted { $0.key < $1.key }
-        for e in enums {
-            guard let enumContext = self.generateEnumContext(e.value, shapeName: e.key) else { continue }
-            shapeContexts.append(["enum": enumContext])
-        }
+        let traitEnums: [EnumContext] = try model
+            .select(from: "[trait|enum]")
+            .compactMap { self.generateEnumTraitContext($0.value, shapeName: $0.key.shapeName) }
+        let shapeEnums: [EnumContext] = model
+            .select(type: EnumShape.self)
+            .compactMap { self.generateEnumContext($0.value, shapeName: $0.key.shapeName) }
+        let enums = (traitEnums + shapeEnums).sorted { $0.name < $1.name }
+        var shapeContexts: [[String: Any]] = enums.map { ["enum": $0] }
 
         // generate structures
         let structures = model.select(type: StructureShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for structure in structures {
-            guard let shapeContext = self.generateStructureContext(structure.value, shapeId: structure.key, typeIsEnum: false) else { continue }
+            guard let shapeContext = self.generateStructureContext(structure.value, shapeId: structure.key, typeIsUnion: false) else { continue }
             shapeContexts.append(["struct": shapeContext])
         }
 
@@ -44,9 +45,9 @@ extension AwsService {
         let unions = model.select(type: UnionShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for union in unions {
             // if union has one member then treat type as struct
-            let typeIsEnum = union.value.members?.count == 1 ? false : true
-            guard let shapeContext = self.generateStructureContext(union.value, shapeId: union.key, typeIsEnum: typeIsEnum) else { continue }
-            if typeIsEnum {
+            let typeIsUnion = union.value.members?.count == 1 ? false : true
+            guard let shapeContext = self.generateStructureContext(union.value, shapeId: union.key, typeIsUnion: typeIsUnion) else { continue }
+            if typeIsUnion {
                 shapeContexts.append(["enumWithValues": shapeContext])
             } else {
                 shapeContexts.append(["struct": shapeContext])
@@ -59,8 +60,8 @@ extension AwsService {
         return context
     }
 
-    /// Generate the context information for outputting an enum
-    func generateEnumContext(_ shape: Shape, shapeName: String) -> EnumContext? {
+    /// Generate the context information for outputting an enum from strings with enum traits
+    func generateEnumTraitContext(_ shape: Shape, shapeName: String) -> EnumContext? {
         guard let trait = shape.trait(type: EnumTrait.self) else { return nil }
         let usedInInput = shape.hasTrait(type: SotoInputShapeTrait.self)
         let usedInOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
@@ -70,17 +71,7 @@ extension AwsService {
         var valueContexts: [EnumMemberContext] = []
         let enumDefinitions = trait.value.sorted { $0.value < $1.value }
         for value in enumDefinitions {
-            var key = value.value
-                .replacingOccurrences(of: ".", with: "_")
-                .replacingOccurrences(of: ":", with: "_")
-                .replacingOccurrences(of: "-", with: "_")
-                .replacingOccurrences(of: " ", with: "_")
-                .replacingOccurrences(of: "/", with: "_")
-                .replacingOccurrences(of: "(", with: "_")
-                .replacingOccurrences(of: ")", with: "_")
-                .replacingOccurrences(of: "*", with: "all")
-                .toSwiftEnumCase()
-
+            var key = value.value.toSwiftEnumCase()
             if key.allLetterIsNumeric() {
                 key = "\(shapeName.toSwiftVariableCase())\(key)"
             }
@@ -94,8 +85,47 @@ extension AwsService {
         )
     }
 
+    /// Generate the context information for outputting an enum from strings with enum traits
+    func generateEnumContext(_ enumShape: EnumShape, shapeName: String) -> EnumContext? {
+        let usedInInput = enumShape.hasTrait(type: SotoInputShapeTrait.self)
+        let usedInOutput = enumShape.hasTrait(type: SotoOutputShapeTrait.self)
+        guard usedInInput || usedInOutput else { return nil }
+        guard let members = enumShape.members else { return nil }
+        // Operations
+        let valueContexts: [EnumMemberContext] = members.enumerated().map { enumerated -> EnumMemberContext in
+            var key = enumerated.element.key.toSwiftEnumCase()
+            if key.allLetterIsNumeric() {
+                key = "\(shapeName.toSwiftVariableCase())\(key)"
+            }
+            let value: String
+            if let enumValueTrait = enumerated.element.value.trait(type: EnumValueTrait.self) {
+                switch enumValueTrait.value {
+                case .string(let name):
+                    value = name
+                case .integer(let integer):
+                    value = integer.description
+                    fatalError("intEnum is currently not supported")
+                }
+            } else {
+                value = enumerated.element.key
+            }
+            let documentation = enumerated.element.value.trait(type: DocumentationTrait.self)
+            return EnumMemberContext(
+                case: key,
+                documentation: documentation.map { processDocs($0.value) } ?? [],
+                string: value
+            )
+        }
+        return EnumContext(
+            name: shapeName.toSwiftClassCase(),
+            documentation: processDocs(from: enumShape),
+            values: valueContexts.sorted { $0.case < $1.case },
+            isExtensible: enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
+        )
+    }
+
     /// Generate the context information for outputting a shape
-    func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId, typeIsEnum: Bool) -> StructureContext? {
+    func generateStructureContext(_ shape: CollectionShape, shapeId: ShapeId, typeIsUnion: Bool) -> StructureContext? {
         let shapeName = shapeId.shapeName
         var shapeOptions: [String] = []
         var xmlNamespace: String?
@@ -103,7 +133,7 @@ extension AwsService {
 
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payloadMember != nil) else { return nil }
 
-        let contexts = self.generateMembersContexts(shape, shapeName: shapeName, typeIsEnum: typeIsEnum)
+        let contexts = self.generateMembersContexts(shape, shapeName: shapeName, typeIsUnion: typeIsUnion)
 
         // get payload options
         let operationShape = shape.trait(type: SotoRequestShapeTrait.self)?.operationShape
@@ -176,7 +206,7 @@ extension AwsService {
     }
 
     /// generate shape members context
-    func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsEnum: Bool) -> MembersContexts {
+    func generateMembersContexts(_ shape: CollectionShape, shapeName: String, typeIsUnion: Bool) -> MembersContexts {
         var contexts = MembersContexts()
         guard let members = shape.members else { return contexts }
         let isOutputShape = shape.hasTrait(type: SotoOutputShapeTrait.self)
@@ -184,7 +214,7 @@ extension AwsService {
         let sortedMembers = members.map { $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
         for member in sortedMembers {
             // member context
-            let memberContext = self.generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsEnum: typeIsEnum, isOutputShape: isOutputShape)
+            let memberContext = self.generateMemberContext(member.value, name: member.key, shapeName: shapeName, typeIsUnion: typeIsUnion, isOutputShape: isOutputShape)
             contexts.members.append(memberContext)
             // coding key context
             if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, isOutputShape: isOutputShape) {
@@ -212,7 +242,7 @@ extension AwsService {
         return contexts
     }
 
-    func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsEnum: Bool, isOutputShape: Bool) -> MemberContext {
+    func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsUnion: Bool, isOutputShape: Bool) -> MemberContext {
         var required = member.hasTrait(type: RequiredTrait.self)
         let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
         let deprecated = member.hasTrait(type: DeprecatedTrait.self)
@@ -222,28 +252,40 @@ extension AwsService {
         if idempotencyToken == true {
             defaultValue = "\(shapeName.toSwiftClassCase()).idempotencyToken()"
         } else if let defaultTrait = member.trait(type: DefaultTrait.self), !isOutputShape {
+            required = true
             switch defaultTrait.value {
             case .boolean(let b):
                 defaultValue = b.description
             case .number(let d):
                 defaultValue = String(format: "%g", d)
             case .string(let s):
-                defaultValue = "\"\(s)\""
+                let shape = self.model.shape(for: member.target)
+                if let enumShape = shape as? EnumShape {
+                    guard let enumCase = self.getEnumCaseFromRawValue(enumShape: enumShape, value: .string(s)) else {
+                        preconditionFailure("Default enum value does not exist")
+                    }
+                    defaultValue = ".\(enumCase.toSwiftEnumCase())"
+                } else {
+                    defaultValue = "\"\(s)\""
+                }
+            case .none:
+                required = false
+                defaultValue = "nil"
             }
-            required = true
         } else if !required {
             defaultValue = "nil"
         } else {
             defaultValue = nil
         }
         let type = member.output(model)
+        let optional = (!required && !typeIsUnion) || member.hasTrait(type: ClientOptionalTrait.self)
         return MemberContext(
             variable: name.toSwiftVariableCase(),
             parameter: name.toSwiftLabelCase(),
             required: required,
             default: defaultValue,
-            propertyWrapper: self.generatePropertyWrapper(member, name: name, required: required),
-            type: type + ((required || typeIsEnum) ? "" : "?"),
+            propertyWrapper: self.generatePropertyWrapper(member, name: name, optional: optional),
+            type: type + (optional ? "?" : ""),
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
             duplicate: false // TODO: NEED to catch this
@@ -330,10 +372,10 @@ extension AwsService {
         }
     }
 
-    func generatePropertyWrapper(_ member: MemberShape, name: String, required: Bool) -> String? {
+    func generatePropertyWrapper(_ member: MemberShape, name: String, optional: Bool) -> String? {
         let memberShape = model.shape(for: member.target)
         let codingWrapper: String
-        if required {
+        if !optional {
             codingWrapper = "@CustomCoding"
         } else {
             codingWrapper = "@OptionalCustomCoding"
@@ -384,23 +426,25 @@ extension AwsService {
         guard !shape.hasTrait(type: EnumTrait.self) else { return nil }
 
         var requirements: [String: Any] = [:]
-        if let lengthTrait = shape.trait(type: LengthTrait.self) {
-            if let min = lengthTrait.min, min > 0 {
-                requirements["min"] = min
+        if !(shape is EnumShape) {
+            if let lengthTrait = shape.trait(type: LengthTrait.self) {
+                if let min = lengthTrait.min, min > 0 {
+                    requirements["min"] = min
+                }
+                requirements["max"] = lengthTrait.max
             }
-            requirements["max"] = lengthTrait.max
-        }
-        if let rangeTrait = shape.trait(type: RangeTrait.self) {
-            if shape is FloatShape || shape is DoubleShape || shape is BigDecimalShape {
-                requirements["min"] = rangeTrait.min
-                requirements["max"] = rangeTrait.max
-            } else {
-                requirements["min"] = rangeTrait.min.map { NSNumber(value: $0).int64Value }
-                requirements["max"] = rangeTrait.max.map { NSNumber(value: $0).int64Value }
+            if let rangeTrait = shape.trait(type: RangeTrait.self) {
+                if shape is FloatShape || shape is DoubleShape || shape is BigDecimalShape {
+                    requirements["min"] = rangeTrait.min
+                    requirements["max"] = rangeTrait.max
+                } else {
+                    requirements["min"] = rangeTrait.min.map { NSNumber(value: $0).int64Value }
+                    requirements["max"] = rangeTrait.max.map { NSNumber(value: $0).int64Value }
+                }
             }
-        }
-        if let patternTrait = shape.trait(type: PatternTrait.self) {
-            requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
+            if let patternTrait = shape.trait(type: PatternTrait.self) {
+                requirements["pattern"] = "\"\(patternTrait.value.addingBackslashEncoding())\""
+            }
         }
 
         var listMember: MemberShape?
@@ -460,7 +504,7 @@ extension AwsService {
 
         if let collection = shape as? CollectionShape, let members = collection.members {
             for member in members {
-                let memberRequired = member.value.hasTrait(type: RequiredTrait.self)
+                let memberRequired = member.value.hasTrait(type: RequiredTrait.self) && !member.value.hasTrait(type: ClientOptionalTrait.self)
                 var alreadyProcessed2 = alreadyProcessed
                 alreadyProcessed2.insert(shapeId)
                 if self.generateValidationContext(
@@ -481,7 +525,19 @@ extension AwsService {
     }
 
     func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
-        let required = member.hasTrait(type: RequiredTrait.self)
+        let required = member.hasTrait(type: RequiredTrait.self) && !member.hasTrait(type: ClientOptionalTrait.self)
         return self.generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
+    }
+
+    /// return Enum case string from enum value
+    func getEnumCaseFromRawValue(enumShape: EnumShape, value: EnumValueTrait.EnumValue) -> String? {
+        guard let members = enumShape.members else { return nil }
+        for e in members.enumerated() {
+            let enumValue = e.element.value.trait(type: EnumValueTrait.self)
+            if value == enumValue?.value {
+                return e.element.key
+            }
+        }
+        return nil
     }
 }
