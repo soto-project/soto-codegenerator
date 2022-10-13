@@ -60,7 +60,7 @@ public struct SotoCodeGen {
     public init(command: SotoCodeGenCommand) throws {
         self.command = command
         self.library = try Templates.createLibrary()
-        var logger = Logging.Logger(label: "")
+        var logger = Logging.Logger(label: "SotoCodeGenerator")
         logger.logLevel = self.command.logLevel.map { Logging.Logger.Level(rawValue: $0) ?? .info } ?? .info
         self.logger = logger
         Smithy.registerAWSTraits()

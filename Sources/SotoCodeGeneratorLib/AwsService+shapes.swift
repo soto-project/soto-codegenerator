@@ -255,7 +255,10 @@ extension AwsService {
         precondition((required && deprecated) == false, "Member cannot be required and deprecated")
 
         let defaultValue: String?
-        if idempotencyToken == true {
+        if member.hasTrait(type: ClientOptionalTrait.self) {
+            required = false
+            defaultValue = "nil"
+        } else if idempotencyToken == true {
             defaultValue = "\(shapeName.toSwiftClassCase()).idempotencyToken()"
         } else if let defaultTrait = member.trait(type: DefaultTrait.self), !isOutputShape {
             required = true
@@ -284,7 +287,7 @@ extension AwsService {
             defaultValue = nil
         }
         let type = member.output(model)
-        let optional = (!required && !typeIsUnion) || member.hasTrait(type: ClientOptionalTrait.self)
+        let optional = (!required && !typeIsUnion)
         return MemberContext(
             variable: name.toSwiftVariableCase(),
             parameter: name.toSwiftLabelCase(),
