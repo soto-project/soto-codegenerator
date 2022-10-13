@@ -79,7 +79,7 @@ struct AwsService {
     /// return service name used in endpoint. Uses filename of Smithy file
     static func getServiceEndpointPrefix(service: SotoSmithy.ServiceShape, id: ShapeId) throws -> String? {
         let awsService = try Self.getTrait(from: service, trait: AwsServiceTrait.self, id: id)
-        return awsService.endpointPrefix
+        return awsService.endpointPrefix ?? awsService.arnNamespace
     }
 
     /// Generate context for rendering service template
