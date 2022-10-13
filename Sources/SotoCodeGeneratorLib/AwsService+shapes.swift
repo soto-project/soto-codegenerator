@@ -177,8 +177,14 @@ extension AwsService {
         let initParameters = contexts.members.compactMap {
             !$0.deprecated ? InitParamContext(parameter: $0.parameter, type: $0.type, default: $0.default) : nil
         }
+        let object: String
+        if typeIsUnion {
+            object = recursive ? "indirect enum" : "enum"
+        } else {
+            object = recursive ? "final class" : "struct"
+        }
         return StructureContext(
-            object: recursive ? "final class" : "struct",
+            object: object,
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
             payload: payloadMember?.key.toSwiftLabelCase(),

@@ -382,18 +382,6 @@ struct AwsService {
             } else {
                 guard let shape = model.shape(for: member.target) else { return false }
                 switch shape {
-                case let list as ListShape:
-                    if list.member.target == shapeId {
-                        return true
-                    }
-                case let set as SetShape:
-                    if set.member.target == shapeId {
-                        return true
-                    }
-                case let map as MapShape:
-                    if map.value.target == shapeId {
-                        return true
-                    }
                 case let structure as StructureShape:
                     return structure.members?.first { $0.value.target == shapeId } != nil
                 default:
