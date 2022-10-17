@@ -32,6 +32,7 @@ enum Region: String, Decodable {
     case eucentral1 = "eu-central-1"
     case eunorth1 = "eu-north-1"
     case eusouth1 = "eu-south-1"
+    case eusouth2 = "eu-south-2"
     case saeast1 = "sa-east-1"
     case mecentral1 = "me-central-1"
     case mesouth1 = "me-south-1"
