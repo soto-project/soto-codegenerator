@@ -18,6 +18,7 @@ enum Region: String, Decodable {
     case uswest1 = "us-west-1"
     case uswest2 = "us-west-2"
     case apsouth1 = "ap-south-1"
+    case apsouth2 = "ap-south-2"
     case apsoutheast1 = "ap-southeast-1"
     case apnortheast2 = "ap-northeast-2"
     case apnortheast3 = "ap-northeast-3"
