@@ -274,6 +274,12 @@ extension AwsService {
                         preconditionFailure("Default enum value does not exist")
                     }
                     defaultValue = ".\(enumCase.toSwiftEnumCase())"
+                } else if shape is BlobShape {
+                    if shape?.hasTrait(type: HttpPayloadTrait.self) == true {
+                        defaultValue = ".string(\"\(s)\")"
+                    } else {
+                        defaultValue = ".data(\"\(s)\".utf8)"
+                    }
                 } else {
                     defaultValue = "\"\(s)\""
                 }
