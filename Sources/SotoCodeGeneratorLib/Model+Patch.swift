@@ -108,6 +108,9 @@ extension Model {
                 return MemberShape(target: "com.amazonaws.lambda#SotoCore.Region", traits: shape.traits)
             }
         ],
+        "MediaConvert": [
+            "com.amazonaws.mediaconvert#__stringPatternS3": EditTraitPatch { _ in PatternTrait(value: "^s3:\\/\\/") }
+        ],
         "Mq": [
             // service name change
             "com.amazonaws.mq#mq": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "MQ") },
