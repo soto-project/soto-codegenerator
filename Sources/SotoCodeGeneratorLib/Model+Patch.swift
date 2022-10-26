@@ -49,7 +49,11 @@ extension Model {
         ],
         "CognitoIdentityProvider": [
             // https://github.com/soto-project/soto/issues/478
-            "com.amazonaws.cognitoidentityprovider#UserStatusType": EditEnumTraitPatch(add: [.init(value: "EXTERNAL_PROVIDER")]),
+            "com.amazonaws.cognitoidentityprovider#UserStatusType": AddShapeMemberPatch<EnumShape>(
+                name: "EXTERNAL_PROVIDER",
+                shapeId: "smithy.api#Unit",
+                traits: [EnumValueTrait(value: .string("EXTERNAL_PROVIDER"))]
+            ),
         ],
         "DynamoDB": [
             // Make TransactWriteItem an enum with associated values
@@ -76,7 +80,7 @@ extension Model {
         ],
         "IAM": [
             // Missing Enum value
-            "com.amazonaws.iam#PolicySourceType": EditEnumTraitPatch(add: [.init(value: "IAM Policy")]),
+            "com.amazonaws.iam#PolicySourceType": AddShapeMemberPatch<EnumShape>(name: "IAM Policy"),
         ],
         "Identitystore": [
             // service name change
@@ -120,7 +124,10 @@ extension Model {
         ],
         "S3": [
             // https://github.com/soto-project/soto/issues/68
-            "com.amazonaws.s3#ReplicationStatus": EditEnumTraitPatch(add: [.init(value: "COMPLETED")], remove: ["COMPLETE"]),
+            "com.amazonaws.s3#ReplicationStatus": MultiplePatch(
+                AddShapeMemberPatch<EnumShape>(name: "COMPLETED"),
+                RemoveShapeMemberPatch<EnumShape>(name: "COMPLETE")
+            ),
             // should be 64 bit number
             "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
             // https://github.com/soto-project/soto/issues/311
@@ -128,18 +135,18 @@ extension Model {
             "com.amazonaws.s3#LifecycleRule$Filter": AddTraitPatch(trait: RequiredTrait()),
             // https://github.com/soto-project/soto/issues/502
             "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch(
-                EditEnumTraitPatch(add: [.init(value: "us-east-1")]),
+                AddShapeMemberPatch<EnumShape>(name: "us-east-1"),
                 AddTraitPatch(trait: SotoExtensibleEnumTrait())
             ),
             // ListParts uses the IsTruncated flags to indicate when to finish pagination
             "com.amazonaws.s3#ListParts": AddTraitPatch(trait: SotoPaginationTruncatedTrait(isTruncated: "IsTruncated")),
             //
-            "com.amazonaws.s3#StorageClass": EditEnumTraitPatch(add: [.init(value: "NONE")]),
+            "com.amazonaws.s3#StorageClass": AddShapeMemberPatch<EnumShape>(name: "NONE"),
         ],
         "S3Control": [
             // Similar to the same issue in S3
             "com.amazonaws.s3control#BucketLocationConstraint": MultiplePatch([
-                AddShapeMemberPatch<EnumShape>(name: "us_east_1", shapeId: "smithy.api#Unit", traits: [EnumValueTrait(value: .string("us-east-1"))]),
+                AddShapeMemberPatch<EnumShape>(name: "us_east_1"),
                 AddTraitPatch(trait: SotoExtensibleEnumTrait()),
             ]),
         ],

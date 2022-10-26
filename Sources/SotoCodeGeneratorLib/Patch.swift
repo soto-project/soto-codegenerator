@@ -14,7 +14,11 @@
 
 import SotoSmithy
 
+/// Protocol for patching a Smithy shape.
 protocol ShapePatch {
+    /// Patch Smithy Shape.
+    /// - Parameter shape: Original Shape
+    /// - Returns: Patched shape, nil means don't patch the shape
     func patch(shape: Shape) throws -> Shape?
 }
 
@@ -25,6 +29,7 @@ struct ShapeTypePatch: ShapePatch {
     }
 }
 
+/// Patch using a closure to provide a new shape
 struct EditShapePatch<S: Shape>: ShapePatch {
     let edit: (S) -> (Shape)
 
@@ -34,13 +39,17 @@ struct EditShapePatch<S: Shape>: ShapePatch {
     }
 }
 
+/// Add member to collection shape patch
 struct AddShapeMemberPatch<S: CollectionShape>: ShapePatch {
     let name: String
     let shapeId: ShapeId
     let traits: TraitList?
 
-    func patch(shape: Shape) -> Shape? {
+    func patch(shape: Shape) throws -> Shape? {
         guard let shape = shape as? S else { return nil }
+        guard shape.members?[self.name] == nil else {
+            throw PatchError(message: "Shape already has member named \(self.name)")
+        }
         let memberShape = MemberShape(target: self.shapeId, traits: self.traits)
         if var members = shape.members {
             members[self.name] = memberShape
@@ -52,6 +61,28 @@ struct AddShapeMemberPatch<S: CollectionShape>: ShapePatch {
     }
 }
 
+extension AddShapeMemberPatch where S == EnumShape {
+    /// Specialization of init for EnumShapes which just requires the new enum value
+    init(name: String) {
+        self.init(name: name, shapeId: "smithy.api#Unit", traits: [EnumValueTrait(value: .string(name))])
+    }
+}
+
+/// Remove member from shape patch
+struct RemoveShapeMemberPatch<S: CollectionShape>: ShapePatch {
+    let name: String
+
+    func patch(shape: Shape) throws -> Shape? {
+        guard let shape = shape as? S else { return nil }
+        guard shape.members?[self.name] != nil else {
+            throw PatchError(message: "Shape does not have member named \(self.name)")
+        }
+        shape.members?.removeValue(forKey: self.name)
+        return shape
+    }
+}
+
+/// Create new shape
 struct CreateShapePatch: ShapePatch {
     let shape: Shape
     let patch: ShapePatch?
@@ -70,6 +101,7 @@ struct CreateShapePatch: ShapePatch {
     }
 }
 
+/// Add a trait to a shape
 struct AddTraitPatch: ShapePatch {
     let trait: Trait
     func patch(shape: Shape) -> Shape? {
@@ -78,6 +110,7 @@ struct AddTraitPatch: ShapePatch {
     }
 }
 
+/// Remove a trait from a shape
 struct RemoveTraitPatch: ShapePatch {
     let trait: StaticTrait.Type
     func patch(shape: Shape) throws -> Shape? {
@@ -89,6 +122,7 @@ struct RemoveTraitPatch: ShapePatch {
     }
 }
 
+/// Edit trait attached to shape
 struct EditTraitPatch<T: StaticTrait>: ShapePatch {
     let edit: (T) -> (T)
     func patch(shape: Shape) throws -> Shape? {
@@ -102,6 +136,7 @@ struct EditTraitPatch<T: StaticTrait>: ShapePatch {
     }
 }
 
+/// Edit EnumTrait attached to a shape
 struct EditEnumTraitPatch: ShapePatch {
     let add: [EnumTrait.EnumDefinition]
     let remove: [String]
@@ -137,6 +172,7 @@ struct EditEnumTraitPatch: ShapePatch {
     }
 }
 
+/// Apply multiple shape patches to a shape
 struct MultiplePatch: ShapePatch {
     let patches: [ShapePatch]
 
