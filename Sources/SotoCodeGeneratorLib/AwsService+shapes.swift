@@ -260,47 +260,46 @@ extension AwsService {
             defaultValue = "nil"
         } else if idempotencyToken == true {
             defaultValue = "\(shapeName.toSwiftClassCase()).idempotencyToken()"
-        } else if let defaultTrait = member.trait(type: DefaultTrait.self), !isOutputShape {
-            required = true
-            switch defaultTrait.value {
-            case .boolean(let b):
-                defaultValue = b.description
-            case .number(let d):
-                defaultValue = String(format: "%g", d)
-            case .string(let s):
-                let shape = self.model.shape(for: member.target)
-                if let enumShape = shape as? EnumShape {
-                    guard let enumCase = self.getEnumCaseFromRawValue(enumShape: enumShape, value: .string(s)) else {
-                        preconditionFailure("Default enum value does not exist")
-                    }
-                    defaultValue = ".\(enumCase.toSwiftEnumCase())"
-                } else if shape is BlobShape {
-                    if shape?.hasTrait(type: HttpPayloadTrait.self) == true {
-                        defaultValue = ".string(\"\(s)\")"
+        } else if required {
+            if let defaultTrait = member.trait(type: DefaultTrait.self), !isOutputShape {
+                switch defaultTrait.value {
+                case .boolean(let b):
+                    defaultValue = b.description
+                case .number(let d):
+                    defaultValue = String(format: "%g", d)
+                case .string(let s):
+                    let shape = self.model.shape(for: member.target)
+                    if let enumShape = shape as? EnumShape {
+                        guard let enumCase = self.getEnumCaseFromRawValue(enumShape: enumShape, value: .string(s)) else {
+                            preconditionFailure("Default enum value does not exist")
+                        }
+                        defaultValue = ".\(enumCase.toSwiftEnumCase())"
+                    } else if shape is BlobShape {
+                        if shape?.hasTrait(type: HttpPayloadTrait.self) == true {
+                            defaultValue = ".string(\"\(s)\")"
+                        } else {
+                            defaultValue = ".data(\"\(s)\".utf8)"
+                        }
                     } else {
-                        defaultValue = ".data(\"\(s)\".utf8)"
+                        defaultValue = "\"\(s)\""
                     }
-                } else {
-                    defaultValue = "\"\(s)\""
+                case .empty:
+                    let shape = self.model.shape(for: member.target)
+                    if shape is ListShape {
+                        defaultValue = "[]"
+                    } else if shape is MapShape {
+                        defaultValue = "[:]"
+                    } else {
+                        defaultValue = nil
+                    }
+                case .none:
+                    defaultValue = nil
                 }
-            case .empty:
-                let shape = self.model.shape(for: member.target)
-                if shape is ListShape {
-                    defaultValue = "[]"
-                } else if shape is MapShape {
-                    defaultValue = "[:]"
-                } else {
-                    required = false
-                    defaultValue = "nil"
-                }
-            case .none:
-                required = false
-                defaultValue = "nil"
+            } else {
+                defaultValue = nil
             }
-        } else if !required {
-            defaultValue = "nil"
         } else {
-            defaultValue = nil
+            defaultValue = "nil"
         }
         let type = member.output(model)
         let optional = (!required && !typeIsUnion)
