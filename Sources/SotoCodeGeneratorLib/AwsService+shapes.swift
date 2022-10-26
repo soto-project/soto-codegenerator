@@ -277,6 +277,16 @@ extension AwsService {
                 } else {
                     defaultValue = "\"\(s)\""
                 }
+            case .empty:
+                let shape = self.model.shape(for: member.target)
+                if shape is ListShape {
+                    defaultValue = "[]"
+                } else if shape is MapShape {
+                    defaultValue = "[:]"
+                } else {
+                    required = false
+                    defaultValue = "nil"
+                }
             case .none:
                 required = false
                 defaultValue = "nil"
