@@ -86,10 +86,18 @@ extension Templates {
                     apiVersion: "{{apiVersion}}",
                     endpoint: endpoint,
         {{#first(serviceEndpoints)}}
-                    serviceEndpoints: [{{#serviceEndpoints}}{{.}}{{^last()}}, {{/last()}}{{/serviceEndpoints}}],
+                    serviceEndpoints: [
+        {{#serviceEndpoints}}
+                        {{.}}{{^last()}}, {{/last()}}
+        {{/serviceEndpoints}}
+                    ],
         {{/first(serviceEndpoints)}}
         {{#first(partitionEndpoints)}}
-                    partitionEndpoints: [{{#partitionEndpoints}}{{.}}{{^last()}}, {{/last()}}{{/partitionEndpoints}}],
+                    partitionEndpoints: [
+        {{#partitionEndpoints}}
+                        {{.}}{{^last()}}, {{/last()}}
+        {{/partitionEndpoints}}
+                    ],
         {{/first(partitionEndpoints)}}
         {{#errorTypes}}
                     errorType: {{.}}.self,
