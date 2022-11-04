@@ -20,8 +20,10 @@ import SotoSmithyAWS
 import SwiftFormat
 
 public protocol SotoCodeGenCommand {
+    var inputFile: String? { get }
+    var prefix: String? { get }
     var outputFolder: String { get }
-    var inputFolder: String { get }
+    var inputFolder: String? { get }
     var endpoints: String { get }
     var module: String? { get }
     var output: Bool { get }
@@ -112,17 +114,29 @@ public struct SotoCodeGen {
     }
 
     func getModelFiles() -> [String] {
-        if let module = command.module {
-            return Glob.entries(pattern: "\(self.command.inputFolder)/\(module)*.json")
+        if let input = self.command.inputFile {
+            return [input]
+        } else if let inputFolder = self.command.inputFolder {
+            if let module = command.module {
+                return Glob.entries(pattern: "\(inputFolder)/\(module)*.json")
+            }
+            return Glob.entries(pattern: "\(inputFolder)/*.json")
+        } else {
+            return []
         }
-        return Glob.entries(pattern: "\(self.command.inputFolder)/*.json")
     }
 
     func getSmithyFiles() -> [String] {
-        if let module = command.module {
-            return Glob.entries(pattern: "\(self.command.inputFolder)/\(module)*.smithy")
+        if let input = self.command.inputFile {
+            return [input]
+        } else if let inputFolder = self.command.inputFolder {
+            if let module = command.module {
+                return Glob.entries(pattern: "\(inputFolder)/\(module)*.smithy")
+            }
+            return Glob.entries(pattern: "\(inputFolder)/*.smithy")
+        } else {
+            return []
         }
-        return Glob.entries(pattern: "\(self.command.inputFolder)/*.smithy")
     }
 
     func loadEndpointJSON() throws -> Endpoints {
@@ -173,38 +187,46 @@ public struct SotoCodeGen {
     /// Generate service files from AWSService
     /// - Parameter codeGenerator: service generated from JSON
     func generateFiles(with service: AwsService) throws {
-        let basePath = "\(command.outputFolder)/\(service.serviceName)/"
-        try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
+        let basePath: String
+        let prefix: String
+        if self.command.inputFile == nil {
+            basePath = "\(self.command.outputFolder)/\(service.serviceName)"
+            prefix = service.serviceName
+            try FileManager.default.createDirectory(atPath: basePath, withIntermediateDirectories: true)
+        } else {
+            basePath = "\(self.command.outputFolder)"
+            prefix = self.command.prefix.map { $0.replacingOccurrences(of: "-", with: "_") } ?? service.serviceName
+        }
 
         let apiContext = try service.generateServiceContext()
         let api = self.library.render(apiContext, withTemplate: "api")!
         if try self.format(api)
-            .writeIfChanged(toFile: "\(basePath)\(service.serviceName)_API.swift")
+            .writeIfChanged(toFile: "\(basePath)/\(prefix)_API.swift")
         {
-            self.logger.info("Wrote \(service.serviceName)_API.swift")
+            self.logger.info("Wrote \(prefix)_API.swift")
         }
         let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
         if self.command.output, try self.format(apiAsync).writeIfChanged(
-            toFile: "\(basePath)/\(service.serviceName)_API+async.swift"
+            toFile: "\(basePath)/\(prefix)_API+async.swift"
         ) {
-            self.logger.info("Wrote \(service.serviceName)_API+async.swift")
+            self.logger.info("Wrote \(prefix)_API+async.swift")
         }
 
         let shapesContext = try service.generateShapesContext()
         let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
         if self.command.output, try self.format(shapes).writeIfChanged(
-            toFile: "\(basePath)/\(service.serviceName)_Shapes.swift"
+            toFile: "\(basePath)/\(prefix)_Shapes.swift"
         ) {
-            self.logger.info("Wrote \(service.serviceName)_Shapes.swift")
+            self.logger.info("Wrote \(prefix)_Shapes.swift")
         }
 
         let errorContext = try service.generateErrorContext()
         if errorContext["errors"] != nil {
             let errors = self.library.render(errorContext, withTemplate: "error")!
             if self.command.output, try self.format(errors).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_Error.swift"
+                toFile: "\(basePath)/\(prefix)_Error.swift"
             ) {
-                self.logger.info("Wrote \(service.serviceName)_Error.swift")
+                self.logger.info("Wrote \(prefix)_Error.swift")
             }
         }
 
@@ -212,15 +234,15 @@ public struct SotoCodeGen {
         if paginatorContext["paginators"] != nil {
             let paginators = self.library.render(paginatorContext, withTemplate: "paginator")!
             if self.command.output, try self.format(paginators).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_Paginator.swift"
+                toFile: "\(basePath)/\(prefix)_Paginator.swift"
             ) {
-                self.logger.info("Wrote \(service.serviceName)_Paginator.swift")
+                self.logger.info("Wrote \(prefix)_Paginator.swift")
             }
             let paginatorsAsync = self.library.render(paginatorContext, withTemplate: "paginator+async")!
             if self.command.output, try self.format(paginatorsAsync).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_Paginator+async.swift"
+                toFile: "\(basePath)/\(prefix)_Paginator+async.swift"
             ) {
-                self.logger.info("Wrote \(service.serviceName)_Paginator+async.swift")
+                self.logger.info("Wrote \(prefix)_Paginator+async.swift")
             }
         }
 
@@ -228,15 +250,15 @@ public struct SotoCodeGen {
         if waiterContexts["waiters"] != nil {
             let waiters = self.library.render(waiterContexts, withTemplate: "waiter")!
             if self.command.output, try self.format(waiters).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_Waiter.swift"
+                toFile: "\(basePath)/\(prefix)_Waiter.swift"
             ) {
-                self.logger.info("Wrote \(service.serviceName)_Waiter.swift")
+                self.logger.info("Wrote \(prefix)_Waiter.swift")
             }
             let waitersAsync = self.library.render(waiterContexts, withTemplate: "waiter+async")!
             if self.command.output, try self.format(waitersAsync).writeIfChanged(
-                toFile: "\(basePath)/\(service.serviceName)_Waiter+async.swift"
+                toFile: "\(basePath)/\(prefix)_Waiter+async.swift"
             ) {
-                self.logger.info("Wrote \(service.serviceName)_Waiter+async.swift")
+                self.logger.info("Wrote \(prefix)_Waiter+async.swift")
             }
         }
         self.logger.debug("Succesfully Generated \(service.serviceName)")
