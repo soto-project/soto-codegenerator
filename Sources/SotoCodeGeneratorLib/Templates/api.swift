@@ -175,5 +175,13 @@ extension Templates {
             {{/endpointDiscovery}}
             }
         }
+
+        {{#paginators}}
+        {{>paginators}}
+        {{/paginators}}
+
+        {{#waiters}}
+        {{>waiters}}
+        {{/waiters}}
         """#
 }

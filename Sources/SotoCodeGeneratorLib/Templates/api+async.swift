@@ -61,6 +61,14 @@ extension Templates {
     {{/first(streamingOperations)}}
     }
 
+    {{#paginators}}
+    {{>paginators_async}}
+    {{/paginators}}
+
+    {{#waiters}}
+    {{>waiters_async}}
+    {{/waiters}}
+
     #endif // compiler(>=5.5.2) && canImport(_Concurrency)
     """
 }

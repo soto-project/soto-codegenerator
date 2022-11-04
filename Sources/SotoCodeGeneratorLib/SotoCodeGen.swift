@@ -198,68 +198,40 @@ public struct SotoCodeGen {
             prefix = self.command.prefix.map { $0.replacingOccurrences(of: "-", with: "_") } ?? service.serviceName
         }
 
-        let apiContext = try service.generateServiceContext()
+        var apiContext = try service.generateServiceContext()
+        let paginators = try service.generatePaginatorContext()
+        let waiters = try service.generateWaiterContexts()
+        if paginators["paginators"] != nil {
+            apiContext["paginators"] = paginators
+        }
+        if waiters["waiters"] != nil {
+            apiContext["waiters"] = waiters
+        }
+
         let api = self.library.render(apiContext, withTemplate: "api")!
         if try self.format(api)
-            .writeIfChanged(toFile: "\(basePath)/\(prefix)_API.swift")
+            .writeIfChanged(toFile: "\(basePath)/\(prefix)_api.swift")
         {
-            self.logger.info("Wrote \(prefix)_API.swift")
+            self.logger.info("Wrote \(prefix)_api.swift")
         }
-        let apiAsync = self.library.render(apiContext, withTemplate: "api+async")!
+        let apiAsync = self.library.render(apiContext, withTemplate: "api_async")!
         if self.command.output, try self.format(apiAsync).writeIfChanged(
-            toFile: "\(basePath)/\(prefix)_API+async.swift"
+            toFile: "\(basePath)/\(prefix)_api+async.swift"
         ) {
-            self.logger.info("Wrote \(prefix)_API+async.swift")
+            self.logger.info("Wrote \(prefix)_api+async.swift")
         }
 
-        let shapesContext = try service.generateShapesContext()
-        let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
-        if self.command.output, try self.format(shapes).writeIfChanged(
-            toFile: "\(basePath)/\(prefix)_Shapes.swift"
-        ) {
-            self.logger.info("Wrote \(prefix)_Shapes.swift")
-        }
-
+        var shapesContext = try service.generateShapesContext()
         let errorContext = try service.generateErrorContext()
         if errorContext["errors"] != nil {
-            let errors = self.library.render(errorContext, withTemplate: "error")!
-            if self.command.output, try self.format(errors).writeIfChanged(
-                toFile: "\(basePath)/\(prefix)_Error.swift"
-            ) {
-                self.logger.info("Wrote \(prefix)_Error.swift")
-            }
+            shapesContext["errors"] = errorContext
         }
 
-        let paginatorContext = try service.generatePaginatorContext()
-        if paginatorContext["paginators"] != nil {
-            let paginators = self.library.render(paginatorContext, withTemplate: "paginator")!
-            if self.command.output, try self.format(paginators).writeIfChanged(
-                toFile: "\(basePath)/\(prefix)_Paginator.swift"
-            ) {
-                self.logger.info("Wrote \(prefix)_Paginator.swift")
-            }
-            let paginatorsAsync = self.library.render(paginatorContext, withTemplate: "paginator+async")!
-            if self.command.output, try self.format(paginatorsAsync).writeIfChanged(
-                toFile: "\(basePath)/\(prefix)_Paginator+async.swift"
-            ) {
-                self.logger.info("Wrote \(prefix)_Paginator+async.swift")
-            }
-        }
-
-        let waiterContexts = try service.generateWaiterContexts()
-        if waiterContexts["waiters"] != nil {
-            let waiters = self.library.render(waiterContexts, withTemplate: "waiter")!
-            if self.command.output, try self.format(waiters).writeIfChanged(
-                toFile: "\(basePath)/\(prefix)_Waiter.swift"
-            ) {
-                self.logger.info("Wrote \(prefix)_Waiter.swift")
-            }
-            let waitersAsync = self.library.render(waiterContexts, withTemplate: "waiter+async")!
-            if self.command.output, try self.format(waitersAsync).writeIfChanged(
-                toFile: "\(basePath)/\(prefix)_Waiter+async.swift"
-            ) {
-                self.logger.info("Wrote \(prefix)_Waiter+async.swift")
-            }
+        let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
+        if self.command.output, try self.format(shapes).writeIfChanged(
+            toFile: "\(basePath)/\(prefix)_shapes.swift"
+        ) {
+            self.logger.info("Wrote \(prefix)_shapes.swift")
         }
         self.logger.debug("Succesfully Generated \(service.serviceName)")
     }

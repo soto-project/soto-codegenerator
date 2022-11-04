@@ -14,13 +14,6 @@
 
 extension Templates {
     static let paginatorAsyncTemplate = #"""
-    {{%CONTENT_TYPE:TEXT}}
-    {{>header}}
-
-    #if compiler(>=5.5.2) && canImport(_Concurrency)
-
-    import SotoCore
-
     // MARK: Paginators
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
@@ -62,7 +55,6 @@ extension Templates {
     {{/last()}}
     {{/paginators}}
     }
-
-    #endif // compiler(>=5.5.2) && canImport(_Concurrency)
+    
     """#
 }

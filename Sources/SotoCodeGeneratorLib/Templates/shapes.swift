@@ -43,5 +43,10 @@ extension Templates {
     {{/struct}}
     {{/shapes}}
     }
+
+    {{#errors}}
+    {{>errors}}
+    {{/errors}}
+
     """
 }
