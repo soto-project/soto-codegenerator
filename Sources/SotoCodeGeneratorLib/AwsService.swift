@@ -125,7 +125,7 @@ struct AwsService {
             context["partitionEndpoints"] = self.getPartitionEndpoints()
                 .map { (partition: $0.key, endpoint: $0.value.endpoint, region: $0.value.region) }
                 .sorted { $0.partition < $1.partition }
-                .map { ".\($0.partition.toSwiftRegionEnumCase()): (endpoint: \"\($0.endpoint)\", region: .\($0.region.rawValue.toSwiftRegionEnumCase()))" }
+                .map { ".\($0.partition.toSwiftRegionEnumCase()): (endpoint: \"\($0.endpoint)\", region: .\($0.region.toSwiftRegionEnumCase()))" }
         }
 
         context["operations"] = operations.operations
@@ -475,12 +475,7 @@ struct AwsService {
             return value + (endpoints?.map { (key: $0.key, value: EndpointInfo(endpoint: $0.value, partition: partition.partition)) } ?? [])
         }
         let partitionEndpoints = self.getPartitionEndpoints()
-        let partitionEndpointSet = Set<String>(partitionEndpoints.map(\.value.endpoint))
         return serviceEndpoints.compactMap {
-            // if service endpoint isn't in the set of partition endpoints or a region name return nil
-            if partitionEndpointSet.contains($0.key) == false, Region(rawValue: $0.key) == nil {
-                return nil
-            }
             // if endpoint has a hostname return that
             if let hostname = $0.value.endpoint.hostname {
                 return (key: $0.key, value: hostname)
@@ -494,8 +489,8 @@ struct AwsService {
     }
 
     // return dictionary of partition endpoints keyed by endpoint name
-    func getPartitionEndpoints() -> [String: (endpoint: String, region: Region)] {
-        var partitionEndpoints: [String: (endpoint: String, region: Region)] = [:]
+    func getPartitionEndpoints() -> [String: (endpoint: String, region: String)] {
+        var partitionEndpoints: [String: (endpoint: String, region: String)] = [:]
         self.endpoints.partitions.forEach {
             guard let service = $0.services[self.serviceEndpointPrefix] else { return }
             guard let partitionEndpoint = service.partitionEndpoint else { return }
