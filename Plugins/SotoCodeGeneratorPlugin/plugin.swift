@@ -18,9 +18,10 @@ import PackagePlugin
 
         let path: Path = target.directory
         let baseDirectory = path.removingLastComponent().removingLastComponent()
-        let endpoints = baseDirectory.appending("Models", "endpoints.json")
+        let endpointInTarget = target.sourceFiles.first { $0.path.lastComponent == "endpoints.json" }?.path
+        let endpoints = endpointInTarget ?? baseDirectory.appending("endpoints.json")
 
-        let inputFiles: [FileList.Element] = target.sourceFiles.filter { $0.path.extension == "json" }
+        let inputFiles: [FileList.Element] = target.sourceFiles.filter { $0.path.extension == "json" && $0.path.stem != "endpoints" }
 
         let commands: [Command] = inputFiles.map { file in
             let prefix = file.path.stem.replacingOccurrences(of: "-", with: "_")
