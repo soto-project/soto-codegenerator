@@ -55,6 +55,6 @@ extension Templates {
     {{/last()}}
     {{/paginators}}
     }
-    
+
     """#
 }
