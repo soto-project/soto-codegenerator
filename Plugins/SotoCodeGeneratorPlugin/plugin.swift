@@ -1,13 +1,13 @@
 import Foundation
 import PackagePlugin
 
+/// Generate Swift Service files from AWS Smithy models
 @main struct SwiftCodeGeneratorPlugin: BuildToolPlugin {
     func createBuildCommands(
         context: PluginContext,
         target: Target
     ) throws -> [Command] {
-        // This example configures the commands to write to a "GeneratedSources"
-        // directory.
+        // Configure the commands to write to a "GeneratedSources" directory.
         let genSourcesDir = context.pluginWorkDirectory.appending("GeneratedSources")
 
         // We only generate commands for source targets.
@@ -16,14 +16,15 @@ import PackagePlugin
         // SotoCodeGenerator executable path
         let sotoCodeGenerator = try context.tool(named: "SotoCodeGenerator").path
 
-        let path: Path = target.directory
-        let baseDirectory = path.removingLastComponent().removingLastComponent()
+        // get endpoint file
         let endpointInTarget = target.sourceFiles.first { $0.path.lastComponent == "endpoints.json" }?.path
-        let endpoints = endpointInTarget ?? baseDirectory.appending("endpoints.json")
+        let endpoints = endpointInTarget ?? context.package.directory.appending("endpoints.json")
 
+        // get list of AWS Smithy model files
         let inputFiles: [FileList.Element] = target.sourceFiles.filter { $0.path.extension == "json" && $0.path.stem != "endpoints" }
 
-        let commands: [Command] = inputFiles.map { file in
+        // return build command for each model file
+        return inputFiles.map { file in
             let prefix = file.path.stem.replacingOccurrences(of: "-", with: "_")
             let outputFiles: [Path] = [
                 genSourcesDir.appending("\(prefix)_api.swift"),
@@ -31,7 +32,7 @@ import PackagePlugin
                 genSourcesDir.appending("\(prefix)_shapes.swift"),
             ]
             return .buildCommand(
-                displayName: "Running SotoCodeGenerator",
+                displayName: "Generating code for \(file.path.lastComponent)",
                 executable: sotoCodeGenerator,
                 arguments: [
                     "--input-file",
@@ -47,6 +48,5 @@ import PackagePlugin
                 outputFiles: outputFiles
             )
         }
-        return commands
     }
 }
