@@ -339,7 +339,7 @@ struct AwsService {
     func getMiddleware(for service: ServiceShape) -> String? {
         switch self.serviceName {
         case "APIGateway":
-            return "APIGatewayMiddleware()"
+            return "AWSEditHeadersMiddleware(.add(name: \"accept\", value: \"application/json\"))"
         case "Glacier":
             return "GlacierRequestMiddleware(apiVersion: \"\(service.version)\")"
         case "S3":
