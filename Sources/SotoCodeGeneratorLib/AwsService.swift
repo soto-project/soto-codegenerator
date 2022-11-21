@@ -106,7 +106,7 @@ struct AwsService {
             context["errorTypes"] = self.serviceName + "ErrorType"
         }
         context["xmlNamespace"] = service.trait(type: XmlNamespaceTrait.self)?.uri
-        context["middlewareClass"] = self.getMiddleware(for: service)
+        context["middlewareClass"] = self.getMiddleware(for: service).map { "[\($0.joined(separator: ", "))]" }
         context["endpointDiscovery"] = service.trait(type: AwsClientEndpointDiscoveryTrait.self)?.operation.shapeName.toSwiftVariableCase()
 
         let endpoints = self.getServiceEndpoints()
@@ -336,14 +336,17 @@ struct AwsService {
     }
 
     /// return middleware name given a service name
-    func getMiddleware(for service: ServiceShape) -> String? {
+    func getMiddleware(for service: ServiceShape) -> [String]? {
         switch self.serviceName {
         case "APIGateway":
-            return "AWSEditHeadersMiddleware(.add(name: \"accept\", value: \"application/json\"))"
+            return ["AWSEditHeadersMiddleware(.add(name: \"accept\", value: \"application/json\"))"]
         case "Glacier":
-            return "GlacierRequestMiddleware(apiVersion: \"\(service.version)\")"
+            return [
+                "AWSEditHeadersMiddleware(.add(name: \"x-amz-glacier-version\", value: \"\(service.version)\"))",
+                "TreeHashMiddleware(header: \"x-amz-sha256-tree-hash\")"
+            ]
         case "S3":
-            return "S3RequestMiddleware()"
+            return ["S3Middleware()"]
         default:
             return nil
         }

@@ -106,7 +106,7 @@ extension Templates {
                     xmlNamespace: "{{.}}",
         {{/xmlNamespace}}
         {{#middlewareClass}}
-                    middlewares: [{{.}}],
+                    middlewares: {{.}},
         {{/middlewareClass}}
                     timeout: timeout,
                     byteBufferAllocator: byteBufferAllocator,
