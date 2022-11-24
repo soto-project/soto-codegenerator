@@ -14,6 +14,7 @@
 
 extension Templates {
     static let paginatorTemplate = #"""
+    {{%CONTENT_TYPE:TEXT}}
     // MARK: Paginators
 
     extension {{name}} {

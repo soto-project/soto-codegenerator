@@ -14,6 +14,7 @@
 
 extension Templates {
     static let waiterTemplate = """
+    {{%CONTENT_TYPE:TEXT}}
     // MARK: Waiters
 
     extension {{name}} {

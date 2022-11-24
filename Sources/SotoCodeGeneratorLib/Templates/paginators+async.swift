@@ -14,6 +14,7 @@
 
 extension Templates {
     static let paginatorAsyncTemplate = #"""
+    {{%CONTENT_TYPE:TEXT}}
     // MARK: Paginators
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
