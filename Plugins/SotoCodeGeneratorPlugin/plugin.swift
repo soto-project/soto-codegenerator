@@ -26,6 +26,10 @@ import PackagePlugin
         // return build command for each model file
         return inputFiles.map { file in
             let prefix = file.path.stem.replacingOccurrences(of: "-", with: "_")
+            var inputFiles = [file.path]
+            if let endpointInTarget = endpointInTarget {
+                inputFiles.append(endpointInTarget)
+            }
             let outputFiles: [Path] = [
                 genSourcesDir.appending("\(prefix)_api.swift"),
                 genSourcesDir.appending("\(prefix)_api+async.swift"),
@@ -44,7 +48,7 @@ import PackagePlugin
                     "--endpoints",
                     "\(endpoints)"
                 ],
-                inputFiles: [file.path],
+                inputFiles: inputFiles,
                 outputFiles: outputFiles
             )
         }
