@@ -88,13 +88,13 @@ struct AwsService {
         guard let serviceEntry = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object") }
         let serviceId = serviceEntry.key
         let service = serviceEntry.value
-        let authSigV4 = try Self.getTrait(from: service, trait: AwsAuthSigV4Trait.self, id: serviceId)
+        let authSigV4 = service.trait(type: AwsAuthSigV4Trait.self)
         let operations = try generateOperationContexts()
 
         context["name"] = self.serviceName
         context["description"] = self.processDocs(from: service)
         context["endpointPrefix"] = self.serviceEndpointPrefix
-        if authSigV4.name != self.serviceEndpointPrefix {
+        if let authSigV4 = authSigV4, authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
         }
         context["protocol"] = self.serviceProtocolTrait.output
