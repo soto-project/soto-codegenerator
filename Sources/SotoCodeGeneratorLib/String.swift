@@ -235,6 +235,7 @@ private let swiftReservedWords: Set<String> = [
     "in",
     "internal",
     "is",
+    "let",
     "nil",
     "operator",
     "private",
@@ -251,6 +252,7 @@ private let swiftReservedWords: Set<String> = [
     "true",
     "try",
     "Type",
+    "var",
     "where",
     "while",
 ]
