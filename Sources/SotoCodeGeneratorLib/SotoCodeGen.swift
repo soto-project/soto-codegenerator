@@ -109,8 +109,9 @@ public struct SotoCodeGen {
 
         group.wait()
 
-        self.logger.info("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
-        self.logger.info("Done.")
+        if models.count > 1 {
+            self.logger.info("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
+        }
     }
 
     func getModelFiles() -> [String] {
