@@ -26,7 +26,7 @@ struct AwsService {
     let service: ServiceShape
     let serviceProtocolTrait: AwsServiceProtocol
     let endpoints: Endpoints
-    let operations: [ShapeId: OperationShape]
+    var operations: [ShapeId: OperationShape]
     let outputHTMLComments: Bool
     let logger: Logger
 
@@ -132,6 +132,13 @@ struct AwsService {
         context["streamingOperations"] = operations.streamingOperations
         context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
         return context
+    }
+
+    /// filter operations list
+    mutating func filterOperations(_ filter: [String]) {
+        self.operations = self.operations.filter { key, _ in
+            return filter.contains(key.shapeName.toSwiftVariableCase())
+        }
     }
 
     /// Generate the context information for outputting the error enums
