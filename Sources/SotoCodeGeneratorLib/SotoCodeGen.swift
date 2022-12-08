@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2022 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -21,6 +21,7 @@ import SwiftFormat
 
 public protocol SotoCodeGenCommand {
     var inputFile: String? { get }
+    var configFile: String? { get }
     var prefix: String? { get }
     var outputFolder: String { get }
     var inputFolder: String? { get }
@@ -76,6 +77,7 @@ public struct SotoCodeGen {
         let startTime = Date()
 
         // load JSON
+        let config = try loadConfigFile()
         let endpoints = try loadEndpointJSON()
         let models: [String: SotoSmithy.Model]
         if self.command.smithy {
@@ -91,12 +93,20 @@ public struct SotoCodeGen {
             DispatchQueue.global().async {
                 defer { group.leave() }
                 do {
-                    let service = try AwsService(
+                    var service = try AwsService(
                         model.value,
                         endpoints: endpoints,
                         outputHTMLComments: command.htmlComments,
                         logger: self.logger
                     )
+                    // get service filename without path and extension
+                    let filename = model.key
+                        .split(separator: "/", omittingEmptySubsequences: true).last!
+                    let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
+
+                    if let serviceConfig = config.services[filenameWithoutExtension], let filter = serviceConfig.operations {
+                        service.filterOperations(filter)
+                    }
                     if self.command.output {
                         try self.generateFiles(with: service)
                     }
@@ -137,6 +147,16 @@ public struct SotoCodeGen {
             return Glob.entries(pattern: "\(inputFolder)/*.smithy")
         } else {
             return []
+        }
+    }
+
+    func loadConfigFile() throws -> ConfigFile {
+        if let configFile = self.command.configFile {
+            let configData = try Data(contentsOf: URL(fileURLWithPath: configFile))
+            let config = try JSONDecoder().decode(ConfigFile.self, from: configData)
+            return config
+        } else {
+            return .init(services: [:], internal: false)
         }
     }
 

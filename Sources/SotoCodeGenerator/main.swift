@@ -27,6 +27,9 @@ struct Command: ParsableCommand, SotoCodeGenCommand {
     @Option(name: .shortAndLong, help: "Input model file")
     var inputFile: String?
 
+    @Option(name: [.short, .customLong("config")], help: "Configuration file")
+    var configFile: String?
+
     @Option(name: .shortAndLong, help: "Prefix applied to output swift files")
     var prefix: String?
 
