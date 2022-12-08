@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2022 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -21,7 +21,7 @@ extension AwsService {
         var context: [String: Any] = [:]
         context["name"] = self.serviceName
         var waiters: [WaiterContext] = []
-        for operation in operations {
+        for operation in self.operations {
             guard let trait = operation.value.trait(type: WaitableTrait.self) else { continue }
             for waiter in trait.value {
                 let waiterContext = try generateWaiterContext(

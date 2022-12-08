@@ -18,7 +18,7 @@ import SotoSmithy
 extension AwsService {
     /// Generate paginator context
     func generatePaginatorContext() throws -> [String: Any] {
-        let paginatorOperations = try model.select(from: "operation [trait|paginated]")
+        let paginatorOperations = self.operations.filter { $0.value.hasTrait(type: PaginatedTrait.self) }
         guard paginatorOperations.count > 0 else { return [:] }
         var context: [String: Any] = ["name": serviceName]
         let namespace = paginatorOperations.first?.key.namespace
@@ -28,7 +28,7 @@ extension AwsService {
 
         // build list of operations that can be paginated
         for operation in paginatorOperations {
-            guard let operationShape = operation.value as? OperationShape else { continue }
+            let operationShape = operation.value
             guard let paginatedTrait = operationShape.trait(type: PaginatedTrait.self) else { continue }
             guard let input = operationShape.input?.target else { continue }
             guard let inputShape = model.shape(for: input) as? StructureShape else { continue }
