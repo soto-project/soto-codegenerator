@@ -25,7 +25,7 @@ extension Templates {
     {{#deprecated}}
         @available(*, deprecated)
     {{/deprecated}}
-        public func waitUntil{{waiterName}}(
+        {{scope}} func waitUntil{{waiterName}}(
             _ input: {{operation.inputShape}},
             maxWaitTime: TimeAmount? = nil,
             logger: Logger = AWSClient.loggingDisabled,

@@ -108,7 +108,7 @@ public struct SotoCodeGen {
                         service.filterOperations(filter)
                     }
                     if self.command.output {
-                        try self.generateFiles(with: service)
+                        try self.generateFiles(with: service, config: config)
                     }
                 } catch {
                     self.logger.error("\(model.key): \(error)")
@@ -207,7 +207,7 @@ public struct SotoCodeGen {
 
     /// Generate service files from AWSService
     /// - Parameter codeGenerator: service generated from JSON
-    func generateFiles(with service: AwsService) throws {
+    func generateFiles(with service: AwsService, config: ConfigFile) throws {
         let basePath: String
         let prefix: String
         if self.command.inputFile == nil {
@@ -218,10 +218,12 @@ public struct SotoCodeGen {
             basePath = "\(self.command.outputFolder)"
             prefix = self.command.prefix.map { $0.replacingOccurrences(of: "-", with: "_") } ?? service.serviceName
         }
+        let scope = config.internal == true ? "internal" : "public"
 
         var apiContext = try service.generateServiceContext()
         let paginators = try service.generatePaginatorContext()
         let waiters = try service.generateWaiterContexts()
+        apiContext["scope"] = scope
         if paginators["paginators"] != nil {
             apiContext["paginators"] = paginators
         }
@@ -244,6 +246,7 @@ public struct SotoCodeGen {
 
         var shapesContext = try service.generateShapesContext()
         let errorContext = try service.generateErrorContext()
+        shapesContext["scope"] = scope
         if errorContext["errors"] != nil {
             shapesContext["errors"] = errorContext
         }

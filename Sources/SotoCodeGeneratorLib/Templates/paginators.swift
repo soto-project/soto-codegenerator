@@ -36,7 +36,7 @@ extension Templates {
     {{#operation.deprecated}}
         @available(*, deprecated, message:"{{.}}")
     {{/operation.deprecated}}
-        public func {{operation.funcName}}Paginator<Result>(
+        {{scope}} func {{operation.funcName}}Paginator<Result>(
             _ input: {{operation.inputShape}},
             _ initialValue: Result,
             logger: {{logger}} = AWSClient.loggingDisabled,
@@ -72,7 +72,7 @@ extension Templates {
     {{#operation.deprecated}}
         @available(*, deprecated, message:"{{.}}")
     {{/operation.deprecated}}
-        public func {{operation.funcName}}Paginator(
+        {{scope}} func {{operation.funcName}}Paginator(
             _ input: {{operation.inputShape}},
             logger: {{logger}} = AWSClient.loggingDisabled,
             on eventLoop: EventLoop? = nil,
@@ -103,7 +103,7 @@ extension Templates {
 
     {{#paginatorShapes}}
     extension {{name}}.{{inputShape}}: {{paginatorProtocol}} {
-        public func usingPaginationToken(_ token: {{tokenType}}) -> {{name}}.{{inputShape}} {
+        {{scope}} func usingPaginationToken(_ token: {{tokenType}}) -> {{name}}.{{inputShape}} {
             return .init(
     {{#initParams}}
                 {{.}}{{^last()}},{{/last()}}
