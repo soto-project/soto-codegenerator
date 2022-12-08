@@ -16,30 +16,30 @@ extension Templates {
     static let enumTemplate = """
     {{%CONTENT_TYPE:TEXT}}
     {{#isExtensible}}
-        public struct {{name}}: RawRepresentable, Equatable, Codable, _SotoSendable {
-            public var rawValue: String
+        {{scope}} struct {{name}}: RawRepresentable, Equatable, Codable, _SotoSendable {
+            {{scope}} var rawValue: String
 
-            public init(rawValue: String) {
+            {{scope}} init(rawValue: String) {
                 self.rawValue = rawValue
             }
     {{#values}}
     {{#documentation}}
             /// {{.}}
     {{/documentation}}
-            public static var {{case}}: Self { .init(rawValue: "{{string}}")}
+            {{scope}} static var {{case}}: Self { .init(rawValue: "{{string}}")}
     {{/values}}
         }
 
     {{/isExtensible}}
     {{^isExtensible}}
-        public enum {{name}}: String, CustomStringConvertible, Codable, _SotoSendable {
+        {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, _SotoSendable {
     {{#values}}
     {{#documentation}}
             /// {{.}}
     {{/documentation}}
             case {{case}} = "{{string}}"
     {{/values}}
-            public var description: String { return self.rawValue }
+            {{scope}} var description: String { return self.rawValue }
         }
     {{/isExtensible}}
     """

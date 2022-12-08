@@ -32,7 +32,7 @@ extension Templates {
     {{#operation.deprecated}}
         @available(*, deprecated, message:"{{.}}")
     {{/operation.deprecated}}
-        public func {{operation.funcName}}Paginator(
+        {{scope}} func {{operation.funcName}}Paginator(
             _ input: {{operation.inputShape}},
             logger: {{logger}} = AWSClient.loggingDisabled,
             on eventLoop: EventLoop? = nil

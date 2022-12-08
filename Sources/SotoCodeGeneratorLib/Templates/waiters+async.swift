@@ -20,7 +20,7 @@ extension Templates {
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     extension {{name}} {
     {{#waiters}}
-        public func waitUntil{{waiterName}}(
+        {{scope}} func waitUntil{{waiterName}}(
             _ input: {{operation.inputShape}},
             maxWaitTime: TimeAmount? = nil,
             logger: Logger = AWSClient.loggingDisabled,

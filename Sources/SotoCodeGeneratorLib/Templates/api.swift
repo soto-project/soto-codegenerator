@@ -31,13 +31,13 @@ extension Templates {
         /// {{.}}
         {{/description}}
         {{/first(description)}}
-        public struct {{ name }}: AWSService {
+        {{scope}} struct {{ name }}: AWSService {
             // MARK: Member variables
 
             /// Client used for communication with AWS
-            public let client: AWSClient
+            {{scope}} let client: AWSClient
             /// Service configuration
-            public let config: AWSServiceConfig
+            {{scope}} let config: AWSServiceConfig
         {{#endpointDiscovery}}
             /// endpoint storage
             let endpointStorage: AWSEndpointStorage
@@ -54,7 +54,7 @@ extension Templates {
             ///     - partition: AWS partition where service resides, standard (.aws), china (.awscn), government (.awsusgov).
             ///     - endpoint: Custom endpoint URL to use instead of standard AWS servers
             ///     - timeout: Timeout value for HTTP requests
-            public init(
+            {{scope}} init(
                 client: AWSClient,
         {{#regionalized}}
                 region: SotoCore.Region? = nil,
@@ -129,7 +129,7 @@ extension Templates {
         {{#deprecated}}
             @available(*, deprecated, message:"{{.}}")
         {{/deprecated}}
-            {{^outputShape}}@discardableResult {{/outputShape}}public func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
+            {{^outputShape}}@discardableResult {{/outputShape}}{{scope}} func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
                 return self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop)
             }
         {{/operations}}
@@ -147,7 +147,7 @@ extension Templates {
         {{#deprecated}}
             @available(*, deprecated, message:"{{.}}")
         {{/deprecated}}
-            {{^outputShape}}@discardableResult {{/outputShape}}public func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil{{#streaming}}, _ stream: @escaping ({{.}}, EventLoop)->EventLoopFuture<Void>{{/streaming}}) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
+            {{^outputShape}}@discardableResult {{/outputShape}}{{scope}} func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil{{#streaming}}, _ stream: @escaping ({{.}}, EventLoop)->EventLoopFuture<Void>{{/streaming}}) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
                 return self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop{{#streaming}}, stream: stream{{/streaming}})
             }
         {{/streamingOperations}}
@@ -165,9 +165,9 @@ extension Templates {
         }
 
         extension {{ name }} {
-            /// Initializer required by `AWSService.with(middlewares:timeout:byteBufferAllocator:options)`. You are not able to use this initializer directly as there are no public
+            /// Initializer required by `AWSService.with(middlewares:timeout:byteBufferAllocator:options)`. You are not able to use this initializer directly as there are no {{scope}}
             /// initializers for `AWSServiceConfig.Patch`. Please use `AWSService.with(middlewares:timeout:byteBufferAllocator:options)` instead.
-            public init(from: {{ name }}, patch: AWSServiceConfig.Patch) {
+            {{scope}} init(from: {{ name }}, patch: AWSServiceConfig.Patch) {
                 self.client = from.client
                 self.config = from.config.with(patch: patch)
             {{#endpointDiscovery}}

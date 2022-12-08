@@ -17,7 +17,7 @@ extension Templates {
     // MARK - Errors
 
     /// Error enum for {{name}}
-    public struct {{errorName}}: AWSErrorType {
+    {{scope}} struct {{errorName}}: AWSErrorType {
         enum Code: String {
     {{#errors}}
             case {{enum}} = "{{string}}"
@@ -25,10 +25,10 @@ extension Templates {
         }
 
         private let error: Code
-        public let context: AWSErrorContext?
+        {{scope}} let context: AWSErrorContext?
 
         /// initialize {{name}}
-        public init?(errorCode: String, context: AWSErrorContext) {
+        {{scope}} init?(errorCode: String, context: AWSErrorContext) {
             guard let error = Code(rawValue: errorCode) else { return nil }
             self.error = error
             self.context = context
@@ -40,24 +40,24 @@ extension Templates {
         }
 
         /// return error code string
-        public var errorCode: String { self.error.rawValue }
+        {{scope}} var errorCode: String { self.error.rawValue }
 
     {{#errors}}
     {{#comment}}
         /// {{.}}
     {{/comment}}
-        public static var {{enum}}: Self { .init(.{{enum}}) }
+        {{scope}} static var {{enum}}: Self { .init(.{{enum}}) }
     {{/errors}}
     }
 
     extension {{errorName}}: Equatable {
-        public static func == (lhs: {{errorName}}, rhs: {{errorName}}) -> Bool {
+        {{scope}} static func == (lhs: {{errorName}}, rhs: {{errorName}}) -> Bool {
             lhs.error == rhs.error
         }
     }
 
     extension {{errorName}}: CustomStringConvertible {
-        public var description: String {
+        {{scope}} var description: String {
             return "\(self.error.rawValue): \(self.message ?? "")"
         }
     }
