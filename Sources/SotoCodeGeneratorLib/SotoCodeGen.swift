@@ -104,7 +104,7 @@ public struct SotoCodeGen {
                         .split(separator: "/", omittingEmptySubsequences: true).last!
                     let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
 
-                    if let serviceConfig = config.services[filenameWithoutExtension], let filter = serviceConfig.operations {
+                    if let serviceConfig = config.services?[filenameWithoutExtension], let filter = serviceConfig.operations {
                         service.filterOperations(filter)
                     }
                     if self.command.output {
@@ -156,7 +156,7 @@ public struct SotoCodeGen {
             let config = try JSONDecoder().decode(ConfigFile.self, from: configData)
             return config
         } else {
-            return .init(services: [:], internal: false)
+            return .init(services: [:], access: .public)
         }
     }
 
@@ -218,7 +218,7 @@ public struct SotoCodeGen {
             basePath = "\(self.command.outputFolder)"
             prefix = self.command.prefix.map { $0.replacingOccurrences(of: "-", with: "_") } ?? service.serviceName
         }
-        let scope = config.internal == true ? "internal" : "public"
+        let scope = config.access == .internal ? "internal" : "public"
 
         var apiContext = try service.generateServiceContext()
         let paginators = try service.generatePaginatorContext()

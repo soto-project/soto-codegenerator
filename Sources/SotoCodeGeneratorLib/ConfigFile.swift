@@ -17,6 +17,11 @@ struct ConfigFile: Decodable {
         let operations: [String]?
     }
 
-    let services: [String: ServiceConfig]
-    let `internal`: Bool?
+    enum AccessControl: String, Decodable {
+        case `public`
+        case `internal`
+    }
+
+    let services: [String: ServiceConfig]?
+    let access: AccessControl?
 }
