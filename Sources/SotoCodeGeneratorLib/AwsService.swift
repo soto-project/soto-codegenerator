@@ -502,7 +502,10 @@ struct AwsService {
                 return
             }
             guard let region = endpoint.credentialScope?.region else {
-                self.logger.error("Partition endpoint \(partitionEndpoint) for service \(self.serviceEndpointPrefix) in \($0.partitionName) has no credential scope region")
+                // services with SigV4 authentication require an endpoint
+                if self.service.trait(type: AwsAuthSigV4Trait.self) != nil {
+                    self.logger.error("Partition endpoint \(partitionEndpoint) for service \(self.serviceEndpointPrefix) in \($0.partitionName) has no credential scope region")
+                }
                 return
             }
             partitionEndpoints[$0.partition] = (endpoint: partitionEndpoint, region: region)
