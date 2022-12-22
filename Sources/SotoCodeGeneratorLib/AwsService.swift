@@ -478,7 +478,7 @@ struct AwsService {
             return value + (endpoints?.map { (key: $0.key, value: EndpointInfo(endpoint: $0.value, partition: partition.partition)) } ?? [])
         }
         let partitionEndpoints = self.getPartitionEndpoints()
-        return serviceEndpoints.compactMap {
+        let values = serviceEndpoints.compactMap {
             // if endpoint has a hostname return that
             if let hostname = $0.value.endpoint.hostname {
                 return (key: $0.key, value: hostname)
@@ -489,6 +489,9 @@ struct AwsService {
             }
             return nil
         }
+        // ensure we only have unique keys
+        let valueDictionary: [String: String] = .init(values) { first, _ in first }
+        return valueDictionary.map { $0 }
     }
 
     // return dictionary of partition endpoints keyed by endpoint name
