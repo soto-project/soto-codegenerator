@@ -14,10 +14,7 @@
 
 extension Templates {
     static let errorTemplate = #"""
-    {{%CONTENT_TYPE:TEXT}}
-    {{>header}}
-
-    import SotoCore
+    // MARK - Errors
 
     /// Error enum for {{name}}
     public struct {{errorName}}: AWSErrorType {

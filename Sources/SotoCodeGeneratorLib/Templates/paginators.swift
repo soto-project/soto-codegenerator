@@ -15,10 +15,6 @@
 extension Templates {
     static let paginatorTemplate = #"""
     {{%CONTENT_TYPE:TEXT}}
-    {{>header}}
-
-    import SotoCore
-
     // MARK: Paginators
 
     extension {{name}} {

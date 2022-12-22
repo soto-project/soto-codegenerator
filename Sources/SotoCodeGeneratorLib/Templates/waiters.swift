@@ -13,25 +13,24 @@
 //===----------------------------------------------------------------------===//
 
 extension Templates {
-    static let waiterAsyncTemplate = """
+    static let waiterTemplate = """
     {{%CONTENT_TYPE:TEXT}}
-    {{>header}}
-
-    #if compiler(>=5.5.2) && canImport(_Concurrency)
-
-    import SotoCore
-
     // MARK: Waiters
 
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     extension {{name}} {
     {{#waiters}}
+    {{#comment}}
+        /// {{.}}
+    {{/comment}}
+    {{#deprecated}}
+        @available(*, deprecated)
+    {{/deprecated}}
         public func waitUntil{{waiterName}}(
             _ input: {{operation.inputShape}},
             maxWaitTime: TimeAmount? = nil,
             logger: Logger = AWSClient.loggingDisabled,
             on eventLoop: EventLoop? = nil
-        ) async throws {
+        ) -> EventLoopFuture<Void> {
             let waiter = AWSClient.Waiter(
                 acceptors: [
     {{#acceptors}}
@@ -63,14 +62,12 @@ extension Templates {
     {{/maxDelayTime}}
                 command: {{operation.funcName}}
             )
-            return try await self.client.waitUntil(input, waiter: waiter, maxWaitTime: maxWaitTime, logger: logger, on: eventLoop)
+            return self.client.waitUntil(input, waiter: waiter, maxWaitTime: maxWaitTime, logger: logger, on: eventLoop)
         }
-    {{#last()}}
+    {{^last()}}
 
     {{/last()}}
     {{/waiters}}
     }
-
-    #endif // compiler(>=5.5.2) && canImport(_Concurrency)
     """
 }

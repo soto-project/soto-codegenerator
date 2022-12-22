@@ -18,11 +18,17 @@ import Logging
 import SotoCodeGeneratorLib
 
 struct Command: ParsableCommand, SotoCodeGenCommand {
-    @Option(name: .shortAndLong, help: "Folder to output service files to")
-    var outputFolder: String = Self.defaultOutputFolder
+    @Option(name: .long, help: "Folder to output service files to")
+    var outputFolder: String
 
-    @Option(name: .shortAndLong, help: "Folder to find model files")
-    var inputFolder: String = Self.defaultInputFolder
+    @Option(name: .long, help: "Folder to find model files")
+    var inputFolder: String?
+
+    @Option(name: .shortAndLong, help: "Input model file")
+    var inputFile: String?
+
+    @Option(name: .shortAndLong, help: "Prefix applied to output swift files")
+    var prefix: String?
 
     @Option(name: .shortAndLong, help: "Endpoint JSON file")
     var endpoints: String = Self.defaultEndpoints

@@ -1,17 +1,17 @@
-// swift-tools-version:5.6
+// swift-tools-version:5.5
 import PackageDescription
 
 let package = Package(
     name: "soto-codegenerator",
     products: [
         .executable(name: "SotoCodeGenerator", targets: ["SotoCodeGenerator"]),
-        .plugin(name: "SotoCodeGeneratorPlugin", targets: ["SotoCodeGeneratorPlugin"]),
+        .library(name: "SotoCodeGeneratorLib", targets: ["SotoCodeGeneratorLib"])
     ],
     dependencies: [
         .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.3.1"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.0.0"),
         .package(url: "https://github.com/hummingbird-project/hummingbird-mustache.git", from: "1.0.0"),
-        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", from: "0.48.17"),
+        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", .exact("0.48.17")),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
     ],
     targets: [
@@ -33,14 +33,9 @@ let package = Package(
                 .product(name: "Logging", package: "swift-log")
             ]
         ),
-        .plugin(
-            name: "SotoCodeGeneratorPlugin",
-            capability: .buildTool(),
-            dependencies: ["SotoCodeGenerator"]
-        ),
         .testTarget(
             name: "SotoCodeGeneratorTests",
-            dependencies: ["SotoCodeGeneratorLib"]
+            dependencies: [.byName(name: "SotoCodeGeneratorLib")]
         )
     ]
 )

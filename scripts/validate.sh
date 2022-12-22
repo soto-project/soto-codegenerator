@@ -54,7 +54,7 @@ for language in swift-or-c; do
   matching_files=( -name '*' )
   case "$language" in
       swift-or-c)
-        exceptions=( -path '*Sources/INIParser/*' -o -path '*Sources/CSotoExpat/*' -o -path '*Benchmark/.build/*' -o -name Package.swift)
+        exceptions=( -path '*Sources/INIParser/*' -o -path '*Sources/CSotoExpat/*' -o -path '*Benchmark/.build/*' -o -name Package.swift -o -name Package@swift-5.4.swift -o -name Package@swift-5.5.swift)
         matching_files=( -name '*.swift' -o -name '*.c' -o -name '*.h' )
         cat > "$tmp" <<"EOF"
 //===----------------------------------------------------------------------===//
