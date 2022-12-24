@@ -16,13 +16,13 @@ extension Templates {
     static let enumWithValuesTemplate = #"""
     {{! Template for a AWSShape enum with values }}
     {{%CONTENT_TYPE:TEXT}}
-        public {{object}} {{name}}: {{shapeProtocol}}, _SotoSendable {
+        {{scope}} {{object}} {{name}}: {{shapeProtocol}}, _SotoSendable {
     {{#namespace}}
-            public static let _xmlNamespace: String? = "{{.}}"
+            {{scope}} static let _xmlNamespace: String? = "{{.}}"
     {{/namespace}}
     {{! AWSShapeMember array }}
     {{#first(awsShapeMembers)}}
-            public static var _encoding = [
+            {{scope}} static var _encoding = [
     {{#awsShapeMembers}}
                 AWSMemberEncoding(label: "{{name}}"{{#location}}, location: {{.}}{{/location}}){{^last()}}, {{/last()}}
     {{/awsShapeMembers}}
@@ -38,7 +38,7 @@ extension Templates {
     {{/members}}
     {{#isDecodable}}
 
-            public init(from decoder: Decoder) throws {
+            {{scope}} init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 guard container.allKeys.count == 1, let key = container.allKeys.first else {
                     let context = DecodingError.Context(
@@ -58,7 +58,7 @@ extension Templates {
     {{/isDecodable}}
     {{#isEncodable}}
 
-            public func encode(to encoder: Encoder) throws {
+            {{scope}} func encode(to encoder: Encoder) throws {
                 var container = encoder.container(keyedBy: CodingKeys.self)
                 switch self {
     {{#members}}
@@ -71,7 +71,7 @@ extension Templates {
 
     {{! validate() function }}
     {{#first(validation)}}
-            public func validate(name: String) throws {
+            {{scope}} func validate(name: String) throws {
                 switch self {
     {{#validation}}
                 case .{{name}}(let value):

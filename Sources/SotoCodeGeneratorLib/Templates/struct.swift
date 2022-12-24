@@ -16,20 +16,20 @@ extension Templates {
     static let structTemplate = #"""
     {{%CONTENT_TYPE:TEXT}}
     {{! Template for a AWSShape }}
-        public {{object}} {{name}}: {{shapeProtocol}} {
+        {{scope}} {{object}} {{name}}: {{shapeProtocol}} {
     {{#payload}}
             /// The key for the payload
-            public static let _payloadPath: String = "{{.}}"
+            {{scope}} static let _payloadPath: String = "{{.}}"
     {{/payload}}
     {{#options}}
-            public static let _options: AWSShapeOptions = [{{.}}]
+            {{scope}} static let _options: AWSShapeOptions = [{{.}}]
     {{/options}}
     {{#namespace}}
-            public static let _xmlNamespace: String? = "{{.}}"
+            {{scope}} static let _xmlNamespace: String? = "{{.}}"
     {{/namespace}}
     {{! AWSShapeMember array }}
     {{#first(awsShapeMembers)}}
-            public static var _encoding = [
+            {{scope}} static var _encoding = [
     {{#awsShapeMembers}}
                 AWSMemberEncoding(label: "{{name}}"{{#location}}, location: {{.}}{{/location}}){{^last()}}, {{/last()}}
     {{/awsShapeMembers}}
@@ -38,10 +38,10 @@ extension Templates {
     {{#encoding}}
     {{! Is encoding a dictionary }}
     {{#key}}
-            public struct {{name}}: DictionaryCoderProperties { static public let entry: String? = {{#entry}}"{{.}}"{{/entry}}{{^entry}}nil{{/entry}}; static public let key = "{{key}}"; static public let value = "{{value}}" }
+            {{scope}} struct {{name}}: DictionaryCoderProperties { static {{scope}} let entry: String? = {{#entry}}"{{.}}"{{/entry}}{{^entry}}nil{{/entry}}; static {{scope}} let key = "{{key}}"; static {{scope}} let value = "{{value}}" }
     {{/key}}
     {{^key}}
-            public struct {{name}}: ArrayCoderProperties { static public let member = "{{member}}" }
+            {{scope}} struct {{name}}: ArrayCoderProperties { static {{scope}} let member = "{{member}}" }
     {{/key}}
     {{/encoding}}
 
@@ -53,11 +53,11 @@ extension Templates {
     {{#propertyWrapper}}
             {{.}}
     {{/propertyWrapper}}
-            public {{#propertyWrapper}}var{{/propertyWrapper}}{{^propertyWrapper}}let{{/propertyWrapper}} {{variable}}: {{type}}
+            {{scope}} {{#propertyWrapper}}var{{/propertyWrapper}}{{^propertyWrapper}}let{{/propertyWrapper}} {{variable}}: {{type}}
     {{/members}}
 
     {{! init() function }}
-            public init({{#initParameters}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/initParameters}}) {
+            {{scope}} init({{#initParameters}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/initParameters}}) {
     {{#members}}
     {{^deprecated}}
                 self.{{variable}} = {{variable}}
@@ -70,7 +70,7 @@ extension Templates {
     {{! deprecated init() function }}
     {{^empty(deprecatedMembers)}}
             @available(*, deprecated, message:"Members {{#deprecatedMembers}}{{.}}{{^last()}}, {{/last()}}{{/deprecatedMembers}} have been deprecated")
-            public init({{#members}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/members}}) {
+            {{scope}} init({{#members}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/members}}) {
     {{#members}}
                 self.{{variable}} = {{variable}}
     {{/members}}
@@ -79,7 +79,7 @@ extension Templates {
     {{! validate() function }}
     {{#first(validation)}}
 
-            public func validate(name: String) throws {
+            {{scope}} func validate(name: String) throws {
     {{#validation}}
     {{#shape}}
                 try self.{{name}}{{^required}}?{{/required}}.validate(name: "\(name).{{name}}")

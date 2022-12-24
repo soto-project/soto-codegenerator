@@ -34,8 +34,13 @@ import PackagePlugin
         let endpointInTarget = target.sourceFiles.first { $0.path.lastComponent == "endpoints.json" }?.path
         let endpoints = endpointInTarget ?? context.package.directory.appending("endpoints.json")
 
-        // get list of AWS Smithy model files
-        let inputFiles: [FileList.Element] = target.sourceFiles.filter { $0.path.extension == "json" && $0.path.stem != "endpoints" }
+        // get config file
+        let configFile = target.sourceFiles.first { $0.path.lastComponent == "soto.config.json" }?.path
+
+        // get list of AWS Smithy model files (ignore endpoints and config)
+        let inputFiles: [FileList.Element] = target.sourceFiles.filter {
+            $0.path.extension == "json" && $0.path.stem != "endpoints" && $0.path.stem != "soto.config"
+        }
 
         // return build command for each model file
         return inputFiles.map { file in
@@ -43,6 +48,13 @@ import PackagePlugin
             var inputFiles = [file.path]
             if let endpointInTarget = endpointInTarget {
                 inputFiles.append(endpointInTarget)
+            }
+            let configArgs: [String]
+            if let configFile = configFile {
+                configArgs = ["--config", "\(configFile)"]
+                inputFiles.append(configFile)
+            } else {
+                configArgs = []
             }
             let outputFiles: [Path] = [
                 genSourcesDir.appending("\(prefix)_api.swift"),
@@ -61,7 +73,7 @@ import PackagePlugin
                     genSourcesDir,
                     "--endpoints",
                     "\(endpoints)"
-                ],
+                ] + configArgs,
                 inputFiles: inputFiles,
                 outputFiles: outputFiles
             )

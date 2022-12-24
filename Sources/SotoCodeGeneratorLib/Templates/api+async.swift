@@ -36,7 +36,7 @@ extension Templates {
     {{#deprecated}}
         @available(*, deprecated, message:"{{.}}")
     {{/deprecated}}
-        public func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
+        {{scope}} func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
             return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop)
         }
     {{/operations}}
@@ -54,7 +54,7 @@ extension Templates {
     {{#deprecated}}
         @available(*, deprecated, message:"{{.}}")
     {{/deprecated}}
-        public func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil, _ stream: @escaping ({{streaming}}, EventLoop) -> EventLoopFuture<Void>) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
+        {{scope}} func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil, _ stream: @escaping ({{streaming}}, EventLoop) -> EventLoopFuture<Void>) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
             return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop, stream: stream)
         }
     {{/streamingOperations}}
