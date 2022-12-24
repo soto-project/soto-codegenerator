@@ -478,14 +478,14 @@ struct AwsService {
             return value + (endpoints?.map { (key: $0.key, value: EndpointInfo(endpoint: $0.value, partition: partition.partition)) } ?? [])
         }
         let partitionEndpoints = self.getPartitionEndpoints()
-        let values = serviceEndpoints.compactMap {
+        let values = serviceEndpoints.compactMap { endpoint -> (key: String, value: String)? in
             // if endpoint has a hostname return that
-            if let hostname = $0.value.endpoint.hostname {
-                return (key: $0.key, value: hostname)
-            } else if partitionEndpoints[$0.value.partition] != nil {
+            if let hostname = endpoint.value.endpoint.hostname {
+                return (key: endpoint.key, value: hostname)
+            } else if partitionEndpoints[endpoint.value.partition] != nil {
                 // if there is a partition endpoint, then default this regions endpoint to ensure partition endpoint doesn't override it.
                 // Only an issue for S3 at the moment.
-                return (key: $0.key, value: "\(self.serviceEndpointPrefix).\($0.key).amazonaws.com")
+                return (key: endpoint.key, value: "\(self.serviceEndpointPrefix).\(endpoint.key).amazonaws.com")
             }
             return nil
         }
