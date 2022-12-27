@@ -481,8 +481,14 @@ struct AwsService {
             let partition: String
         }
         let serviceEndpoints: [(key: String, value: EndpointInfo)] = self.endpoints.partitions.reduce([]) { value, partition in
-            let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints
-            return value + (endpoints?.map { (key: $0.key, value: EndpointInfo(endpoint: $0.value, partition: partition.partition)) } ?? [])
+            guard let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints else { return value }
+            let endpointInfo = endpoints.compactMap { endpoint -> (key: String, value: EndpointInfo)? in
+                if endpoint.value.deprecated == true {
+                    return nil
+                }
+                return (key: endpoint.key, value: EndpointInfo(endpoint: endpoint.value, partition: partition.partition))
+            }
+            return value + endpointInfo
         }
         let partitionEndpoints = self.getPartitionEndpoints()
         return serviceEndpoints.compactMap {
