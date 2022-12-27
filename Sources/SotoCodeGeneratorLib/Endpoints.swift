@@ -25,7 +25,23 @@ struct Endpoints: Decodable {
         var service: String?
     }
 
+    struct Endpoint: Decodable {
+        struct EndpointVariant: Decodable {
+            var dnsSuffix: String?
+            var hostname: String?
+            var tags: [String]
+        }
+
+        var credentialScope: CredentialScope?
+        var hostname: String?
+        var protocols: [String]?
+        var signatureVersions: [SignatureVersion]?
+        var variants: [EndpointVariant]?
+        var deprecated: Bool?
+    }
+
     struct Defaults: Decodable {
+        var defaults: Endpoint?
         var credentialScope: CredentialScope?
         var hostname: String?
         var protocols: [String]?
@@ -37,13 +53,6 @@ struct Endpoints: Decodable {
     }
 
     struct Service: Decodable {
-        struct Endpoint: Decodable {
-            var credentialScope: CredentialScope?
-            var hostname: String?
-            var protocols: [String]?
-            var signatureVersions: [SignatureVersion]?
-        }
-
         var defaults: Endpoint?
         var endpoints: [String: Endpoint]
         var isRegionalized: Bool?

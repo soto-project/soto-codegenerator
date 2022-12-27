@@ -477,7 +477,7 @@ struct AwsService {
     func getServiceEndpoints() -> [(key: String, value: String)] {
         // create dictionary of endpoint name to Endpoint and partition from across all partitions
         struct EndpointInfo {
-            let endpoint: Endpoints.Service.Endpoint
+            let endpoint: Endpoints.Endpoint
             let partition: String
         }
         let serviceEndpoints: [(key: String, value: EndpointInfo)] = self.endpoints.partitions.reduce([]) { value, partition in
