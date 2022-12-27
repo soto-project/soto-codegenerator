@@ -25,13 +25,13 @@ struct Endpoints: Decodable {
         var service: String?
     }
 
-    struct Endpoint: Decodable {
-        struct EndpointVariant: Decodable {
-            var dnsSuffix: String?
-            var hostname: String?
-            var tags: [String]
-        }
+    struct EndpointVariant: Decodable {
+        var dnsSuffix: String?
+        var hostname: String?
+        var tags: Set<String>
+    }
 
+    struct Endpoint: Decodable {
         var credentialScope: CredentialScope?
         var hostname: String?
         var protocols: [String]?
@@ -41,11 +41,11 @@ struct Endpoints: Decodable {
     }
 
     struct Defaults: Decodable {
-        var defaults: Endpoint?
         var credentialScope: CredentialScope?
         var hostname: String?
         var protocols: [String]?
         var signatureVersions: [SignatureVersion]?
+        var variants: [EndpointVariant]?
     }
 
     struct RegionDesc: Decodable {
@@ -53,7 +53,7 @@ struct Endpoints: Decodable {
     }
 
     struct Service: Decodable {
-        var defaults: Endpoint?
+        var defaults: Defaults?
         var endpoints: [String: Endpoint]
         var isRegionalized: Bool?
         var partitionEndpoint: String?
