@@ -127,7 +127,8 @@ struct AwsService {
                 .sorted { $0.partition < $1.partition }
                 .map { ".\($0.partition.toSwiftRegionEnumCase()): (endpoint: \"\($0.endpoint)\", region: .\($0.region.toSwiftRegionEnumCase()))" }
         }
-
+        context["variantEndpoints"] = self.getVariantEndpoints()
+            .map { (variant: $0.key, endpoints: $0.value) }
         context["operations"] = operations.operations
         context["streamingOperations"] = operations.streamingOperations
         context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
@@ -480,15 +481,15 @@ struct AwsService {
             let endpoint: Endpoints.Endpoint
             let partition: String
         }
-        let serviceEndpoints: [(key: String, value: EndpointInfo)] = self.endpoints.partitions.reduce([]) { value, partition in
-            guard let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints else { return value }
+        let serviceEndpoints = self.endpoints.partitions.flatMap { partition -> [(key: String, value: EndpointInfo)] in
+            guard let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints else { return [] }
             let endpointInfo = endpoints.compactMap { endpoint -> (key: String, value: EndpointInfo)? in
                 if endpoint.value.deprecated == true {
                     return nil
                 }
                 return (key: endpoint.key, value: EndpointInfo(endpoint: endpoint.value, partition: partition.partition))
             }
-            return value + endpointInfo
+            return endpointInfo
         }
         let partitionEndpoints = self.getPartitionEndpoints()
         return serviceEndpoints.compactMap {
@@ -524,6 +525,31 @@ struct AwsService {
             partitionEndpoints[$0.partition] = (endpoint: partitionEndpoint, region: region)
         }
         return partitionEndpoints
+    }
+
+    func getVariantEndpoints() -> [String: VariantContext] {
+        var variantEndpoints: [String: VariantContext] = [:]
+        self.endpoints.partitions.forEach { partition in
+            guard let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints else { return }
+            return endpoints.forEach { endpoint in
+                guard let variants = endpoint.value.variants else { return }
+                guard endpoint.value.deprecated != true else { return }
+                variants.forEach { variant in
+                    let variantString = variant.tags
+                        .map { ".\($0)" }
+                        .sorted()
+                        .joined(separator: ", ")
+                    if variantEndpoints[variantString] == nil {
+                        variantEndpoints[variantString] = .init()
+                    }
+                    // need to support calculated hostname
+                    if let hostname = variant.hostname {
+                        variantEndpoints[variantString]!.endpoints.append((region: endpoint.key, hostname: hostname))
+                    }
+                }
+            }
+        }
+        return variantEndpoints
     }
 
     /// get protocol needed for shape
@@ -694,6 +720,11 @@ extension AwsService {
         let variable: String
         let codingKey: String
         var duplicate: Bool
+    }
+
+    struct VariantContext {
+        var defaultEndpoint: String?
+        var endpoints: [(region: String, hostname: String)] = []
     }
 
     struct StructureContext {

@@ -99,6 +99,17 @@ extension Templates {
         {{/partitionEndpoints}}
                     ],
         {{/first(partitionEndpoints)}}
+        {{#first(variantEndpoints)}}
+                    variantEndpoints: [
+        {{#variantEndpoints}}
+                        [{{variant}}]: .init(endpoints: [
+        {{#endpoints.endpoints}}
+                            "{{region}}": "{{hostname}}"{{^last()}}, {{/last()}}
+        {{/endpoints.endpoints}}
+                        ]){{^last()}}, {{/last()}}
+        {{/variantEndpoints}}
+                    ],
+        {{/first(variantEndpoints)}}
         {{#errorTypes}}
                     errorType: {{.}}.self,
         {{/errorTypes}}
