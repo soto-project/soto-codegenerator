@@ -129,6 +129,7 @@ struct AwsService {
         }
         context["variantEndpoints"] = self.getVariantEndpoints()
             .map { (variant: $0.key, endpoints: $0.value) }
+            .sorted { $0.variant < $1.variant }
         context["operations"] = operations.operations
         context["streamingOperations"] = operations.streamingOperations
         context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
@@ -530,8 +531,8 @@ struct AwsService {
     func getVariantEndpoints() -> [String: VariantContext] {
         var variantEndpoints: [String: VariantContext] = [:]
         self.endpoints.partitions.forEach { partition in
-            guard let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints else { return }
-            return endpoints.forEach { endpoint in
+            guard let service = partition.services[self.serviceEndpointPrefix] else { return }
+            return service.endpoints.forEach { endpoint in
                 guard let variants = endpoint.value.variants else { return }
                 guard endpoint.value.deprecated != true else { return }
                 variants.forEach { variant in
@@ -542,14 +543,56 @@ struct AwsService {
                     if variantEndpoints[variantString] == nil {
                         variantEndpoints[variantString] = .init()
                     }
-                    // need to support calculated hostname
-                    if let hostname = variant.hostname {
+                    if let hostname = variant.hostname ?? calculateHostname(
+                        region: endpoint.key,
+                        partition: partition,
+                        service: service,
+                        tags: variant.tags
+                    ) {
                         variantEndpoints[variantString]!.endpoints.append((region: endpoint.key, hostname: hostname))
                     }
                 }
             }
         }
-        return variantEndpoints
+        // return variants with endpoints sorted by region name
+        return variantEndpoints.mapValues {
+            return .init(defaultEndpoint: $0.defaultEndpoint, endpoints: $0.endpoints.sorted { $0.region < $1.region })
+        }
+    }
+
+    func calculateHostname(
+        region: String,
+        partition: Endpoints.Partition,
+        service: Endpoints.Service,
+        tags: Set<String>
+    ) -> String? {
+        guard let hostname = getDefaultValue(partition: partition, service: service, getValue: { defaults in
+            return defaults.variants?.first(where: { $0.tags == tags })?.hostname
+        }) else {
+            return nil
+        }
+        guard let dnsSuffix = getDefaultValue(partition: partition, service: service, getValue: { defaults in
+            return defaults.variants?.first(where: { $0.tags == tags })?.dnsSuffix
+        }) else {
+            return nil
+        }
+        return hostname
+            .replacingOccurrences(of: "{region}", with: region)
+            .replacingOccurrences(of: "{dnsSuffix}", with: dnsSuffix)
+            .replacingOccurrences(of: "{service}", with: self.serviceEndpointPrefix)
+    }
+
+    func getDefaultValue<Value>(
+        partition: Endpoints.Partition,
+        service: Endpoints.Service,
+        getValue: (Endpoints.Defaults) -> Value?
+    ) -> Value? {
+        if let serviceDefaults = service.defaults, let value = getValue(serviceDefaults) {
+            return value
+        } else if let value = getValue(partition.defaults) {
+            return value
+        }
+        return nil
     }
 
     /// get protocol needed for shape
