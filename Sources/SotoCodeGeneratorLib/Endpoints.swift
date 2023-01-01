@@ -49,6 +49,27 @@ struct Endpoints: Decodable {
                 deprecated: self.deprecated
             )
         }
+
+        func applyingGlobalDefaults(_ defaults: Defaults) -> Endpoint {
+            var variants = self.variants
+            if variants != nil {
+                variants = variants!.map { variant in
+                    if variant.hostname == nil {
+                        let hostname = defaults.variants?.first(where: { $0.tags == variant.tags })?.hostname
+                        return .init(dnsSuffix: variant.dnsSuffix, hostname: hostname, tags: variant.tags)
+                    }
+                    return variant
+                }
+            }
+            return .init(
+                credentialScope: self.credentialScope ?? defaults.credentialScope,
+                hostname: self.hostname ?? defaults.hostname,
+                protocols: self.protocols ?? defaults.protocols,
+                signatureVersions: self.signatureVersions ?? defaults.signatureVersions,
+                variants: variants,
+                deprecated: self.deprecated
+            )
+        }
     }
 
     struct Defaults: Decodable {

@@ -539,6 +539,7 @@ struct AwsService {
                 if let defaults = service.defaults {
                     endpointValue = endpointValue.applyingDefaults(defaults)
                 }
+                endpointValue = endpointValue.applyingGlobalDefaults(partition.defaults)
                 guard let variants = endpointValue.variants else { return }
                 variants.forEach { variant in
                     let variantString = variant.tags
