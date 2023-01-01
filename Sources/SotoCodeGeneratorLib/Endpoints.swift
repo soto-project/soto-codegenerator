@@ -38,6 +38,17 @@ struct Endpoints: Decodable {
         var signatureVersions: [SignatureVersion]?
         var variants: [EndpointVariant]?
         var deprecated: Bool?
+
+        func applyingDefaults(_ defaults: Defaults) -> Endpoint {
+            return .init(
+                credentialScope: self.credentialScope ?? defaults.credentialScope,
+                hostname: self.hostname ?? defaults.hostname,
+                protocols: self.protocols ?? defaults.protocols,
+                signatureVersions: self.signatureVersions ?? defaults.signatureVersions,
+                variants: self.variants ?? defaults.variants,
+                deprecated: self.deprecated
+            )
+        }
     }
 
     struct Defaults: Decodable {
