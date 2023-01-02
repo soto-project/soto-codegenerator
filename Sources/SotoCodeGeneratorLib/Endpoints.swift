@@ -39,6 +39,7 @@ struct Endpoints: Decodable {
         var variants: [EndpointVariant]?
         var deprecated: Bool?
 
+        // apply service defaults to endpoint
         func applyingDefaults(_ defaults: Defaults) -> Endpoint {
             return .init(
                 credentialScope: self.credentialScope ?? defaults.credentialScope,
@@ -50,7 +51,10 @@ struct Endpoints: Decodable {
             )
         }
 
-        func applyingGlobalDefaults(_ defaults: Defaults) -> Endpoint {
+        /// apply partition defaults to endpoint. This is slightly different to the service defaults
+        /// as it only applies variant endpoint data if there already exists variant endpoint data in
+        /// the endpoint.
+        func applyingPartitionDefaults(_ defaults: Defaults) -> Endpoint {
             var variants = self.variants
             if variants != nil {
                 variants = variants!.map { variant in
