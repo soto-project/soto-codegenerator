@@ -66,6 +66,7 @@ If you don't want to have something as static as the `operations` field there is
 {
     "access": "internal"
 }
+```
 
 Setting this to `internal` will set the access control for your code to `internal` and you'll only be able to use the generated code within the same target. The linker should then be able to remove any unused generated code. If you only use `s3.getObject` you'll only link the code for `s3.getObject`.
 
