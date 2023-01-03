@@ -127,7 +127,9 @@ struct AwsService {
                 .sorted { $0.partition < $1.partition }
                 .map { ".\($0.partition.toSwiftRegionEnumCase()): (endpoint: \"\($0.endpoint)\", region: .\($0.region.toSwiftRegionEnumCase()))" }
         }
-
+        context["variantEndpoints"] = self.getVariantEndpoints()
+            .map { (variant: $0.key, endpoints: $0.value) }
+            .sorted { $0.variant < $1.variant }
         context["operations"] = operations.operations
         context["streamingOperations"] = operations.streamingOperations
         context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
@@ -477,12 +479,18 @@ struct AwsService {
     func getServiceEndpoints() -> [(key: String, value: String)] {
         // create dictionary of endpoint name to Endpoint and partition from across all partitions
         struct EndpointInfo {
-            let endpoint: Endpoints.Service.Endpoint
+            let endpoint: Endpoints.Endpoint
             let partition: String
         }
-        let serviceEndpoints: [(key: String, value: EndpointInfo)] = self.endpoints.partitions.reduce([]) { value, partition in
-            let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints
-            return value + (endpoints?.map { (key: $0.key, value: EndpointInfo(endpoint: $0.value, partition: partition.partition)) } ?? [])
+        let serviceEndpoints = self.endpoints.partitions.flatMap { partition -> [(key: String, value: EndpointInfo)] in
+            guard let endpoints = partition.services[self.serviceEndpointPrefix]?.endpoints else { return [] }
+            let endpointInfo = endpoints.compactMap { endpoint -> (key: String, value: EndpointInfo)? in
+                if endpoint.value.deprecated == true {
+                    return nil
+                }
+                return (key: endpoint.key, value: EndpointInfo(endpoint: endpoint.value, partition: partition.partition))
+            }
+            return endpointInfo
         }
         let partitionEndpoints = self.getPartitionEndpoints()
         return serviceEndpoints.compactMap {
@@ -518,6 +526,64 @@ struct AwsService {
             partitionEndpoints[$0.partition] = (endpoint: partitionEndpoint, region: region)
         }
         return partitionEndpoints
+    }
+
+    func getVariantEndpoints() -> [String: VariantContext] {
+        var variantEndpoints: [String: VariantContext] = [:]
+        self.endpoints.partitions.forEach { partition in
+            guard let service = partition.services[self.serviceEndpointPrefix] else { return }
+            return service.endpoints.forEach { endpoint in
+                guard endpoint.value.deprecated != true else { return }
+                var endpointValue = endpoint.value
+                // apply service defaults to endpoint info
+                if let defaults = service.defaults {
+                    endpointValue = endpointValue.applyingDefaults(defaults)
+                }
+                endpointValue = endpointValue.applyingPartitionDefaults(partition.defaults)
+                guard let variants = endpointValue.variants else { return }
+                variants.forEach { variant in
+                    let variantString = variant.tags
+                        .map { ".\($0)" }
+                        .sorted()
+                        .joined(separator: ", ")
+                    // get dnsSuffix for this variant
+                    guard let dnsSuffix = getDefaultValue(partition: partition, service: service, getValue: { defaults in
+                        return defaults.variants?.first(where: { $0.tags == variant.tags })?.dnsSuffix
+                    }) else {
+                        return
+                    }
+                    if variantEndpoints[variantString] == nil {
+                        variantEndpoints[variantString] = .init()
+                    }
+                    if let hostname = variant.hostname {
+                        // get hostname and replace any variables (wrapped in {}) in hostname
+                        let finalHostname = hostname
+                            .replacingOccurrences(of: "{region}", with: endpoint.key)
+                            .replacingOccurrences(of: "{dnsSuffix}", with: dnsSuffix)
+                            .replacingOccurrences(of: "{service}", with: self.serviceEndpointPrefix)
+                        // add variant endpoint
+                        variantEndpoints[variantString]!.endpoints.append((region: endpoint.key, hostname: finalHostname))
+                    }
+                }
+            }
+        }
+        // return variants with endpoints sorted by region name
+        return variantEndpoints.mapValues {
+            return .init(defaultEndpoint: $0.defaultEndpoint, endpoints: $0.endpoints.sorted { $0.region < $1.region })
+        }
+    }
+
+    func getDefaultValue<Value>(
+        partition: Endpoints.Partition,
+        service: Endpoints.Service,
+        getValue: (Endpoints.Defaults) -> Value?
+    ) -> Value? {
+        if let serviceDefaults = service.defaults, let value = getValue(serviceDefaults) {
+            return value
+        } else if let value = getValue(partition.defaults) {
+            return value
+        }
+        return nil
     }
 
     /// get protocol needed for shape
@@ -688,6 +754,11 @@ extension AwsService {
         let variable: String
         let codingKey: String
         var duplicate: Bool
+    }
+
+    struct VariantContext {
+        var defaultEndpoint: String?
+        var endpoints: [(region: String, hostname: String)] = []
     }
 
     struct StructureContext {

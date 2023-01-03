@@ -25,11 +25,63 @@ struct Endpoints: Decodable {
         var service: String?
     }
 
+    struct EndpointVariant: Decodable {
+        var dnsSuffix: String?
+        var hostname: String?
+        var tags: Set<String>
+    }
+
+    struct Endpoint: Decodable {
+        var credentialScope: CredentialScope?
+        var hostname: String?
+        var protocols: [String]?
+        var signatureVersions: [SignatureVersion]?
+        var variants: [EndpointVariant]?
+        var deprecated: Bool?
+
+        // apply service defaults to endpoint
+        func applyingDefaults(_ defaults: Defaults) -> Endpoint {
+            return .init(
+                credentialScope: self.credentialScope ?? defaults.credentialScope,
+                hostname: self.hostname ?? defaults.hostname,
+                protocols: self.protocols ?? defaults.protocols,
+                signatureVersions: self.signatureVersions ?? defaults.signatureVersions,
+                variants: self.variants ?? defaults.variants,
+                deprecated: self.deprecated
+            )
+        }
+
+        /// apply partition defaults to endpoint. This is slightly different to the service defaults
+        /// as it only applies variant endpoint data if there already exists variant endpoint data in
+        /// the endpoint.
+        func applyingPartitionDefaults(_ defaults: Defaults) -> Endpoint {
+            var variants = self.variants
+            if variants != nil {
+                variants = variants!.map { variant in
+                    if variant.hostname == nil {
+                        let hostname = defaults.variants?.first(where: { $0.tags == variant.tags })?.hostname
+                        return .init(dnsSuffix: variant.dnsSuffix, hostname: hostname, tags: variant.tags)
+                    }
+                    return variant
+                }
+            }
+            return .init(
+                credentialScope: self.credentialScope ?? defaults.credentialScope,
+                hostname: self.hostname ?? defaults.hostname,
+                protocols: self.protocols ?? defaults.protocols,
+                signatureVersions: self.signatureVersions ?? defaults.signatureVersions,
+                variants: variants,
+                deprecated: self.deprecated
+            )
+        }
+    }
+
     struct Defaults: Decodable {
         var credentialScope: CredentialScope?
         var hostname: String?
         var protocols: [String]?
         var signatureVersions: [SignatureVersion]?
+        var variants: [EndpointVariant]?
     }
 
     struct RegionDesc: Decodable {
@@ -37,14 +89,7 @@ struct Endpoints: Decodable {
     }
 
     struct Service: Decodable {
-        struct Endpoint: Decodable {
-            var credentialScope: CredentialScope?
-            var hostname: String?
-            var protocols: [String]?
-            var signatureVersions: [SignatureVersion]?
-        }
-
-        var defaults: Endpoint?
+        var defaults: Defaults?
         var endpoints: [String: Endpoint]
         var isRegionalized: Bool?
         var partitionEndpoint: String?
