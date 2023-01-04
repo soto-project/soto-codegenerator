@@ -12,7 +12,7 @@ Replace your dependency on Soto in the Package.swift with the following
 
 ```swift
 .package(url: "https://github.com/soto-project/soto-codegenerator", from: "0.6.0"),
-.package(url: "https://github.com/soto-project/soto-core.git", from: "6.3.0")
+.package(url: "https://github.com/soto-project/soto-core.git", from: "6.4.0")
 ```
 
 And the target you want to add the generated Soto code to should be setup as follows
