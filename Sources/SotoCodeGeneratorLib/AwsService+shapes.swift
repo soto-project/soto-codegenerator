@@ -411,10 +411,18 @@ extension AwsService {
             guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let memberName = getListEntryName(member: member, list: list)
             guard let validMemberName = memberName else { return nil }
-            if validMemberName == "member" {
-                return "\(codingWrapper)<StandardArrayCoder>"
+            if self.serviceProtocolTrait is AwsProtocolsEc2QueryTrait {
+                if validMemberName == "member" {
+                    return "\(codingWrapper)<EC2StandardArrayCoder>"
+                } else {
+                    return "\(codingWrapper)<EC2ArrayCoder<\(self.encodingName(name)), \(list.member.output(model))>>"
+                }
             } else {
-                return "\(codingWrapper)<ArrayCoder<\(self.encodingName(name)), \(list.member.output(model))>>"
+                if validMemberName == "member" {
+                    return "\(codingWrapper)<StandardArrayCoder>"
+                } else {
+                    return "\(codingWrapper)<ArrayCoder<\(self.encodingName(name)), \(list.member.output(model))>>"
+                }
             }
         case let map as MapShape:
             guard isMemberInBody(member) else { return nil }
