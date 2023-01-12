@@ -161,6 +161,9 @@ extension Model {
             // service name change
             "com.amazonaws.savingsplans#AWSSavingsPlan": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "SavingsPlans") },
         ],
+        "Textract": [
+            "com.amazonaws.textract#ValueType$Date": EditTraitPatch { _ in EnumValueTrait(value: .string("Date")) },
+        ]
     ]
     func patch(serviceName: String) throws {
         if let servicePatches = Self.patches[serviceName] {
