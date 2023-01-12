@@ -370,11 +370,19 @@ extension AwsService {
         else {
             return nil
         }
-        var codingKey: String = name
+        var rawValue: String? = name
         if let aliasTrait = member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait {
-            codingKey = aliasTrait.alias
+            rawValue = aliasTrait.alias
         }
-        return CodingKeysContext(variable: name.toSwiftVariableCase(), codingKey: codingKey, duplicate: false)
+        let variable = name.toSwiftVariableCase()
+        if rawValue == variable {
+            // rawValue = nil
+        }
+        return CodingKeysContext(
+            variable: variable,
+            rawValue: rawValue,
+            duplicate: false
+        )
     }
 
     /// Generate array/dictionary encoding contexts

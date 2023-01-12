@@ -43,10 +43,10 @@ extension Templates {
             on eventLoop: EventLoop? = nil,
             onPage: @escaping (Result, {{operation.outputShape}}, EventLoop) -> EventLoopFuture<(Bool, Result)>
         ) -> EventLoopFuture<Result> {
-            return client.paginate(
+            return self.client.paginate(
                 input: input,
                 initialValue: initialValue,
-                command: {{operation.funcName}},
+                command: self.{{operation.funcName}},
     {{#inputKey}}
                 inputKey: \{{operation.inputShape}}.{{.}},
                 outputKey: \{{operation.outputShape}}.{{outputKey}},
@@ -78,9 +78,9 @@ extension Templates {
             on eventLoop: EventLoop? = nil,
             onPage: @escaping ({{operation.outputShape}}, EventLoop) -> EventLoopFuture<Bool>
         ) -> EventLoopFuture<Void> {
-            return client.paginate(
+            return self.client.paginate(
                 input: input,
-                command: {{operation.funcName}},
+                command: self.{{operation.funcName}},
     {{#inputKey}}
                 inputKey: \{{operation.inputShape}}.{{.}},
                 outputKey: \{{operation.outputShape}}.{{outputKey}},
@@ -115,5 +115,6 @@ extension Templates {
 
     {{/last()}}
     {{/paginatorShapes}}
+
     """#
 }

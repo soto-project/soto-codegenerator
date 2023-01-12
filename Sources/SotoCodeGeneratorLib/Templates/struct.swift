@@ -31,9 +31,10 @@ extension Templates {
     {{#first(awsShapeMembers)}}
             {{scope}} static var _encoding = [
     {{#awsShapeMembers}}
-                AWSMemberEncoding(label: "{{name}}"{{#location}}, location: {{.}}{{/location}}){{^last()}}, {{/last()}}
+                AWSMemberEncoding(label: "{{name}}"{{#location}}, location: {{.}}{{/location}}){{^last()}},{{/last()}}
     {{/awsShapeMembers}}
             ]
+
     {{/first(awsShapeMembers)}}
     {{#encoding}}
     {{! Is encoding a dictionary }}
@@ -43,8 +44,8 @@ extension Templates {
     {{^key}}
             {{scope}} struct {{name}}: ArrayCoderProperties { static {{scope}} let member = "{{member}}" }
     {{/key}}
-    {{/encoding}}
 
+    {{/encoding}}
     {{! Member variables }}
     {{#members}}
     {{#comment}}
@@ -133,16 +134,22 @@ extension Templates {
     {{#first(codingKeys)}}
             private enum CodingKeys: String, CodingKey {
     {{#codingKeys}}
+    {{#rawValue}}
     {{#duplicate}}
-                case {{variable}} = "_{{codingKey}}" // TODO this is temporary measure for avoiding CodingKey duplication.
+                case {{variable}} = "_{{.}}" // TODO this is temporary measure for avoiding CodingKey duplication.
     {{/duplicate}}
     {{^duplicate}}
-                case {{variable}} = "{{codingKey}}"
+                case {{variable}} = "{{.}}"
     {{/duplicate}}
+    {{/rawValue}}
+    {{^rawValue}}
+                case {{variable}}
+    {{/rawValue}}
     {{/codingKeys}}
             }
     {{/first(codingKeys)}}
     {{/first(members)}}
         }
+
     """#
 }

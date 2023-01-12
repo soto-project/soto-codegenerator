@@ -55,7 +55,7 @@ extension Templates {
     {{#maxDelayTime}}
                 maxDelayTime: .seconds({{.}}),
     {{/maxDelayTime}}
-                command: {{operation.funcName}}
+                command: self.{{operation.funcName}}
             )
             return try await self.client.waitUntil(input, waiter: waiter, maxWaitTime: maxWaitTime, logger: logger, on: eventLoop)
         }

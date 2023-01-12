@@ -88,14 +88,14 @@ extension Templates {
         {{#first(serviceEndpoints)}}
                     serviceEndpoints: [
         {{#serviceEndpoints}}
-                        {{.}}{{^last()}}, {{/last()}}
+                        {{.}}{{^last()}},{{/last()}}
         {{/serviceEndpoints}}
                     ],
         {{/first(serviceEndpoints)}}
         {{#first(partitionEndpoints)}}
                     partitionEndpoints: [
         {{#partitionEndpoints}}
-                        {{.}}{{^last()}}, {{/last()}}
+                        {{.}}{{^last()}},{{/last()}}
         {{/partitionEndpoints}}
                     ],
         {{/first(partitionEndpoints)}}
@@ -104,9 +104,9 @@ extension Templates {
         {{#variantEndpoints}}
                         [{{variant}}]: .init(endpoints: [
         {{#endpoints.endpoints}}
-                            "{{region}}": "{{hostname}}"{{^last()}}, {{/last()}}
+                            "{{region}}": "{{hostname}}"{{^last()}},{{/last()}}
         {{/endpoints.endpoints}}
-                        ]){{^last()}}, {{/last()}}
+                        ]){{^last()}},{{/last()}}
         {{/variantEndpoints}}
                     ],
         {{/first(variantEndpoints)}}
@@ -186,12 +186,12 @@ extension Templates {
             {{/endpointDiscovery}}
             }
         }
-
         {{#paginators}}
+
         {{>paginators}}
         {{/paginators}}
-
         {{#waiters}}
+
         {{>waiters}}
         {{/waiters}}
         """#

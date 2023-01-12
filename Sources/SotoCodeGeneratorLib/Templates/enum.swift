@@ -42,5 +42,6 @@ extension Templates {
             {{scope}} var description: String { return self.rawValue }
         }
     {{/isExtensible}}
+
     """
 }

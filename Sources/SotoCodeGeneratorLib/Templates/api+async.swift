@@ -23,7 +23,6 @@ extension Templates {
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     extension {{ name }} {
-
         // MARK: Async API Calls
     {{#operations}}
 
@@ -60,15 +59,16 @@ extension Templates {
     {{/streamingOperations}}
     {{/first(streamingOperations)}}
     }
-
     {{#paginators}}
+
     {{>paginators_async}}
     {{/paginators}}
-
     {{#waiters}}
+
     {{>waiters_async}}
     {{/waiters}}
 
     #endif // compiler(>=5.5.2) && canImport(_Concurrency)
+
     """
 }

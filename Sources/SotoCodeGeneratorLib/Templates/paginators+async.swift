@@ -39,7 +39,7 @@ extension Templates {
         ) -> AWSClient.PaginatorSequence<{{operation.inputShape}}, {{operation.outputShape}}> {
             return .init(
                 input: input,
-                command: {{operation.funcName}},
+                command: self.{{operation.funcName}},
     {{#inputKey}}
                 inputKey: \{{operation.inputShape}}.{{.}},
     {{/inputKey}}

@@ -34,7 +34,6 @@ extension Templates {
     {{>enumWithValues}}
     {{/enumWithValues}}
     {{/shapes}}
-
         // MARK: Shapes
     {{#shapes}}
     {{#struct}}

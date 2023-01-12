@@ -14,7 +14,7 @@
 
 extension Templates {
     static let errorTemplate = #"""
-    // MARK - Errors
+    // MARK: - Errors
 
     /// Error enum for {{name}}
     {{scope}} struct {{errorName}}: AWSErrorType {
@@ -61,5 +61,6 @@ extension Templates {
             return "\(self.error.rawValue): \(self.message ?? "")"
         }
     }
+
     """#
 }
