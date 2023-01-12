@@ -29,7 +29,6 @@ extension Templates {
             {{scope}} static var {{case}}: Self { .init(rawValue: "{{string}}")}
     {{/values}}
         }
-
     {{/isExtensible}}
     {{^isExtensible}}
         {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, _SotoSendable {
