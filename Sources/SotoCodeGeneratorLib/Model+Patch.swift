@@ -162,7 +162,7 @@ extension Model {
             "com.amazonaws.savingsplans#AWSSavingsPlan": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "SavingsPlans") },
         ],
         "Textract": [
-            "com.amazonaws.textract#ValueType$Date": EditTraitPatch { _ in EnumValueTrait(value: .string("Date")) },
+            "com.amazonaws.textract#ValueType$DATE": EditTraitPatch { _ in EnumValueTrait(value: .string("Date")) },
         ]
     ]
     func patch(serviceName: String) throws {
