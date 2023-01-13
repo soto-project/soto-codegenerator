@@ -18,6 +18,7 @@ enum Templates {
     static var values: [String: String] = [
         "api": apiTemplate,
         "api_async": apiAsyncTemplate,
+        "comment": commentTemplate,
         "enum": enumTemplate,
         "enumWithValues": enumWithValuesTemplate,
         "errors": errorTemplate,

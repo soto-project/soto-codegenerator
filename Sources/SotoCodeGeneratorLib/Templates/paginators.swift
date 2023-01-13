@@ -20,7 +20,12 @@ extension Templates {
     extension {{name}} {
     {{#paginators}}
     {{#operation.comment}}
+        {{^empty(.)}}
         ///  {{.}}
+        {{/empty(.)}}
+        {{#empty(.)}}
+        ///{{.}}
+        {{/empty(.)}}
     {{/operation.comment}}
         ///
         /// Provide paginated results to closure `onPage` for it to combine them into one result.
@@ -34,7 +39,7 @@ extension Templates {
         ///   - onPage: closure called with each paginated response. It combines an accumulating result with the contents of response. This combined result is then returned
         ///         along with a boolean indicating if the paginate operation should continue.
     {{#operation.deprecated}}
-        @available(*, deprecated, message:"{{.}}")
+        @available(*, deprecated, message: "{{.}}")
     {{/operation.deprecated}}
         {{scope}} func {{operation.funcName}}Paginator<Result>(
             _ input: {{operation.inputShape}},
@@ -70,7 +75,7 @@ extension Templates {
         ///   - eventLoop: EventLoop to run this process on
         ///   - onPage: closure called with each block of entries. Returns boolean indicating whether we should continue.
     {{#operation.deprecated}}
-        @available(*, deprecated, message:"{{.}}")
+        @available(*, deprecated, message: "{{.}}")
     {{/operation.deprecated}}
         {{scope}} func {{operation.funcName}}Paginator(
             _ input: {{operation.inputShape}},

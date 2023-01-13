@@ -21,7 +21,12 @@ extension Templates {
     extension {{name}} {
     {{#paginators}}
     {{#operation.comment}}
+        {{^empty(.)}}
         ///  {{.}}
+        {{/empty(.)}}
+        {{#empty(.)}}
+        ///{{.}}
+        {{/empty(.)}}
     {{/operation.comment}}
         /// Return PaginatorSequence for operation.
         ///
@@ -30,7 +35,7 @@ extension Templates {
         ///   - logger: Logger used flot logging
         ///   - eventLoop: EventLoop to run this process on
     {{#operation.deprecated}}
-        @available(*, deprecated, message:"{{.}}")
+        @available(*, deprecated, message: "{{.}}")
     {{/operation.deprecated}}
         {{scope}} func {{operation.funcName}}Paginator(
             _ input: {{operation.inputShape}},

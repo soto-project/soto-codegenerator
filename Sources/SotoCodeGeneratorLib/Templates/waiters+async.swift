@@ -59,7 +59,7 @@ extension Templates {
             )
             return try await self.client.waitUntil(input, waiter: waiter, maxWaitTime: maxWaitTime, logger: logger, on: eventLoop)
         }
-    {{#last()}}
+    {{^last()}}
 
     {{/last()}}
     {{/waiters}}

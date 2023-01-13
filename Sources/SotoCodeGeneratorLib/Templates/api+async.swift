@@ -27,13 +27,13 @@ extension Templates {
     {{#operations}}
 
     {{#comment}}
-        /// {{.}}
+        {{>comment}}
     {{/comment}}
     {{#documentationUrl}}
         /// {{.}}
     {{/documentationUrl}}
     {{#deprecated}}
-        @available(*, deprecated, message:"{{.}}")
+        @available(*, deprecated, message: "{{.}}")
     {{/deprecated}}
         {{scope}} func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
             return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop)
@@ -45,7 +45,7 @@ extension Templates {
     {{#streamingOperations}}
 
     {{#comment}}
-        /// {{.}}
+        {{>comment}}
     {{/comment}}
     {{#documentationUrl}}
         /// {{.}}

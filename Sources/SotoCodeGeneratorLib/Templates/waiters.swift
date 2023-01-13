@@ -20,7 +20,7 @@ extension Templates {
     extension {{name}} {
     {{#waiters}}
     {{#comment}}
-        /// {{.}}
+        {{>comment}}
     {{/comment}}
     {{#deprecated}}
         @available(*, deprecated)
