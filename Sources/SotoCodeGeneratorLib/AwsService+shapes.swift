@@ -376,7 +376,7 @@ extension AwsService {
         }
         let variable = name.toSwiftVariableCase()
         if rawValue == variable {
-            // rawValue = nil
+            rawValue = nil
         }
         return CodingKeysContext(
             variable: variable,
