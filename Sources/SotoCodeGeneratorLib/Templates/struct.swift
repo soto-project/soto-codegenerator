@@ -49,7 +49,7 @@ extension Templates {
     {{! Member variables }}
     {{#members}}
     {{#comment}}
-            /// {{.}}
+            {{>comment}}
     {{/comment}}
     {{#propertyWrapper}}
             {{.}}
@@ -58,6 +58,10 @@ extension Templates {
     {{/members}}
 
     {{! init() function }}
+    {{#empty(initParameters)}}
+            {{scopt}} init() {}
+    {{/empty(initParameters)}}
+    {{^empty(initParameters)}}
             {{scope}} init({{#initParameters}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/initParameters}}) {
     {{#members}}
     {{^deprecated}}
@@ -68,6 +72,7 @@ extension Templates {
     {{/deprecated}}
     {{/members}}
             }
+    {{/empty(initParameters)}}
     {{! deprecated init() function }}
     {{^empty(deprecatedMembers)}}
             @available(*, deprecated, message:"Members {{#deprecatedMembers}}{{.}}{{^last()}}, {{/last()}}{{/deprecatedMembers}} have been deprecated")
@@ -127,28 +132,23 @@ extension Templates {
     {{/first(validation)}}
 
     {{! CodingKeys enum }}
-    {{#first(members)}}
-    {{^first(codingKeys)}}
+    {{^empty(members)}}
+    {{#empty(codingKeys)}}
             private enum CodingKeys: CodingKey {}
-    {{/first(codingKeys)}}
-    {{#first(codingKeys)}}
+    {{/empty(codingKeys)}}
+    {{^empty(codingKeys)}}
             private enum CodingKeys: String, CodingKey {
     {{#codingKeys}}
     {{#rawValue}}
-    {{#duplicate}}
-                case {{variable}} = "_{{.}}" // TODO this is temporary measure for avoiding CodingKey duplication.
-    {{/duplicate}}
-    {{^duplicate}}
                 case {{variable}} = "{{.}}"
-    {{/duplicate}}
     {{/rawValue}}
     {{^rawValue}}
                 case {{variable}}
     {{/rawValue}}
     {{/codingKeys}}
             }
-    {{/first(codingKeys)}}
-    {{/first(members)}}
+    {{/empty(codingKeys)}}
+    {{/empty(members)}}
         }
 
     """#
