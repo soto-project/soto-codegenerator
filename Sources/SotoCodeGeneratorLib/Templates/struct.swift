@@ -47,6 +47,7 @@ extension Templates {
 
     {{/encoding}}
     {{! Member variables }}
+    {{^empty(members)}}
     {{#members}}
     {{#comment}}
             {{>comment}}
@@ -57,9 +58,10 @@ extension Templates {
             {{scope}} {{#propertyWrapper}}var{{/propertyWrapper}}{{^propertyWrapper}}let{{/propertyWrapper}} {{variable}}: {{type}}
     {{/members}}
 
+    {{/empty(members)}}
     {{! init() function }}
     {{#empty(initParameters)}}
-            {{scopt}} init() {}
+            {{scope}} init() {}
     {{/empty(initParameters)}}
     {{^empty(initParameters)}}
             {{scope}} init({{#initParameters}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/initParameters}}) {
@@ -130,9 +132,9 @@ extension Templates {
     {{/validation}}
             }
     {{/first(validation)}}
-
     {{! CodingKeys enum }}
     {{^empty(members)}}
+
     {{#empty(codingKeys)}}
             private enum CodingKeys: CodingKey {}
     {{/empty(codingKeys)}}
