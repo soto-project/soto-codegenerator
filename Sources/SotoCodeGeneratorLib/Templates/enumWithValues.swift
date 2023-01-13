@@ -126,21 +126,21 @@ extension Templates {
     {{/first(validation)}}
     {{! CodingKeys enum }}
     {{#first(members)}}
-    {{^first(codingKeys)}}
+    {{#empty(codingKeys)}}
             private enum CodingKeys: CodingKey {}
-    {{/first(codingKeys)}}
-    {{#first(codingKeys)}}
+    {{/empty(codingKeys)}}
+    {{^empty(codingKeys)}}
             private enum CodingKeys: String, CodingKey {
     {{#codingKeys}}
-    {{#duplicate}}
-                case {{variable}} = "_{{codingKey}}" // TODO this is temporary measure for avoiding CodingKey duplication.
-    {{/duplicate}}
-    {{^duplicate}}
-                case {{variable}} = "{{codingKey}}"
-    {{/duplicate}}
+    {{#rawValue}}
+                case {{variable}} = "{{.}}"
+    {{/rawValue}}
+    {{^rawValue}}
+                case {{variable}}
+    {{/rawValue}}
     {{/codingKeys}}
             }
-    {{/first(codingKeys)}}
+    {{/empty(codingKeys)}}
     {{/first(members)}}
         }
 
