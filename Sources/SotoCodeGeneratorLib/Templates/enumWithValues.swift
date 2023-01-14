@@ -32,7 +32,7 @@ extension Templates {
     {{! enum cases }}
     {{#members}}
     {{#comment}}
-            /// {{.}}
+            {{>comment}}
     {{/comment}}
             case {{variable}}({{type}})
     {{/members}}

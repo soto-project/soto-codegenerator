@@ -14,6 +14,7 @@
 
 extension Templates {
     static let errorTemplate = #"""
+    {{%CONTENT_TYPE:TEXT}}
     // MARK: - Errors
 
     /// Error enum for {{name}}
@@ -44,7 +45,7 @@ extension Templates {
 
     {{#errors}}
     {{#comment}}
-        /// {{.}}
+        {{>comment}}
     {{/comment}}
         {{scope}} static var {{enum}}: Self { .init(.{{enum}}) }
     {{/errors}}

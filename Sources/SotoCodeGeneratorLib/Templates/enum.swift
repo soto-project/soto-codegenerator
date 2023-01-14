@@ -25,7 +25,7 @@ extension Templates {
 
     {{#values}}
     {{#documentation}}
-            /// {{.}}
+            {{>comment}}
     {{/documentation}}
             {{scope}} static var {{case}}: Self { .init(rawValue: "{{rawValue}}") }
     {{/values}}
@@ -35,7 +35,7 @@ extension Templates {
         {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, _SotoSendable {
     {{#values}}
     {{#documentation}}
-            /// {{.}}
+            {{>comment}}
     {{/documentation}}
             case {{case}}{{#rawValue}} = "{{.}}"{{/rawValue}}
     {{/values}}
