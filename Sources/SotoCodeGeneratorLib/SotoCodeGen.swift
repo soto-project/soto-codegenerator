@@ -17,7 +17,6 @@ import HummingbirdMustache
 import Logging
 import SotoSmithy
 import SotoSmithyAWS
-import SwiftFormat
 
 public protocol SotoCodeGenCommand {
     var inputFile: String? { get }
@@ -28,7 +27,6 @@ public protocol SotoCodeGenCommand {
     var endpoints: String { get }
     var module: String? { get }
     var output: Bool { get }
-    var swiftFormat: Bool { get }
     var htmlComments: Bool { get }
     var smithy: Bool { get }
     var logLevel: String? { get }
@@ -38,22 +36,6 @@ public struct SotoCodeGen {
     struct FileError: Error {
         let filename: String
         let error: Error
-    }
-
-    enum SwiftFormatConfig {
-        static let disabledRules = FormatRules.disabledByDefault + ["redundantReturn", "redundantBackticks", "trailingCommas", "extensionAccessControl"]
-        static let ruleNames = Set(FormatRules.byName.keys).subtracting(disabledRules)
-        static let rules: [FormatRule] = ruleNames.map { FormatRules.byName[$0]! }
-        static let formatOptions = FormatOptions(
-            ifdefIndent: .noIndent,
-            wrapArguments: .beforeFirst,
-            wrapParameters: .beforeFirst,
-            wrapCollections: .beforeFirst,
-            hoistPatternLet: false,
-            stripUnusedArguments: .unnamedOnly,
-            explicitSelf: .insert,
-            noSpaceOperators: ["...", "..<"]
-        )
     }
 
     let command: SotoCodeGenCommand
@@ -196,15 +178,6 @@ public struct SotoCodeGen {
         }) { left, _ in left }
     }
 
-    /// Run swift format on String
-    func format(_ string: String) throws -> String {
-        if self.command.swiftFormat {
-            return try SwiftFormat.format(string, rules: Self.SwiftFormatConfig.rules, options: Self.SwiftFormatConfig.formatOptions)
-        } else {
-            return string
-        }
-    }
-
     /// Generate service files from AWSService
     /// - Parameter codeGenerator: service generated from JSON
     func generateFiles(with service: AwsService, config: ConfigFile) throws {
@@ -232,13 +205,13 @@ public struct SotoCodeGen {
         }
 
         let api = self.library.render(apiContext, withTemplate: "api")!
-        if try self.format(api)
+        if try api
             .writeIfChanged(toFile: "\(basePath)/\(prefix)_api.swift")
         {
             self.logger.info("Wrote \(prefix)_api.swift")
         }
         let apiAsync = self.library.render(apiContext, withTemplate: "api_async")!
-        if self.command.output, try self.format(apiAsync).writeIfChanged(
+        if self.command.output, try apiAsync.writeIfChanged(
             toFile: "\(basePath)/\(prefix)_api+async.swift"
         ) {
             self.logger.info("Wrote \(prefix)_api+async.swift")
@@ -252,7 +225,7 @@ public struct SotoCodeGen {
         }
 
         let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
-        if self.command.output, try self.format(shapes).writeIfChanged(
+        if self.command.output, try shapes.writeIfChanged(
             toFile: "\(basePath)/\(prefix)_shapes.swift"
         ) {
             self.logger.info("Wrote \(prefix)_shapes.swift")

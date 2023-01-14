@@ -11,7 +11,6 @@ let package = Package(
         .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.3.1"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.0.0"),
         .package(url: "https://github.com/hummingbird-project/hummingbird-mustache.git", from: "1.0.0"),
-        .package(url: "https://github.com/nicklockwood/SwiftFormat.git", .exact("0.48.17")),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
     ],
     targets: [
@@ -29,7 +28,6 @@ let package = Package(
                 .product(name: "SotoSmithy", package: "soto-smithy"),
                 .product(name: "SotoSmithyAWS", package: "soto-smithy"),
                 .product(name: "HummingbirdMustache", package: "hummingbird-mustache"),
-                .product(name: "SwiftFormat", package: "SwiftFormat"),
                 .product(name: "Logging", package: "swift-log")
             ]
         ),
