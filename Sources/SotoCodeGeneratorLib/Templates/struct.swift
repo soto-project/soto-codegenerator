@@ -40,7 +40,11 @@ extension Templates {
     {{#encoding}}
     {{! Is encoding a dictionary }}
     {{#key}}
-            {{scope}} struct {{name}}: DictionaryCoderProperties { {{scope}} static let entry: String? = {{#entry}}"{{.}}"{{/entry}}{{^entry}}nil{{/entry}}; {{scope}} static let key = "{{key}}"; {{scope}} static let value = "{{value}}" }
+            {{scope}} struct {{name}}: DictionaryCoderProperties {
+                {{scope}} static let entry: String? = {{#entry}}"{{.}}"{{/entry}}{{^entry}}nil{{/entry}}
+                {{scope}} static let key = "{{key}}"
+                {{scope}} static let value = "{{value}}"
+            }
     {{/key}}
     {{^key}}
             {{scope}} struct {{name}}: ArrayCoderProperties { {{scope}} static let member = "{{member}}" }
