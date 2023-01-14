@@ -37,7 +37,7 @@ extension Templates {
     {{#documentation}}
             {{>comment}}
     {{/documentation}}
-            case {{case}}{{#rawValue}} = "{{.}}"{{/rawValue}}
+            case {{case}} = "{{rawValue}}"
     {{/values}}
             {{scope}} var description: String { return self.rawValue }
         }

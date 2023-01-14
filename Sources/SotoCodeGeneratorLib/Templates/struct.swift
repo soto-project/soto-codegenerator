@@ -144,7 +144,7 @@ extension Templates {
     {{^empty(codingKeys)}}
             private enum CodingKeys: String, CodingKey {
     {{#codingKeys}}
-                case {{variable}}{{#rawValue}} = "{{.}}"{{/rawValue}}
+                case {{variable}} = "{{rawValue}}"
     {{/codingKeys}}
             }
     {{/empty(codingKeys)}}
