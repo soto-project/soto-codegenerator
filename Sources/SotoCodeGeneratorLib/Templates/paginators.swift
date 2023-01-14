@@ -20,12 +20,7 @@ extension Templates {
     extension {{name}} {
     {{#paginators}}
     {{#operation.comment}}
-        {{^empty(.)}}
-        ///  {{.}}
-        {{/empty(.)}}
-        {{#empty(.)}}
-        ///{{.}}
-        {{/empty(.)}}
+        {{>comment}}
     {{/operation.comment}}
         ///
         /// Provide paginated results to closure `onPage` for it to combine them into one result.

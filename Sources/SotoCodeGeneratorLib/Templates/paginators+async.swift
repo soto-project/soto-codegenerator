@@ -21,12 +21,7 @@ extension Templates {
     extension {{name}} {
     {{#paginators}}
     {{#operation.comment}}
-        {{^empty(.)}}
-        ///  {{.}}
-        {{/empty(.)}}
-        {{#empty(.)}}
-        ///{{.}}
-        {{/empty(.)}}
+        {{>comment}}
     {{/operation.comment}}
         /// Return PaginatorSequence for operation.
         ///
