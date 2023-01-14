@@ -124,7 +124,7 @@ extension Templates {
                     options: options
                 )
                 {{#endpointDiscovery}}
-                    self.endpointStorage = .init(endpoint: self.config.endpoint)
+                self.endpointStorage = .init(endpoint: self.config.endpoint)
                 {{/endpointDiscovery}}
             }
 
@@ -166,7 +166,7 @@ extension Templates {
         {{#endpointDiscovery}}
 
             func getEndpoint(logger: Logger, eventLoop: EventLoop) -> EventLoopFuture<AWSEndpoints> {
-                return describeEndpoints(.init(), logger: logger, on: eventLoop).map {
+                return self.describeEndpoints(.init(), logger: logger, on: eventLoop).map {
                     .init(endpoints: $0.endpoints.map {
                         .init(address: "https://\($0.address)", cachePeriodInMinutes: $0.cachePeriodInMinutes)
                     })

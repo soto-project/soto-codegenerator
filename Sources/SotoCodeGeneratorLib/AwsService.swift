@@ -674,7 +674,7 @@ extension AwsService {
     struct EnumMemberContext {
         let `case`: String
         let documentation: [String.SubSequence]
-        let string: String
+        let rawValue: String?
     }
 
     struct ArrayEncodingPropertiesContext: EncodingPropertiesContext {

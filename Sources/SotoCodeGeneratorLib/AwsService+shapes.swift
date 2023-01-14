@@ -65,6 +65,7 @@ extension AwsService {
         guard let trait = shape.trait(type: EnumTrait.self) else { return nil }
         let usedInInput = shape.hasTrait(type: SotoInputShapeTrait.self)
         let usedInOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
+        let isExtensible = shape.hasTrait(type: SotoExtensibleEnumTrait.self)
         guard usedInInput || usedInOutput else { return nil }
 
         // Operations
@@ -75,7 +76,11 @@ extension AwsService {
             if key.allLetterIsNumeric() {
                 key = "\(shapeName.toSwiftVariableCase())\(key)"
             }
-            valueContexts.append(EnumMemberContext(case: key, documentation: processDocs(value.documentation), string: value.value))
+            var rawValue: String?
+            if isExtensible || key != value.value.reservedwordEscaped() {
+                rawValue = value.value
+            }
+            valueContexts.append(EnumMemberContext(case: key, documentation: processDocs(value.documentation), rawValue: rawValue))
         }
         return EnumContext(
             name: shapeName.toSwiftClassCase(),
@@ -89,6 +94,7 @@ extension AwsService {
     func generateEnumContext(_ enumShape: EnumShape, shapeName: String) -> EnumContext? {
         let usedInInput = enumShape.hasTrait(type: SotoInputShapeTrait.self)
         let usedInOutput = enumShape.hasTrait(type: SotoOutputShapeTrait.self)
+        let isExtensible = enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
         guard usedInInput || usedInOutput else { return nil }
         guard let members = enumShape.members else { return nil }
         // Operations
@@ -110,10 +116,14 @@ extension AwsService {
                 value = enumerated.element.key
             }
             let documentation = enumerated.element.value.trait(type: DocumentationTrait.self)
+            var rawValue: String?
+            if isExtensible || key != value.reservedwordEscaped() {
+                rawValue = value
+            }
             return EnumMemberContext(
                 case: key,
                 documentation: documentation.map { processDocs($0.value) } ?? [],
-                string: value
+                rawValue: rawValue
             )
         }
         return EnumContext(
@@ -375,7 +385,7 @@ extension AwsService {
             rawValue = aliasTrait.alias
         }
         let variable = name.toSwiftVariableCase()
-        if rawValue == variable {
+        if variable == rawValue?.reservedwordEscaped() {
             rawValue = nil
         }
         return CodingKeysContext(

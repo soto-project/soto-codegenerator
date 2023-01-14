@@ -113,7 +113,7 @@ extension Templates {
     {{/withDictionaryContexts(.)}}
     {{! validate min,max,pattern }}
     {{#sorted(reqs)}}
-                    try validate(value, name: "{{name}}", parent: name, {{key}}: {{value}})
+                    try self.validate(value, name: "{{name}}", parent: name, {{key}}: {{value}})
     {{/sorted(reqs)}}
     {{/validation}}
     {{#requiresDefaultValidation}}

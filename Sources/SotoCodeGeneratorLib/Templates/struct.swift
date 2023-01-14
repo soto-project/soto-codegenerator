@@ -36,16 +36,18 @@ extension Templates {
             ]
 
     {{/first(awsShapeMembers)}}
+    {{^empty(encoding)}}
     {{#encoding}}
     {{! Is encoding a dictionary }}
     {{#key}}
-            {{scope}} struct {{name}}: DictionaryCoderProperties { static {{scope}} let entry: String? = {{#entry}}"{{.}}"{{/entry}}{{^entry}}nil{{/entry}}; static {{scope}} let key = "{{key}}"; static {{scope}} let value = "{{value}}" }
+            {{scope}} struct {{name}}: DictionaryCoderProperties { {{scope}} static let entry: String? = {{#entry}}"{{.}}"{{/entry}}{{^entry}}nil{{/entry}}; {{scope}} static let key = "{{key}}"; {{scope}} static let value = "{{value}}" }
     {{/key}}
     {{^key}}
-            {{scope}} struct {{name}}: ArrayCoderProperties { static {{scope}} let member = "{{member}}" }
+            {{scope}} struct {{name}}: ArrayCoderProperties { {{scope}} static let member = "{{member}}" }
     {{/key}}
-
     {{/encoding}}
+
+    {{/empty(encoding)}}
     {{! Member variables }}
     {{^empty(members)}}
     {{#members}}
@@ -60,10 +62,10 @@ extension Templates {
 
     {{/empty(members)}}
     {{! init() function }}
-    {{#empty(initParameters)}}
+    {{#empty(members)}}
             {{scope}} init() {}
-    {{/empty(initParameters)}}
-    {{^empty(initParameters)}}
+    {{/empty(members)}}
+    {{^empty(members)}}
             {{scope}} init({{#initParameters}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/initParameters}}) {
     {{#members}}
     {{^deprecated}}
@@ -74,10 +76,11 @@ extension Templates {
     {{/deprecated}}
     {{/members}}
             }
-    {{/empty(initParameters)}}
+    {{/empty(members)}}
     {{! deprecated init() function }}
     {{^empty(deprecatedMembers)}}
-            @available(*, deprecated, message:"Members {{#deprecatedMembers}}{{.}}{{^last()}}, {{/last()}}{{/deprecatedMembers}} have been deprecated")
+
+            @available(*, deprecated, message: "Members {{#deprecatedMembers}}{{.}}{{^last()}}, {{/last()}}{{/deprecatedMembers}} have been deprecated")
             {{scope}} init({{#members}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/members}}) {
     {{#members}}
                 self.{{variable}} = {{variable}}
@@ -141,12 +144,7 @@ extension Templates {
     {{^empty(codingKeys)}}
             private enum CodingKeys: String, CodingKey {
     {{#codingKeys}}
-    {{#rawValue}}
-                case {{variable}} = "{{.}}"
-    {{/rawValue}}
-    {{^rawValue}}
-                case {{variable}}
-    {{/rawValue}}
+                case {{variable}}{{#rawValue}} = "{{.}}"{{/rawValue}}
     {{/codingKeys}}
             }
     {{/empty(codingKeys)}}

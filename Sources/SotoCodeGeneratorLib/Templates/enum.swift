@@ -22,11 +22,12 @@ extension Templates {
             {{scope}} init(rawValue: String) {
                 self.rawValue = rawValue
             }
+
     {{#values}}
     {{#documentation}}
             /// {{.}}
     {{/documentation}}
-            {{scope}} static var {{case}}: Self { .init(rawValue: "{{string}}")}
+            {{scope}} static var {{case}}: Self { .init(rawValue: "{{rawValue}}") }
     {{/values}}
         }
     {{/isExtensible}}
@@ -36,7 +37,7 @@ extension Templates {
     {{#documentation}}
             /// {{.}}
     {{/documentation}}
-            case {{case}} = "{{string}}"
+            case {{case}}{{#rawValue}} = "{{.}}"{{/rawValue}}
     {{/values}}
             {{scope}} var description: String { return self.rawValue }
         }
