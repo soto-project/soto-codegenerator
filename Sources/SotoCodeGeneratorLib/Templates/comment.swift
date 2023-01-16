@@ -13,40 +13,14 @@
 //===----------------------------------------------------------------------===//
 
 extension Templates {
-    static let shapesTemplate = """
+    static let commentTemplate = """
     {{%CONTENT_TYPE:TEXT}}
-    {{>header}}
-
-    import Foundation
-    import SotoCore
-
-    extension {{name}} {
-        // MARK: Enums
-    {{#shapes}}
-    {{#enum}}
-
-    {{>enum}}
-    {{/enum}}
-    {{/shapes}}
-    {{#shapes}}
-    {{#enumWithValues}}
-
-    {{>enumWithValues}}
-    {{/enumWithValues}}
-    {{/shapes}}
-
-        // MARK: Shapes
-    {{#shapes}}
-    {{#struct}}
-
-    {{>struct}}
-    {{/struct}}
-    {{/shapes}}
-    }
-    {{#errors}}
-
-    {{>errors}}
-    {{/errors}}
+    {{^empty(.)}}
+    /// {{.}}
+    {{/empty(.)}}
+    {{#empty(.)}}
+    ///{{.}}
+    {{/empty(.)}}
 
     """
 }

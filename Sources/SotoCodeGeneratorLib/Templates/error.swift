@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -14,7 +14,8 @@
 
 extension Templates {
     static let errorTemplate = #"""
-    // MARK - Errors
+    {{%CONTENT_TYPE:TEXT}}
+    // MARK: - Errors
 
     /// Error enum for {{name}}
     {{scope}} struct {{errorName}}: AWSErrorType {
@@ -44,7 +45,7 @@ extension Templates {
 
     {{#errors}}
     {{#comment}}
-        /// {{.}}
+        {{>comment}}
     {{/comment}}
         {{scope}} static var {{enum}}: Self { .init(.{{enum}}) }
     {{/errors}}
@@ -61,5 +62,6 @@ extension Templates {
             return "\(self.error.rawValue): \(self.message ?? "")"
         }
     }
+
     """#
 }

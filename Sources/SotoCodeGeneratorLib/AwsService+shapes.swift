@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2022 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -75,7 +75,7 @@ extension AwsService {
             if key.allLetterIsNumeric() {
                 key = "\(shapeName.toSwiftVariableCase())\(key)"
             }
-            valueContexts.append(EnumMemberContext(case: key, documentation: processDocs(value.documentation), string: value.value))
+            valueContexts.append(EnumMemberContext(case: key, documentation: processDocs(value.documentation), rawValue: value.value))
         }
         return EnumContext(
             name: shapeName.toSwiftClassCase(),
@@ -113,7 +113,7 @@ extension AwsService {
             return EnumMemberContext(
                 case: key,
                 documentation: documentation.map { processDocs($0.value) } ?? [],
-                string: value
+                rawValue: value
             )
         }
         return EnumContext(
@@ -370,11 +370,16 @@ extension AwsService {
         else {
             return nil
         }
-        var codingKey: String = name
+        var rawValue: String = name
         if let aliasTrait = member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait {
-            codingKey = aliasTrait.alias
+            rawValue = aliasTrait.alias
         }
-        return CodingKeysContext(variable: name.toSwiftVariableCase(), codingKey: codingKey, duplicate: false)
+        let variable = name.toSwiftVariableCase()
+        return CodingKeysContext(
+            variable: variable,
+            rawValue: rawValue,
+            duplicate: false
+        )
     }
 
     /// Generate array/dictionary encoding contexts

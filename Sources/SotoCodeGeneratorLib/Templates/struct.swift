@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -31,24 +31,32 @@ extension Templates {
     {{#first(awsShapeMembers)}}
             {{scope}} static var _encoding = [
     {{#awsShapeMembers}}
-                AWSMemberEncoding(label: "{{name}}"{{#location}}, location: {{.}}{{/location}}){{^last()}}, {{/last()}}
+                AWSMemberEncoding(label: "{{name}}"{{#location}}, location: {{.}}{{/location}}){{^last()}},{{/last()}}
     {{/awsShapeMembers}}
             ]
+
     {{/first(awsShapeMembers)}}
+    {{^empty(encoding)}}
     {{#encoding}}
     {{! Is encoding a dictionary }}
     {{#key}}
-            {{scope}} struct {{name}}: DictionaryCoderProperties { static {{scope}} let entry: String? = {{#entry}}"{{.}}"{{/entry}}{{^entry}}nil{{/entry}}; static {{scope}} let key = "{{key}}"; static {{scope}} let value = "{{value}}" }
+            {{scope}} struct {{name}}: DictionaryCoderProperties {
+                {{scope}} static let entry: String? = {{#entry}}"{{.}}"{{/entry}}{{^entry}}nil{{/entry}}
+                {{scope}} static let key = "{{key}}"
+                {{scope}} static let value = "{{value}}"
+            }
     {{/key}}
     {{^key}}
-            {{scope}} struct {{name}}: ArrayCoderProperties { static {{scope}} let member = "{{member}}" }
+            {{scope}} struct {{name}}: ArrayCoderProperties { {{scope}} static let member = "{{member}}" }
     {{/key}}
     {{/encoding}}
 
+    {{/empty(encoding)}}
     {{! Member variables }}
+    {{^empty(members)}}
     {{#members}}
     {{#comment}}
-            /// {{.}}
+            {{>comment}}
     {{/comment}}
     {{#propertyWrapper}}
             {{.}}
@@ -56,7 +64,12 @@ extension Templates {
             {{scope}} {{#propertyWrapper}}var{{/propertyWrapper}}{{^propertyWrapper}}let{{/propertyWrapper}} {{variable}}: {{type}}
     {{/members}}
 
+    {{/empty(members)}}
     {{! init() function }}
+    {{#empty(members)}}
+            {{scope}} init() {}
+    {{/empty(members)}}
+    {{^empty(members)}}
             {{scope}} init({{#initParameters}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/initParameters}}) {
     {{#members}}
     {{^deprecated}}
@@ -67,9 +80,11 @@ extension Templates {
     {{/deprecated}}
     {{/members}}
             }
+    {{/empty(members)}}
     {{! deprecated init() function }}
     {{^empty(deprecatedMembers)}}
-            @available(*, deprecated, message:"Members {{#deprecatedMembers}}{{.}}{{^last()}}, {{/last()}}{{/deprecatedMembers}} have been deprecated")
+
+            @available(*, deprecated, message: "Members {{#deprecatedMembers}}{{.}}{{^last()}}, {{/last()}}{{/deprecatedMembers}} have been deprecated")
             {{scope}} init({{#members}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/members}}) {
     {{#members}}
                 self.{{variable}} = {{variable}}
@@ -124,25 +139,21 @@ extension Templates {
     {{/validation}}
             }
     {{/first(validation)}}
-
     {{! CodingKeys enum }}
-    {{#first(members)}}
-    {{^first(codingKeys)}}
+    {{^empty(members)}}
+
+    {{#empty(codingKeys)}}
             private enum CodingKeys: CodingKey {}
-    {{/first(codingKeys)}}
-    {{#first(codingKeys)}}
+    {{/empty(codingKeys)}}
+    {{^empty(codingKeys)}}
             private enum CodingKeys: String, CodingKey {
     {{#codingKeys}}
-    {{#duplicate}}
-                case {{variable}} = "_{{codingKey}}" // TODO this is temporary measure for avoiding CodingKey duplication.
-    {{/duplicate}}
-    {{^duplicate}}
-                case {{variable}} = "{{codingKey}}"
-    {{/duplicate}}
+                case {{variable}} = "{{rawValue}}"
     {{/codingKeys}}
             }
-    {{/first(codingKeys)}}
-    {{/first(members)}}
+    {{/empty(codingKeys)}}
+    {{/empty(members)}}
         }
+
     """#
 }

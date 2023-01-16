@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -20,7 +20,7 @@ extension Templates {
     extension {{name}} {
     {{#paginators}}
     {{#operation.comment}}
-        ///  {{.}}
+        {{>comment}}
     {{/operation.comment}}
         ///
         /// Provide paginated results to closure `onPage` for it to combine them into one result.
@@ -34,7 +34,7 @@ extension Templates {
         ///   - onPage: closure called with each paginated response. It combines an accumulating result with the contents of response. This combined result is then returned
         ///         along with a boolean indicating if the paginate operation should continue.
     {{#operation.deprecated}}
-        @available(*, deprecated, message:"{{.}}")
+        @available(*, deprecated, message: "{{.}}")
     {{/operation.deprecated}}
         {{scope}} func {{operation.funcName}}Paginator<Result>(
             _ input: {{operation.inputShape}},
@@ -43,10 +43,10 @@ extension Templates {
             on eventLoop: EventLoop? = nil,
             onPage: @escaping (Result, {{operation.outputShape}}, EventLoop) -> EventLoopFuture<(Bool, Result)>
         ) -> EventLoopFuture<Result> {
-            return client.paginate(
+            return self.client.paginate(
                 input: input,
                 initialValue: initialValue,
-                command: {{operation.funcName}},
+                command: self.{{operation.funcName}},
     {{#inputKey}}
                 inputKey: \{{operation.inputShape}}.{{.}},
                 outputKey: \{{operation.outputShape}}.{{outputKey}},
@@ -70,7 +70,7 @@ extension Templates {
         ///   - eventLoop: EventLoop to run this process on
         ///   - onPage: closure called with each block of entries. Returns boolean indicating whether we should continue.
     {{#operation.deprecated}}
-        @available(*, deprecated, message:"{{.}}")
+        @available(*, deprecated, message: "{{.}}")
     {{/operation.deprecated}}
         {{scope}} func {{operation.funcName}}Paginator(
             _ input: {{operation.inputShape}},
@@ -78,9 +78,9 @@ extension Templates {
             on eventLoop: EventLoop? = nil,
             onPage: @escaping ({{operation.outputShape}}, EventLoop) -> EventLoopFuture<Bool>
         ) -> EventLoopFuture<Void> {
-            return client.paginate(
+            return self.client.paginate(
                 input: input,
-                command: {{operation.funcName}},
+                command: self.{{operation.funcName}},
     {{#inputKey}}
                 inputKey: \{{operation.inputShape}}.{{.}},
                 outputKey: \{{operation.outputShape}}.{{outputKey}},
@@ -115,5 +115,6 @@ extension Templates {
 
     {{/last()}}
     {{/paginatorShapes}}
+
     """#
 }

@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -22,25 +22,26 @@ extension Templates {
             {{scope}} init(rawValue: String) {
                 self.rawValue = rawValue
             }
+
     {{#values}}
     {{#documentation}}
-            /// {{.}}
+            {{>comment}}
     {{/documentation}}
-            {{scope}} static var {{case}}: Self { .init(rawValue: "{{string}}")}
+            {{scope}} static var {{case}}: Self { .init(rawValue: "{{rawValue}}") }
     {{/values}}
         }
-
     {{/isExtensible}}
     {{^isExtensible}}
         {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, _SotoSendable {
     {{#values}}
     {{#documentation}}
-            /// {{.}}
+            {{>comment}}
     {{/documentation}}
-            case {{case}} = "{{string}}"
+            case {{case}} = "{{rawValue}}"
     {{/values}}
             {{scope}} var description: String { return self.rawValue }
         }
     {{/isExtensible}}
+
     """
 }

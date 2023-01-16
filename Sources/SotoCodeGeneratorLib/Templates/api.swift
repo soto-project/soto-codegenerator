@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -28,7 +28,7 @@ extension Templates {
         {{#first(description)}}
         ///
         {{#description}}
-        /// {{.}}
+        {{>comment}}
         {{/description}}
         {{/first(description)}}
         {{scope}} struct {{ name }}: AWSService {
@@ -88,14 +88,14 @@ extension Templates {
         {{#first(serviceEndpoints)}}
                     serviceEndpoints: [
         {{#serviceEndpoints}}
-                        {{.}}{{^last()}}, {{/last()}}
+                        {{.}}{{^last()}},{{/last()}}
         {{/serviceEndpoints}}
                     ],
         {{/first(serviceEndpoints)}}
         {{#first(partitionEndpoints)}}
                     partitionEndpoints: [
         {{#partitionEndpoints}}
-                        {{.}}{{^last()}}, {{/last()}}
+                        {{.}}{{^last()}},{{/last()}}
         {{/partitionEndpoints}}
                     ],
         {{/first(partitionEndpoints)}}
@@ -104,9 +104,9 @@ extension Templates {
         {{#variantEndpoints}}
                         [{{variant}}]: .init(endpoints: [
         {{#endpoints.endpoints}}
-                            "{{region}}": "{{hostname}}"{{^last()}}, {{/last()}}
+                            "{{region}}": "{{hostname}}"{{^last()}},{{/last()}}
         {{/endpoints.endpoints}}
-                        ]){{^last()}}, {{/last()}}
+                        ]){{^last()}},{{/last()}}
         {{/variantEndpoints}}
                     ],
         {{/first(variantEndpoints)}}
@@ -124,7 +124,7 @@ extension Templates {
                     options: options
                 )
                 {{#endpointDiscovery}}
-                    self.endpointStorage = .init(endpoint: self.config.endpoint)
+                self.endpointStorage = .init(endpoint: self.config.endpoint)
                 {{/endpointDiscovery}}
             }
 
@@ -132,13 +132,13 @@ extension Templates {
         {{#operations}}
 
         {{#comment}}
-            /// {{.}}
+            {{>comment}}
         {{/comment}}
         {{#documentationUrl}}
             /// {{.}}
         {{/documentationUrl}}
         {{#deprecated}}
-            @available(*, deprecated, message:"{{.}}")
+            @available(*, deprecated, message: "{{.}}")
         {{/deprecated}}
             {{^outputShape}}@discardableResult {{/outputShape}}{{scope}} func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
                 return self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop)
@@ -150,15 +150,15 @@ extension Templates {
         {{#streamingOperations}}
 
         {{#comment}}
-            /// {{.}}
+            {{>comment}}
         {{/comment}}
         {{#documentationUrl}}
             /// {{.}}
         {{/documentationUrl}}
         {{#deprecated}}
-            @available(*, deprecated, message:"{{.}}")
+            @available(*, deprecated, message: "{{.}}")
         {{/deprecated}}
-            {{^outputShape}}@discardableResult {{/outputShape}}{{scope}} func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil{{#streaming}}, _ stream: @escaping ({{.}}, EventLoop)->EventLoopFuture<Void>{{/streaming}}) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
+            {{^outputShape}}@discardableResult {{/outputShape}}{{scope}} func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil{{#streaming}}, _ stream: @escaping ({{.}}, EventLoop) -> EventLoopFuture<Void>{{/streaming}}) -> EventLoopFuture<{{#outputShape}}{{.}}{{/outputShape}}{{^outputShape}}Void{{/outputShape}}> {
                 return self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop{{#streaming}}, stream: stream{{/streaming}})
             }
         {{/streamingOperations}}
@@ -166,7 +166,7 @@ extension Templates {
         {{#endpointDiscovery}}
 
             func getEndpoint(logger: Logger, eventLoop: EventLoop) -> EventLoopFuture<AWSEndpoints> {
-                return describeEndpoints(.init(), logger: logger, on: eventLoop).map {
+                return self.describeEndpoints(.init(), logger: logger, on: eventLoop).map {
                     .init(endpoints: $0.endpoints.map {
                         .init(address: "https://\($0.address)", cachePeriodInMinutes: $0.cachePeriodInMinutes)
                     })
@@ -186,13 +186,14 @@ extension Templates {
             {{/endpointDiscovery}}
             }
         }
-
         {{#paginators}}
+
         {{>paginators}}
         {{/paginators}}
-
         {{#waiters}}
+
         {{>waiters}}
         {{/waiters}}
+
         """#
 }

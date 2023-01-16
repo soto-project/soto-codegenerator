@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -20,7 +20,7 @@ extension Templates {
     extension {{name}} {
     {{#waiters}}
     {{#comment}}
-        /// {{.}}
+        {{>comment}}
     {{/comment}}
     {{#deprecated}}
         @available(*, deprecated)
@@ -60,7 +60,7 @@ extension Templates {
     {{#maxDelayTime}}
                 maxDelayTime: .seconds({{.}}),
     {{/maxDelayTime}}
-                command: {{operation.funcName}}
+                command: self.{{operation.funcName}}
             )
             return self.client.waitUntil(input, waiter: waiter, maxWaitTime: maxWaitTime, logger: logger, on: eventLoop)
         }
@@ -69,5 +69,6 @@ extension Templates {
     {{/last()}}
     {{/waiters}}
     }
+
     """
 }

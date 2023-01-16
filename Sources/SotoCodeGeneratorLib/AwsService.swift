@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2022 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -300,8 +300,8 @@ struct AwsService {
     }
 
     /// process documenation string
-    func processDocs(from shape: Shape) -> [String.SubSequence] {
-        var docs: [String.SubSequence]
+    func processDocs(from shape: Shape) -> [Substring] {
+        var docs: [Substring]
 
         let documentation = shape.trait(type: DocumentationTrait.self)?.value
         if self.outputHTMLComments {
@@ -311,7 +311,8 @@ struct AwsService {
                 .tagStriped()
                 .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
                 .split(separator: "\n")
-                .compactMap { $0.isEmpty ? nil : $0 } ?? []
+                .compactMap { $0.isEmpty ? nil : $0 }
+                .map { $0.dropLast(while: { $0.isWhitespace }) } ?? []
         }
 
         if let externalDocumentation = shape.trait(type: ExternalDocumentationTrait.self)?.value {
@@ -323,7 +324,7 @@ struct AwsService {
     }
 
     /// process documenation string
-    func processMemberDocs(from shape: MemberShape) -> [String.SubSequence] {
+    func processMemberDocs(from shape: MemberShape) -> [Substring] {
         guard var documentation = shape.trait(type: DocumentationTrait.self)?.value else { return [] }
         if let recommendation = shape.trait(type: RecommendedTrait.self)?.reason {
             documentation += "\n\(recommendation)"
@@ -333,6 +334,7 @@ struct AwsService {
             .replacingOccurrences(of: "\n +", with: " ", options: .regularExpression, range: nil)
             .split(separator: "\n")
             .compactMap { $0.isEmpty ? nil : $0 }
+            .map { $0.dropLast(while: { $0.isWhitespace }) }
     }
 
     /// process documentation string
@@ -672,7 +674,7 @@ extension AwsService {
     struct EnumMemberContext {
         let `case`: String
         let documentation: [String.SubSequence]
-        let string: String
+        let rawValue: String
     }
 
     struct ArrayEncodingPropertiesContext: EncodingPropertiesContext {
@@ -752,7 +754,7 @@ extension AwsService {
 
     struct CodingKeysContext {
         let variable: String
-        let codingKey: String
+        let rawValue: String
         var duplicate: Bool
     }
 

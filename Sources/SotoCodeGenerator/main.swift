@@ -42,9 +42,6 @@ struct Command: ParsableCommand, SotoCodeGenCommand {
     @Flag(name: .long, inversion: .prefixedNo, help: "Output files")
     var output: Bool = true
 
-    @Flag(name: [.customShort("f"), .customLong("format")], inversion: .prefixedNo, help: "Run swift format on output")
-    var swiftFormat: Bool = false
-
     @Flag(name: .long, help: "HTML comments")
     var htmlComments: Bool = false
 

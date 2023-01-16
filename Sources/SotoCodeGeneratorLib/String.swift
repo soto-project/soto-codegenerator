@@ -162,6 +162,19 @@ extension StringProtocol {
         return true
     }
 
+    func dropLast(while: (Self.Element) throws -> Bool) rethrows -> Self.SubSequence {
+        var position = self.endIndex
+        var count = 0
+        while position != self.startIndex {
+            position = self.index(before: position)
+            if try !`while`(self[position]) {
+                break
+            }
+            count += 1
+        }
+        return self.dropLast(count)
+    }
+
     private func lowerFirst() -> String {
         return String(self[startIndex]).lowercased() + self[index(after: startIndex)...]
     }

@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2021 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -23,18 +23,17 @@ extension Templates {
 
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     extension {{ name }} {
-
         // MARK: Async API Calls
     {{#operations}}
 
     {{#comment}}
-        /// {{.}}
+        {{>comment}}
     {{/comment}}
     {{#documentationUrl}}
         /// {{.}}
     {{/documentationUrl}}
     {{#deprecated}}
-        @available(*, deprecated, message:"{{.}}")
+        @available(*, deprecated, message: "{{.}}")
     {{/deprecated}}
         {{scope}} func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
             return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop)
@@ -46,13 +45,13 @@ extension Templates {
     {{#streamingOperations}}
 
     {{#comment}}
-        /// {{.}}
+        {{>comment}}
     {{/comment}}
     {{#documentationUrl}}
         /// {{.}}
     {{/documentationUrl}}
     {{#deprecated}}
-        @available(*, deprecated, message:"{{.}}")
+        @available(*, deprecated, message: "{{.}}")
     {{/deprecated}}
         {{scope}} func {{funcName}}Streaming({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled, on eventLoop: EventLoop? = nil, _ stream: @escaping ({{streaming}}, EventLoop) -> EventLoopFuture<Void>) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
             return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger, on: eventLoop, stream: stream)
@@ -60,15 +59,16 @@ extension Templates {
     {{/streamingOperations}}
     {{/first(streamingOperations)}}
     }
-
     {{#paginators}}
+
     {{>paginators_async}}
     {{/paginators}}
-
     {{#waiters}}
+
     {{>waiters_async}}
     {{/waiters}}
 
     #endif // compiler(>=5.5.2) && canImport(_Concurrency)
+
     """
 }
