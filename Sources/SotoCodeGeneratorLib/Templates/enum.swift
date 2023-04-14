@@ -16,7 +16,7 @@ extension Templates {
     static let enumTemplate = """
     {{%CONTENT_TYPE:TEXT}}
     {{#isExtensible}}
-        {{scope}} struct {{name}}: RawRepresentable, Equatable, Codable, _SotoSendable {
+        {{scope}} struct {{name}}: RawRepresentable, Equatable, Codable, Sendable {
             {{scope}} var rawValue: String
 
             {{scope}} init(rawValue: String) {
@@ -32,7 +32,7 @@ extension Templates {
         }
     {{/isExtensible}}
     {{^isExtensible}}
-        {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, _SotoSendable {
+        {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, Sendable {
     {{#values}}
     {{#documentation}}
             {{>comment}}

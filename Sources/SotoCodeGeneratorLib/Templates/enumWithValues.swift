@@ -16,7 +16,7 @@ extension Templates {
     static let enumWithValuesTemplate = #"""
     {{! Template for a AWSShape enum with values }}
     {{%CONTENT_TYPE:TEXT}}
-        {{scope}} {{object}} {{name}}: {{shapeProtocol}}, _SotoSendable {
+        {{scope}} {{object}} {{name}}: {{shapeProtocol}}, Sendable {
     {{#namespace}}
             {{scope}} static let _xmlNamespace: String? = "{{.}}"
     {{/namespace}}
