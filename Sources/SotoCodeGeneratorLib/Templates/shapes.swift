@@ -17,7 +17,12 @@ extension Templates {
     {{%CONTENT_TYPE:TEXT}}
     {{>header}}
 
+    #if os(macOS)
     import Foundation
+    #else
+    // swift-corelibs-foundation hasn't been updated with Sendable conformances
+    @preconcurrency import Foundation
+    #endif
     import SotoCore
 
     extension {{name}} {
