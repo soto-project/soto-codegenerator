@@ -19,9 +19,9 @@ extension Templates {
 
     #if compiler(>=5.7) && os(Linux)
     // swift-corelibs-foundation hasn't been updated with Sendable conformances
-    @preconcurrency import struct Foundation.Date
+    @preconcurrency import Foundation
     #else
-    import struct Foundation
+    import Foundation
     #endif
     import SotoCore
 
