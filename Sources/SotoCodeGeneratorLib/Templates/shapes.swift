@@ -17,11 +17,11 @@ extension Templates {
     {{%CONTENT_TYPE:TEXT}}
     {{>header}}
 
-    #if os(macOS)
-    import Foundation
-    #else
+    #if compiler(>=5.7) && os(Linux)
     // swift-corelibs-foundation hasn't been updated with Sendable conformances
-    @preconcurrency import Foundation
+    @preconcurrency import struct Foundation.Date
+    #else
+    import struct Foundation
     #endif
     import SotoCore
 
