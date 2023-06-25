@@ -99,7 +99,7 @@ extension MemberShape {
             if memberShape.hasTrait(type: EnumTrait.self) { return self.target.shapeName.toSwiftClassCase() }
             return "String"
         } else if memberShape is BlobShape {
-            if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSPayload" }
+            if self.hasTrait(type: HttpPayloadTrait.self) { return "HTTPBody" }
             return "AWSBase64Data"
         } else if memberShape is CollectionShape {
             return self.target.shapeName.toSwiftClassCase()
@@ -123,7 +123,7 @@ extension MemberShape {
             if memberShape.hasTrait(type: EnumTrait.self) { return "\(withServiceName).\(self.target.shapeName.toSwiftClassCase())" }
             return "String"
         } else if memberShape is BlobShape {
-            if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSPayload" }
+            if self.hasTrait(type: HttpPayloadTrait.self) { return "HTTPBody" }
             return "AWSBase64Data"
         } else if memberShape is CollectionShape {
             return "\(withServiceName).\(self.target.shapeName.toSwiftClassCase())"
