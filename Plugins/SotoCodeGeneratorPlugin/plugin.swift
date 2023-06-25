@@ -58,7 +58,6 @@ import PackagePlugin
             }
             let outputFiles: [Path] = [
                 genSourcesDir.appending("\(prefix)_api.swift"),
-                genSourcesDir.appending("\(prefix)_api+async.swift"),
                 genSourcesDir.appending("\(prefix)_shapes.swift"),
             ]
             return .buildCommand(

@@ -17,18 +17,15 @@ import HummingbirdMustache
 enum Templates {
     static var values: [String: String] = [
         "api": apiTemplate,
-        "api_async": apiAsyncTemplate,
         "comment": commentTemplate,
         "enum": enumTemplate,
         "enumWithValues": enumWithValuesTemplate,
         "errors": errorTemplate,
         "header": headerTemplate,
         "paginators": paginatorTemplate,
-        "paginators_async": paginatorAsyncTemplate,
         "shapes": shapesTemplate,
         "struct": structTemplate,
         "waiters": waiterTemplate,
-        "waiters_async": waiterAsyncTemplate
     ]
 
     static func createLibrary() throws -> HBMustacheLibrary {
