@@ -78,7 +78,7 @@ public struct SotoCodeGen {
                     var service = try AwsService(
                         model.value,
                         endpoints: endpoints,
-                        outputHTMLComments: command.htmlComments,
+                        outputHTMLComments: self.command.htmlComments,
                         logger: self.logger
                     )
                     // get service filename without path and extension
@@ -209,12 +209,6 @@ public struct SotoCodeGen {
             .writeIfChanged(toFile: "\(basePath)/\(prefix)_api.swift")
         {
             self.logger.info("Wrote \(prefix)_api.swift")
-        }
-        let apiAsync = self.library.render(apiContext, withTemplate: "api_async")!
-        if self.command.output, try apiAsync.writeIfChanged(
-            toFile: "\(basePath)/\(prefix)_api+async.swift"
-        ) {
-            self.logger.info("Wrote \(prefix)_api+async.swift")
         }
 
         var shapesContext = try service.generateShapesContext()
