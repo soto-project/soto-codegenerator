@@ -699,6 +699,9 @@ extension AwsService {
         let comment: [String.SubSequence]
         let deprecated: Bool
         var duplicate: Bool
+        var inBody: Bool
+        var inHeader: Bool
+        var isPayload: Bool
     }
 
     struct InitParamContext {
@@ -772,6 +775,7 @@ extension AwsService {
         let namespace: String?
         let isEncodable: Bool
         let isDecodable: Bool
+        let isResponse: Bool // is this the root response object
         let encoding: [EncodingPropertiesContext]
         let members: [MemberContext]
         let initParameters: [InitParamContext]

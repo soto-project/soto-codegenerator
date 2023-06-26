@@ -192,6 +192,7 @@ extension AwsService {
             namespace: xmlNamespace,
             isEncodable: shape.hasTrait(type: SotoInputShapeTrait.self),
             isDecodable: shape.hasTrait(type: SotoOutputShapeTrait.self),
+            isResponse: shape.hasTrait(type: SotoResponseShapeTrait.self),
             encoding: contexts.encoding,
             members: contexts.members,
             initParameters: initParameters,
@@ -312,7 +313,10 @@ extension AwsService {
             type: type + (optional ? "?" : ""),
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
-            duplicate: false // TODO: NEED to catch this
+            duplicate: false, // TODO: NEED to catch this
+            inBody: self.isMemberInBody(member),
+            inHeader: member.hasTrait(type: HttpHeaderTrait.self),
+            isPayload: member.hasTrait(type: HttpPayloadTrait.self) && model.shape(for: member.target) is BlobShape
         )
     }
 
@@ -361,12 +365,12 @@ extension AwsService {
     }
 
     func generateCodingKeyContext(_ member: MemberShape, name: String, isOutputShape: Bool) -> CodingKeysContext? {
-        guard isOutputShape ||
-            (!member.hasTrait(type: HttpHeaderTrait.self) &&
-                !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
-                !member.hasTrait(type: HttpQueryTrait.self) &&
-                !member.hasTrait(type: HttpLabelTrait.self) &&
-                !(member.hasTrait(type: HttpPayloadTrait.self) && model.shape(for: member.target) is BlobShape))
+        guard isMemberInBody(member)
+        /*            (!member.hasTrait(type: HttpHeaderTrait.self) &&
+         !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
+         !member.hasTrait(type: HttpQueryTrait.self) &&
+         !member.hasTrait(type: HttpLabelTrait.self) &&
+         !(member.hasTrait(type: HttpPayloadTrait.self) && model.shape(for: member.target) is BlobShape))*/
         else {
             return nil
         }
@@ -412,7 +416,7 @@ extension AwsService {
 
         switch memberShape {
         case let list as ListShape:
-            guard isMemberInBody(member) else { return nil }
+            guard self.isMemberInBody(member) else { return nil }
             guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let memberName = getListEntryName(member: member, list: list)
             guard let validMemberName = memberName else { return nil }
@@ -430,7 +434,7 @@ extension AwsService {
                 }
             }
         case let map as MapShape:
-            guard isMemberInBody(member) else { return nil }
+            guard self.isMemberInBody(member) else { return nil }
             guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let names = getMapEntryNames(member: member, map: map)
             if names.entry == "entry", names.key == "key", names.value == "value" {

@@ -91,6 +91,20 @@ extension Templates {
     {{/members}}
             }
     {{/empty(deprecatedMembers)}}
+    {{#isResponse}}
+
+            {{scope}} init(from decoder: Decoder) throws {
+    {{#first(awsShapeMembers)}}
+                let response = decoder.userInfo[.awsResponse] as? AWSResponse
+    {{/first(awsShapeMembers)}}
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+    {{#members}}
+    {{#inBody}}            self.{{variable}} = try container.decode({{type}}.self, forKey: .{{variable}}){{/inBody}}
+    {{#inHeader}}            self.{{variable}} = response?.headerValue("{{variable}}"){{#default}} ?? {{.}}{{/default}}{{/inHeader}}
+    {{#isPayload}}            self.{{variable}} = request.body{{/isPayload}}
+    {{/members}}
+            }
+    {{/isResponse}}
     {{! validate() function }}
     {{#first(validation)}}
 
