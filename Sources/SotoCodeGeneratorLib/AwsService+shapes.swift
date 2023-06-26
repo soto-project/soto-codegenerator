@@ -183,6 +183,13 @@ extension AwsService {
         } else {
             object = recursive ? "final class" : "struct"
         }
+        var decodeContext: DecodeContext?
+        if shape.hasTrait(type: SotoOutputShapeTrait.self) {
+            decodeContext = .init(
+                isResponse: shape.hasTrait(type: SotoResponseShapeTrait.self),
+                requiresHeaders: contexts.members.first { $0.decoding.header == true } != nil
+            )
+        }
         return StructureContext(
             object: object,
             name: shapeName.toSwiftClassCase(),
@@ -191,8 +198,7 @@ extension AwsService {
             options: shapeOptions.count > 0 ? shapeOptions.map { ".\($0)" }.joined(separator: ", ") : nil,
             namespace: xmlNamespace,
             isEncodable: shape.hasTrait(type: SotoInputShapeTrait.self),
-            isDecodable: shape.hasTrait(type: SotoOutputShapeTrait.self),
-            isResponse: shape.hasTrait(type: SotoResponseShapeTrait.self),
+            decode: decodeContext,
             encoding: contexts.encoding,
             members: contexts.members,
             initParameters: initParameters,
@@ -304,6 +310,19 @@ extension AwsService {
         }
         let type = member.output(model)
         let optional = (!required && !typeIsUnion)
+
+        let memberDecodeContext: MemberDecodeContext
+        if member.hasTrait(type: HttpHeaderTrait.self) || member.hasTrait(type: HttpPrefixHeadersTrait.self) {
+            memberDecodeContext = .init(header: true)
+        } else if member.hasTrait(type: HttpPayloadTrait.self) {
+            if model.shape(for: member.target) is BlobShape {
+                memberDecodeContext = .init(rawPayload: true)
+            } else {
+                memberDecodeContext = .init(payload: true)
+            }
+        } else {
+            memberDecodeContext = .init(codable: true)
+        }
         return MemberContext(
             variable: name.toSwiftVariableCase(),
             parameter: name.toSwiftLabelCase(),
@@ -311,12 +330,11 @@ extension AwsService {
             default: defaultValue,
             propertyWrapper: self.generatePropertyWrapper(member, name: name, optional: optional),
             type: type + (optional ? "?" : ""),
+            nonOptionalType: type,
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
             duplicate: false, // TODO: NEED to catch this
-            inBody: self.isMemberInBody(member),
-            inHeader: member.hasTrait(type: HttpHeaderTrait.self),
-            isPayload: member.hasTrait(type: HttpPayloadTrait.self) && model.shape(for: member.target) is BlobShape
+            decoding: memberDecodeContext
         )
     }
 
@@ -365,7 +383,8 @@ extension AwsService {
     }
 
     func generateCodingKeyContext(_ member: MemberShape, name: String, isOutputShape: Bool) -> CodingKeysContext? {
-        guard isMemberInBody(member)
+        guard isMemberInBody(member),
+              !(member.hasTrait(type: HttpPayloadTrait.self))
         /*            (!member.hasTrait(type: HttpHeaderTrait.self) &&
          !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
          !member.hasTrait(type: HttpQueryTrait.self) &&

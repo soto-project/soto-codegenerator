@@ -91,20 +91,23 @@ extension Templates {
     {{/members}}
             }
     {{/empty(deprecatedMembers)}}
-    {{#isResponse}}
+    {{#decode.isResponse}}
 
             {{scope}} init(from decoder: Decoder) throws {
-    {{#first(awsShapeMembers)}}
-                let response = decoder.userInfo[.awsResponse] as? AWSResponse
-    {{/first(awsShapeMembers)}}
+    {{#decode.requiresHeaders}}
+                let response = decoder.userInfo[.awsResponse]! as! AWSResponse
+    {{/decode.requiresHeaders}}
+    {{^empty(codingKeys)}}
                 let container = try decoder.container(keyedBy: CodingKeys.self)
-    {{#members}}
-    {{#inBody}}            self.{{variable}} = try container.decode({{type}}.self, forKey: .{{variable}}){{/inBody}}
-    {{#inHeader}}            self.{{variable}} = response?.headerValue("{{variable}}"){{#default}} ?? {{.}}{{/default}}{{/inHeader}}
-    {{#isPayload}}            self.{{variable}} = request.body{{/isPayload}}
+    {{/empty(codingKeys)}}
+    {{#members}}{{#decoding.codable}}
+                self.{{variable}} = try container.decode({{type}}.self, forKey: .{{variable}}){{/decoding.codable}}{{#decoding.header}}
+                self.{{variable}} = response.decode({{nonOptionalType}}.self, forHeader: "{{variable}}"){{#required}}{{#default}} ?? {{.}}{{/default}}{{/required}}{{/decoding.header}}{{#decoding.rawPayload}}
+                self.{{variable}} = response.body{{/decoding.rawPayload}}{{#decoding.payload}}
+                self.{{variable}} = try .init(from: decoder){{/decoding.payload}}
     {{/members}}
             }
-    {{/isResponse}}
+    {{/decode.isResponse}}
     {{! validate() function }}
     {{#first(validation)}}
 
