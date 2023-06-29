@@ -128,6 +128,8 @@ extension AwsService {
         var shapeOptions: [String] = []
         var xmlNamespace: String?
         let payloadMember = getPayloadMember(from: shape)
+        let isInput = shape.hasTrait(type: SotoInputShapeTrait.self)
+        let isOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
 
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payloadMember != nil) else { return nil }
 
@@ -182,7 +184,7 @@ extension AwsService {
             object = recursive ? "final class" : "struct"
         }
         var decodeContext: DecodeContext?
-        if shape.hasTrait(type: SotoOutputShapeTrait.self) {
+        if isOutput {
             decodeContext = .init(
                 isResponse: shape.hasTrait(type: SotoResponseShapeTrait.self),
                 requiresHeaders: contexts.members.first {
@@ -194,10 +196,10 @@ extension AwsService {
             object: object,
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
-            payload: payloadMember?.key.toSwiftLabelCase(),
+            payload: isInput ? payloadMember?.key.toSwiftLabelCase() : nil,
             options: shapeOptions.count > 0 ? shapeOptions.map { ".\($0)" }.joined(separator: ", ") : nil,
             namespace: xmlNamespace,
-            isEncodable: shape.hasTrait(type: SotoInputShapeTrait.self),
+            isEncodable: isInput,
             decode: decodeContext,
             encoding: contexts.encoding,
             members: contexts.members,

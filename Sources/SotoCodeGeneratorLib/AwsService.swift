@@ -600,13 +600,13 @@ struct AwsService {
             if usedInOutput {
                 shapeProtocol += " & AWSDecodableShape"
             }
+            if hasPayload {
+                shapeProtocol += " & AWSShapeWithPayload"
+            }
         } else if usedInOutput {
             shapeProtocol = "AWSDecodableShape"
         } else {
             return nil
-        }
-        if hasPayload {
-            shapeProtocol += " & AWSShapeWithPayload"
         }
         return shapeProtocol
     }
