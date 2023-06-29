@@ -185,11 +185,13 @@ extension AwsService {
         }
         var decodeContext: DecodeContext?
         if isOutput {
+            let isResponse = shape.hasTrait(type: SotoResponseShapeTrait.self)
+            let hasCustomDecode = contexts.members.first { $0.decoding.fromCodable == nil } != nil
             decodeContext = .init(
-                isResponse: shape.hasTrait(type: SotoResponseShapeTrait.self),
-                requiresHeaders: contexts.members.first {
+                requiresResponse: contexts.members.first {
                     $0.decoding.fromHeader != nil || $0.decoding.fromStatusCode != nil || $0.decoding.fromRawPayload == true
-                } != nil
+                } != nil,
+                requiresDecodeInit: isResponse && hasCustomDecode
             )
         }
         return StructureContext(

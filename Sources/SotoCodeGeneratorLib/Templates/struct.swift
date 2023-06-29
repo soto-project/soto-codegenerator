@@ -91,12 +91,12 @@ extension Templates {
     {{/members}}
             }
     {{/empty(deprecatedMembers)}}
-    {{#decode.isResponse}}
+    {{#decode.requiresDecodeInit}}
 
             {{scope}} init(from decoder: Decoder) throws {
-    {{#decode.requiresHeaders}}
+    {{#decode.requiresResponse}}
                 let response = decoder.userInfo[.awsResponse]! as! ResponseDecodingContainer
-    {{/decode.requiresHeaders}}
+    {{/decode.requiresResponse}}
     {{^empty(codingKeys)}}
                 let container = try decoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
@@ -108,7 +108,7 @@ extension Templates {
                 self.{{variable}} = response.decodeStatus(){{/fromStatusCode}}
     {{/decoding}}{{/members}}
             }
-    {{/decode.isResponse}}
+    {{/decode.requiresDecodeInit}}
     {{! validate() function }}
     {{#first(validation)}}
 

@@ -776,8 +776,8 @@ extension AwsService {
     }
 
     struct DecodeContext {
-        let isResponse: Bool
-        let requiresHeaders: Bool
+        let requiresResponse: Bool
+        let requiresDecodeInit: Bool
     }
 
     struct StructureContext {
