@@ -233,15 +233,16 @@ extension AwsService {
             if let codingKeyContext = generateCodingKeyContext(member.value, name: member.key, isOutputShape: isOutputShape) {
                 contexts.codingKeys.append(codingKeyContext)
             }
-            // member encoding context
-            let memberEncodingContext = self.generateMemberEncodingContext(
-                member.value,
-                name: member.key,
-                isOutputShape: isOutputShape,
-                isPropertyWrapper: memberContext.propertyWrapper != nil && isInputShape
-            )
-            contexts.awsShapeMembers += memberEncodingContext
-
+            // member encoding context. We don't need this for response objects as a custom init(from:) as setup for these
+            if !shape.hasTrait(type: SotoResponseShapeTrait.self) {
+                let memberEncodingContext = self.generateMemberEncodingContext(
+                    member.value,
+                    name: member.key,
+                    isOutputShape: isOutputShape,
+                    isPropertyWrapper: memberContext.propertyWrapper != nil && isInputShape
+                )
+                contexts.awsShapeMembers += memberEncodingContext
+            }
             // validation context
             if isInputShape {
                 if let validationContext = generateValidationContext(member.value, name: member.key) {
@@ -309,8 +310,9 @@ extension AwsService {
         } else {
             defaultValue = "nil"
         }
-        let type = member.output(model)
         let optional = (!required && !typeIsUnion)
+        let propertyWrapper = self.generatePropertyWrapper(member, name: name, optional: optional)
+        let type = member.output(model)
 
         let memberDecodeContext: MemberDecodeContext
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
@@ -326,14 +328,15 @@ extension AwsService {
                 memberDecodeContext = .init(fromPayload: true, decodeType: type)
             }
         } else {
-            memberDecodeContext = .init(fromCodable: true, decodeType: type)
+            // Codable needs to decode property wrapper if it exists
+            memberDecodeContext = .init(fromCodable: true, decodeType: propertyWrapper ?? type)
         }
         return MemberContext(
             variable: name.toSwiftVariableCase(),
             parameter: name.toSwiftLabelCase(),
             required: required,
             default: defaultValue,
-            propertyWrapper: self.generatePropertyWrapper(member, name: name, optional: optional),
+            propertyWrapper: propertyWrapper,
             type: type + (optional ? "?" : ""),
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
@@ -432,9 +435,9 @@ extension AwsService {
         let memberShape = model.shape(for: member.target)
         let codingWrapper: String
         if !optional {
-            codingWrapper = "@CustomCoding"
+            codingWrapper = "CustomCoding"
         } else {
-            codingWrapper = "@OptionalCustomCoding"
+            codingWrapper = "OptionalCustomCoding"
         }
 
         switch memberShape {
@@ -445,7 +448,7 @@ extension AwsService {
             guard let validMemberName = memberName else { return nil }
             if self.serviceProtocolTrait is AwsProtocolsEc2QueryTrait {
                 if validMemberName == "member" {
-                    return "\(codingWrapper)<EC2StandardArrayCoder>"
+                    return "\(codingWrapper)<EC2StandardArrayCoder<\(list.member.output(model))>>"
                 } else {
                     return "\(codingWrapper)<EC2ArrayCoder<\(self.encodingName(name)), \(list.member.output(model))>>"
                 }
@@ -461,7 +464,7 @@ extension AwsService {
             guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let names = getMapEntryNames(member: member, map: map)
             if names.entry == "entry", names.key == "key", names.value == "value" {
-                return "\(codingWrapper)<StandardDictionaryCoder>"
+                return "\(codingWrapper)<StandardDictionaryCoder<\(map.key.output(model)), \(map.value.output(model))>>"
             } else {
                 return "\(codingWrapper)<DictionaryCoder<\(self.encodingName(name)), \(map.key.output(model)), \(map.value.output(model))>>"
             }

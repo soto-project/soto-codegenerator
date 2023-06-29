@@ -59,7 +59,7 @@ extension Templates {
             {{>comment}}
     {{/comment}}
     {{#propertyWrapper}}
-            {{.}}
+            @{{.}}
     {{/propertyWrapper}}
             {{scope}} {{#propertyWrapper}}var{{/propertyWrapper}}{{^propertyWrapper}}let{{/propertyWrapper}} {{variable}}: {{type}}
     {{/members}}
@@ -101,7 +101,7 @@ extension Templates {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
     {{#members}}{{#decoding}}{{#fromCodable}}
-                self.{{variable}} = try container.decode{{^required}}IfPresent{{/required}}({{decodeType}}.self, forKey: .{{variable}}){{/fromCodable}}{{#fromHeader}}
+                self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{decodeType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}{{/fromCodable}}{{#fromHeader}}
                 self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{decodeType}}.self, forHeader: "{{.}}"){{/fromHeader}}{{#fromRawPayload}}
                 self.{{variable}} = response.decodePayload(){{/fromRawPayload}}{{#fromPayload}}
                 self.{{variable}} = try .init(from: decoder){{/fromPayload}}{{#fromStatusCode}}
