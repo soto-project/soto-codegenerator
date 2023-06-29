@@ -22,8 +22,6 @@ extension AwsService {
         var context: [String: Any] = [:]
         context["name"] = serviceName
 
-        markInputOutputShapes(model)
-
         // generate enums
         let traitEnums: [EnumContext] = try model
             .select(from: "[trait|enum]")
@@ -187,7 +185,9 @@ extension AwsService {
         if shape.hasTrait(type: SotoOutputShapeTrait.self) {
             decodeContext = .init(
                 isResponse: shape.hasTrait(type: SotoResponseShapeTrait.self),
-                requiresHeaders: contexts.members.first { $0.decoding.header == true } != nil
+                requiresHeaders: contexts.members.first {
+                    $0.decoding.fromHeader != nil || $0.decoding.fromStatusCode != nil || $0.decoding.fromRawPayload == true
+                } != nil
             )
         }
         return StructureContext(
@@ -256,7 +256,8 @@ extension AwsService {
     }
 
     func generateMemberContext(_ member: MemberShape, name: String, shapeName: String, typeIsUnion: Bool, isOutputShape: Bool) -> MemberContext {
-        var required = member.hasTrait(type: RequiredTrait.self)
+        var required = member.hasTrait(type: RequiredTrait.self) ||
+            (member.hasTrait(type: HttpPayloadTrait.self) && isOutputShape)
         let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
         let deprecated = member.hasTrait(type: DeprecatedTrait.self)
         precondition((required && deprecated) == false, "Member cannot be required and deprecated")
@@ -282,8 +283,8 @@ extension AwsService {
                         }
                         defaultValue = ".\(enumCase.toSwiftEnumCase())"
                     } else if shape is BlobShape {
-                        if shape?.hasTrait(type: HttpPayloadTrait.self) == true {
-                            defaultValue = ".string(\"\(s)\")"
+                        if member.hasTrait(type: HttpPayloadTrait.self) == true {
+                            defaultValue = ".init(string: \"\(s)\")"
                         } else {
                             defaultValue = ".data(\"\(s)\".utf8)"
                         }
@@ -312,16 +313,20 @@ extension AwsService {
         let optional = (!required && !typeIsUnion)
 
         let memberDecodeContext: MemberDecodeContext
-        if member.hasTrait(type: HttpHeaderTrait.self) || member.hasTrait(type: HttpPrefixHeadersTrait.self) {
-            memberDecodeContext = .init(header: true)
+        if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
+            memberDecodeContext = .init(fromHeader: headerTrait.value, decodeType: type)
+        } else if let headerTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
+            memberDecodeContext = .init(fromHeader: headerTrait.value, decodeType: type)
+        } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
+            memberDecodeContext = .init(fromStatusCode: true, decodeType: type)
         } else if member.hasTrait(type: HttpPayloadTrait.self) {
             if model.shape(for: member.target) is BlobShape {
-                memberDecodeContext = .init(rawPayload: true)
+                memberDecodeContext = .init(fromRawPayload: true, decodeType: type)
             } else {
-                memberDecodeContext = .init(payload: true)
+                memberDecodeContext = .init(fromPayload: true, decodeType: type)
             }
         } else {
-            memberDecodeContext = .init(codable: true)
+            memberDecodeContext = .init(fromCodable: true, decodeType: type)
         }
         return MemberContext(
             variable: name.toSwiftVariableCase(),
@@ -330,7 +335,6 @@ extension AwsService {
             default: defaultValue,
             propertyWrapper: self.generatePropertyWrapper(member, name: name, optional: optional),
             type: type + (optional ? "?" : ""),
-            nonOptionalType: type,
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
             duplicate: false, // TODO: NEED to catch this
@@ -383,7 +387,7 @@ extension AwsService {
     }
 
     func generateCodingKeyContext(_ member: MemberShape, name: String, isOutputShape: Bool) -> CodingKeysContext? {
-        guard isMemberInBody(member),
+        guard isMemberInBody(member, isOutputShape: isOutputShape),
               !(member.hasTrait(type: HttpPayloadTrait.self))
         /*            (!member.hasTrait(type: HttpHeaderTrait.self) &&
          !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
@@ -435,7 +439,7 @@ extension AwsService {
 
         switch memberShape {
         case let list as ListShape:
-            guard self.isMemberInBody(member) else { return nil }
+            guard self.isMemberInBody(member, isOutputShape: false) else { return nil }
             guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let memberName = getListEntryName(member: member, list: list)
             guard let validMemberName = memberName else { return nil }
@@ -447,13 +451,13 @@ extension AwsService {
                 }
             } else {
                 if validMemberName == "member" {
-                    return "\(codingWrapper)<StandardArrayCoder>"
+                    return "\(codingWrapper)<StandardArrayCoder<\(list.member.output(model))>>"
                 } else {
                     return "\(codingWrapper)<ArrayCoder<\(self.encodingName(name)), \(list.member.output(model))>>"
                 }
             }
         case let map as MapShape:
-            guard self.isMemberInBody(member) else { return nil }
+            guard self.isMemberInBody(member, isOutputShape: false) else { return nil }
             guard self.serviceProtocolTrait.requiresCollectionCoders else { return nil }
             let names = getMapEntryNames(member: member, map: map)
             if names.entry == "entry", names.key == "key", names.value == "value" {
@@ -564,7 +568,9 @@ extension AwsService {
 
         if let collection = shape as? CollectionShape, let members = collection.members {
             for member in members {
-                let memberRequired = member.value.hasTrait(type: RequiredTrait.self) && !member.value.hasTrait(type: ClientOptionalTrait.self)
+                let memberRequired =
+                    (member.value.hasTrait(type: RequiredTrait.self) && !member.value.hasTrait(type: ClientOptionalTrait.self))
+                        || (member.value.hasTrait(type: HttpPayloadTrait.self) && shape.hasTrait(type: SotoOutputShapeTrait.self))
                 var alreadyProcessed2 = alreadyProcessed
                 alreadyProcessed2.insert(shapeId)
                 if self.generateValidationContext(
@@ -585,6 +591,7 @@ extension AwsService {
     }
 
     func generateValidationContext(_ member: MemberShape, name: String) -> ValidationContext? {
+        // no need to check for HTTP payload trait as this is not an output shape
         let required = member.hasTrait(type: RequiredTrait.self) && !member.hasTrait(type: ClientOptionalTrait.self)
         return self.generateValidationContext(member.target, name: name, required: required, container: false, alreadyProcessed: [])
     }

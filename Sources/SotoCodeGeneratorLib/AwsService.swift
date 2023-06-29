@@ -48,6 +48,8 @@ struct AwsService {
         self.endpoints = endpoints
         self.outputHTMLComments = outputHTMLComments
         self.logger = logger
+
+        self.markInputOutputShapes(model)
     }
 
     /// Return service name from API
@@ -467,12 +469,12 @@ struct AwsService {
             }
         }
         // if output token is member of an optional struct add ? suffix
-
-        if let member = structure.members?[String(split[0])],
-           !member.hasTrait(type: RequiredTrait.self),
-           split.count > 1
-        {
-            split[0] += "?"
+        if let member = structure.members?[String(split[0])] {
+            let required = member.hasTrait(type: RequiredTrait.self) ||
+                (member.hasTrait(type: HttpPayloadTrait.self) && structure.hasTrait(type: SotoOutputShapeTrait.self))
+            if !required, split.count > 1 {
+                split[0] += "?"
+            }
         }
         return split.map { String($0).toSwiftVariableCase() }.joined(separator: ".")
     }
@@ -609,10 +611,10 @@ struct AwsService {
         return shapeProtocol
     }
 
-    func isMemberInBody(_ member: MemberShape) -> Bool {
+    func isMemberInBody(_ member: MemberShape, isOutputShape: Bool) -> Bool {
         return !(member.hasTrait(type: HttpHeaderTrait.self) ||
             member.hasTrait(type: HttpPrefixHeadersTrait.self) ||
-            member.hasTrait(type: HttpQueryTrait.self) ||
+            (member.hasTrait(type: HttpQueryTrait.self) && !isOutputShape) ||
             member.hasTrait(type: HttpLabelTrait.self) ||
             member.hasTrait(type: HttpResponseCodeTrait.self))
     }
@@ -690,10 +692,12 @@ extension AwsService {
     }
 
     struct MemberDecodeContext {
-        var header: Bool?
-        var payload: Bool?
-        var rawPayload: Bool?
-        var codable: Bool?
+        var fromHeader: String?
+        var fromPayload: Bool?
+        var fromRawPayload: Bool?
+        var fromCodable: Bool?
+        var fromStatusCode: Bool?
+        var decodeType: String
     }
 
     struct MemberContext {
@@ -703,7 +707,6 @@ extension AwsService {
         let `default`: String?
         let propertyWrapper: String?
         let type: String
-        let nonOptionalType: String
         let comment: [String.SubSequence]
         let deprecated: Bool
         var duplicate: Bool

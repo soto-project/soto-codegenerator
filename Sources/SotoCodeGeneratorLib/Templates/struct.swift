@@ -95,17 +95,18 @@ extension Templates {
 
             {{scope}} init(from decoder: Decoder) throws {
     {{#decode.requiresHeaders}}
-                let response = decoder.userInfo[.awsResponse]! as! AWSResponse
+                let response = decoder.userInfo[.awsResponse]! as! ResponseDecodingContainer
     {{/decode.requiresHeaders}}
     {{^empty(codingKeys)}}
                 let container = try decoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
-    {{#members}}{{#decoding.codable}}
-                self.{{variable}} = try container.decode({{type}}.self, forKey: .{{variable}}){{/decoding.codable}}{{#decoding.header}}
-                self.{{variable}} = response.decode({{nonOptionalType}}.self, forHeader: "{{variable}}"){{#required}}{{#default}} ?? {{.}}{{/default}}{{/required}}{{/decoding.header}}{{#decoding.rawPayload}}
-                self.{{variable}} = response.body{{/decoding.rawPayload}}{{#decoding.payload}}
-                self.{{variable}} = try .init(from: decoder){{/decoding.payload}}
-    {{/members}}
+    {{#members}}{{#decoding}}{{#fromCodable}}
+                self.{{variable}} = try container.decode{{^required}}IfPresent{{/required}}({{decodeType}}.self, forKey: .{{variable}}){{/fromCodable}}{{#fromHeader}}
+                self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{decodeType}}.self, forHeader: "{{.}}"){{/fromHeader}}{{#fromRawPayload}}
+                self.{{variable}} = response.decodePayload(){{/fromRawPayload}}{{#fromPayload}}
+                self.{{variable}} = try .init(from: decoder){{/fromPayload}}{{#fromStatusCode}}
+                self.{{variable}} = response.decodeStatus(){{/fromStatusCode}}
+    {{/decoding}}{{/members}}
             }
     {{/decode.isResponse}}
     {{! validate() function }}
