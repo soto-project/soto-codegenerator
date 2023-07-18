@@ -59,7 +59,7 @@ extension Templates {
             {{>comment}}
     {{/comment}}
     {{#propertyWrapper}}
-            {{.}}
+            @{{.}}
     {{/propertyWrapper}}
             {{scope}} {{#propertyWrapper}}var{{/propertyWrapper}}{{^propertyWrapper}}let{{/propertyWrapper}} {{variable}}: {{type}}
     {{/members}}
@@ -91,6 +91,24 @@ extension Templates {
     {{/members}}
             }
     {{/empty(deprecatedMembers)}}
+    {{#decode.requiresDecodeInit}}
+
+            {{scope}} init(from decoder: Decoder) throws {
+    {{#decode.requiresResponse}}
+                let response = decoder.userInfo[.awsResponse]! as! ResponseDecodingContainer
+    {{/decode.requiresResponse}}
+    {{^empty(codingKeys)}}
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+    {{/empty(codingKeys)}}
+    {{#members}}{{#decoding}}{{#fromCodable}}
+                self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{decodeType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}{{/fromCodable}}{{#fromHeader}}
+                self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{decodeType}}.self, forHeader: "{{.}}"){{/fromHeader}}{{#fromRawPayload}}
+                self.{{variable}} = response.decodePayload(){{/fromRawPayload}}{{#fromPayload}}
+                self.{{variable}} = try .init(from: decoder){{/fromPayload}}{{#fromStatusCode}}
+                self.{{variable}} = response.decodeStatus(){{/fromStatusCode}}
+    {{/decoding}}{{/members}}
+            }
+    {{/decode.requiresDecodeInit}}
     {{! validate() function }}
     {{#first(validation)}}
 
