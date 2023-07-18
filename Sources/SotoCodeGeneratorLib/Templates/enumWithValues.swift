@@ -36,7 +36,7 @@ extension Templates {
     {{/comment}}
             case {{variable}}({{type}})
     {{/members}}
-    {{#isDecodable}}
+    {{#decode}}
 
             {{scope}} init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -55,7 +55,7 @@ extension Templates {
     {{/members}}
                 }
             }
-    {{/isDecodable}}
+    {{/decode}}
     {{#isEncodable}}
 
             {{scope}} func encode(to encoder: Encoder) throws {
