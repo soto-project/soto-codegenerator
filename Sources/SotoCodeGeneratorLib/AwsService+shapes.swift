@@ -396,11 +396,6 @@ extension AwsService {
     func generateCodingKeyContext(_ member: MemberShape, name: String, isOutputShape: Bool) -> CodingKeysContext? {
         guard isMemberInBody(member, isOutputShape: isOutputShape),
               !(member.hasTrait(type: HttpPayloadTrait.self))
-        /*            (!member.hasTrait(type: HttpHeaderTrait.self) &&
-         !member.hasTrait(type: HttpPrefixHeadersTrait.self) &&
-         !member.hasTrait(type: HttpQueryTrait.self) &&
-         !member.hasTrait(type: HttpLabelTrait.self) &&
-         !(member.hasTrait(type: HttpPayloadTrait.self) && model.shape(for: member.target) is BlobShape))*/
         else {
             return nil
         }
