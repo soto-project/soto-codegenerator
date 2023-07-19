@@ -157,9 +157,15 @@ extension AwsService {
         }
         // check streaming traits
         if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
-            if payload is BlobShape {
-                shapeOptions.append("rawPayload")
-                if payload.hasTrait(type: StreamingTrait.self) {
+            if isOutput {
+                if payload is BlobShape || payload.hasTrait(type: StreamingTrait.self) {
+                    shapeOptions.append("rawPayload")
+                }
+            } else if isInput {
+                // currently only support request streaming of blobs
+                if payload is BlobShape,
+                   payload.hasTrait(type: StreamingTrait.self)
+                {
                     shapeOptions.append("allowStreaming")
                     if !payload.hasTrait(type: RequiresLengthTrait.self),
                        let operationShape = operationShape,
