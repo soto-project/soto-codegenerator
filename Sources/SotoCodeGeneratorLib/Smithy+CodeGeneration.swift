@@ -100,9 +100,14 @@ extension MemberShape {
             return "String"
         } else if memberShape is BlobShape {
             if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSHTTPBody" }
+            else if self.hasTrait(type: EventPayloadTrait.self) { return "ByteBuffer" }
             return "AWSBase64Data"
         } else if memberShape is CollectionShape {
-            return self.target.shapeName.toSwiftClassCase()
+            if memberShape.hasTrait(type: StreamingTrait.self) {
+                return "AWSEventStream<\(self.target.shapeName.toSwiftClassCase())>"
+            } else {
+                return self.target.shapeName.toSwiftClassCase()
+            }
         } else if let listShape = memberShape as? ListShape {
             return "[\(listShape.member.output(model))]"
         } else if let setShape = memberShape as? SetShape {
