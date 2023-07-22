@@ -141,7 +141,16 @@ extension Templates {
     {{/deprecated}}
         @Sendable
         {{scope}} func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
-            return try await self.client.execute(operation: "{{name}}", path: "{{path}}", httpMethod: .{{httpMethod}}, serviceConfig: self.config{{#inputShape}}, input: input{{/inputShape}}{{#endpointRequired}}, endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, hostPrefix: "{{{.}}}"{{/hostPrefix}}, logger: logger)
+            return try await self.client.execute(
+                operation: "{{name}}", 
+                path: "{{path}}", 
+                httpMethod: .{{httpMethod}}, 
+                serviceConfig: self.config{{#inputShape}}, 
+                input: input{{/inputShape}}{{#endpointRequired}}, 
+                endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, 
+                hostPrefix: "{{{.}}}"{{/hostPrefix}}, 
+                logger: logger
+            )
         }
     {{/operations}}
     {{#endpointDiscovery}}
