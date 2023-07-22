@@ -97,13 +97,17 @@ extension Templates {
     {{#decode.requiresResponse}}
                 let response = decoder.userInfo[.awsResponse]! as! ResponseDecodingContainer
     {{/decode.requiresResponse}}
+    {{#decode.requiresEvent}}
+                let response = decoder.userInfo[.awsEvent]! as! EventDecodingContainer
+    {{/decode.requiresEvent}}
     {{^empty(codingKeys)}}
                 let container = try decoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
     {{#members}}{{#decoding}}{{#fromCodable}}
                 self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{decodeType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}{{/fromCodable}}{{#fromHeader}}
                 self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{decodeType}}.self, forHeader: "{{.}}"){{/fromHeader}}{{#fromRawPayload}}
-                self.{{variable}} = response.decodePayload(){{/fromRawPayload}}{{#fromPayload}}
+                self.{{variable}} = response.decodePayload(){{/fromRawPayload}}{{#fromEventStream}}
+                self.{{variable}} = response.decodeEventStream(){{/fromEventStream}}{{#fromPayload}}
                 self.{{variable}} = try .init(from: decoder){{/fromPayload}}{{#fromStatusCode}}
                 self.{{variable}} = response.decodeStatus(){{/fromStatusCode}}
     {{/decoding}}{{/members}}
