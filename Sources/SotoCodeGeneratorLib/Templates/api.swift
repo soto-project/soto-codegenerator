@@ -145,9 +145,10 @@ extension Templates {
                 operation: "{{name}}", 
                 path: "{{path}}", 
                 httpMethod: .{{httpMethod}}, 
-                serviceConfig: self.config{{#inputShape}}, 
-                input: input{{/inputShape}}{{#endpointRequired}}, 
-                endpointDiscovery: .init(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}}){{/endpointRequired}}{{#hostPrefix}}, 
+                serviceConfig: self.config{{#endpointRequired}}
+                    .with(middleware: EndpointDiscoveryMiddleware(storage: self.endpointStorage, discover: self.getEndpoint, required: {{required}})
+                ){{/endpointRequired}}{{#inputShape}}, 
+                input: input{{/inputShape}}{{#hostPrefix}}, 
                 hostPrefix: "{{{.}}}"{{/hostPrefix}}, 
                 logger: logger
             )
