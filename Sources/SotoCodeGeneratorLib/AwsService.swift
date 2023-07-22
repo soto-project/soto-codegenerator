@@ -715,6 +715,7 @@ extension AwsService {
         var fromHeader: String?
         var fromPayload: Bool?
         var fromRawPayload: Bool?
+        var fromEventStream: Bool?
         var fromCodable: Bool?
         var fromStatusCode: Bool?
         var decodeType: String
@@ -797,6 +798,7 @@ extension AwsService {
 
     struct DecodeContext {
         let requiresResponse: Bool
+        let requiresEvent: Bool
         let requiresDecodeInit: Bool
     }
 
