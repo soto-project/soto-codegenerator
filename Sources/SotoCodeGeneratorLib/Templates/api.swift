@@ -107,6 +107,9 @@ extension Templates {
     {{#xmlNamespace}}
                 xmlNamespace: "{{.}}",
     {{/xmlNamespace}}
+    {{#middlewareClass}}
+                middleware: {{.}},
+    {{/middlewareClass}}
     {{^middlewareClass}}
                 middleware: middleware,
     {{/middlewareClass}}
