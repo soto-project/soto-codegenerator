@@ -53,7 +53,7 @@ extension Templates {
         ///     - partition: AWS partition where service resides, standard (.aws), china (.awscn), government (.awsusgov).
         ///     - endpoint: Custom endpoint URL to use instead of standard AWS servers
     {{^middlewareClass}}
-        ///     - middleware: Middleware chain used to edit requests before they sent and responses before they are decoded 
+        ///     - middleware: Middleware chain used to edit requests before they are sent and responses before they are decoded 
     {{/middlewareClass}}
         ///     - timeout: Timeout value for HTTP requests
         ///     - byteBufferAllocator: Allocator for ByteBuffers
