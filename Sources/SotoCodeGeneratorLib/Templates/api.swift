@@ -263,7 +263,7 @@ extension Templates {
     }
 
     extension {{ name }} {
-        /// Initializer required by `AWSService.with(middlewares:timeout:byteBufferAllocator:options)`. You are not able to use this initializer directly as there are no public
+        /// Initializer required by `AWSService.with(middlewares:timeout:byteBufferAllocator:options)`. You are not able to use this initializer directly as there are not public
         /// initializers for `AWSServiceConfig.Patch`. Please use `AWSService.with(middlewares:timeout:byteBufferAllocator:options)` instead.
         {{scope}} init(from: {{ name }}, patch: AWSServiceConfig.Patch) {
             self.client = from.client
