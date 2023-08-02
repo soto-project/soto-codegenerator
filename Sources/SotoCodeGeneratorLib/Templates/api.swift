@@ -204,7 +204,7 @@ extension Templates {
 
     {{#first(partitionEndpoints)}}
         /// Default endpoint and region to use for each partition
-        static var partitionEndpoints: [AWSPartition: (endpoint: String, region: Region)] {[
+        static var partitionEndpoints: [AWSPartition: (endpoint: String, region: SotoCore.Region)] {[
     {{#partitionEndpoints}}
             {{.}}{{^last()}},{{/last()}}
     {{/partitionEndpoints}}
