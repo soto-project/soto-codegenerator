@@ -66,7 +66,7 @@ extension Templates {
             partition: AWSPartition = .aws,
             endpoint: String? = nil,
     {{^middlewareClass}}
-            middleware: AWSMiddlewareProtocol?,
+            middleware: AWSMiddlewareProtocol? = nil,
     {{/middlewareClass}}
             timeout: TimeAmount? = nil,
             byteBufferAllocator: ByteBufferAllocator = ByteBufferAllocator(),
