@@ -85,7 +85,8 @@ extension Templates {
     {{#amzTarget}}
                 amzTarget: "{{.}}",
     {{/amzTarget}}
-                service: "{{endpointPrefix}}",
+                serviceName: "{{name}}",
+                serviceIdentifier: "{{endpointPrefix}}",
     {{#signingName}}
                 signingName: "{{.}}",
     {{/signingName}}
@@ -160,7 +161,8 @@ extension Templates {
     {{#amzTarget}}
                 amzTarget: "{{.}}",
     {{/amzTarget}}
-                service: "{{endpointPrefix}}",
+                serviceName: "{{name}}",
+                serviceIdentifier: "{{endpointPrefix}}",
     {{#signingName}}
                 signingName: "{{.}}",
     {{/signingName}}
