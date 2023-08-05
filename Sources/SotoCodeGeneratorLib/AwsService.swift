@@ -603,9 +603,6 @@ struct AwsService {
             if usedInOutput {
                 shapeProtocol += " & AWSDecodableShape"
             }
-            if hasPayload {
-                shapeProtocol += " & AWSShapeWithPayload"
-            }
         } else if usedInOutput {
             shapeProtocol = "AWSDecodableShape"
         } else {
@@ -695,12 +692,42 @@ extension AwsService {
     }
 
     struct MemberCodableContext {
-        var header: String?
-        var payload: Bool?
-        var rawPayload: Bool?
-        var eventStream: Bool?
-        var codable: Bool?
-        var statusCode: Bool?
+        internal init(
+            inHeader: String? = nil,
+            inQuery: String? = nil,
+            inURI: String? = nil,
+            inHostPrefix: String? = nil,
+            areQueryParams: Bool = false,
+            isPayload: Bool = false,
+            isRawPayload: Bool = false,
+            isEventStream: Bool = false,
+            isCodable: Bool = false,
+            isStatusCode: Bool = false,
+            codableType: String
+        ) {
+            self.inHeader = inHeader
+            self.inQuery = inQuery
+            self.inURI = inURI
+            self.inHostPrefix = inHostPrefix
+            self.areQueryParams = areQueryParams
+            self.isPayload = isPayload
+            self.isRawPayload = isRawPayload
+            self.isEventStream = isEventStream
+            self.isCodable = isCodable
+            self.isStatusCode = isStatusCode
+            self.codableType = codableType
+        }
+
+        var inHeader: String?
+        var inQuery: String?
+        var inURI: String?
+        var inHostPrefix: String?
+        var areQueryParams: Bool
+        var isPayload: Bool
+        var isRawPayload: Bool
+        var isEventStream: Bool
+        var isCodable: Bool
+        var isStatusCode: Bool
         var codableType: String
     }
 
@@ -784,15 +811,16 @@ extension AwsService {
         let requiresEvent: Bool
         let requiresDecodeInit: Bool
         let requiresEncode: Bool
+        let singleValueContainer: Bool
     }
 
     struct StructureContext {
         let object: String
         let name: String
         let shapeProtocol: String
-        let payload: String?
         var options: String?
         let namespace: String?
+        let xmlRootNodeName: String?
         let shapeCoding: ShapeCodingContext?
         let encoding: [EncodingPropertiesContext]
         let members: [MemberContext]
