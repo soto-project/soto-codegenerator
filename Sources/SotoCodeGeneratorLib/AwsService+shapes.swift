@@ -189,17 +189,38 @@ extension AwsService {
         } else {
             object = recursive ? "final class" : "struct"
         }
-        var decodeContext: DecodeContext?
-        if isOutput {
-            let isResponse = shape.hasTrait(type: SotoResponseShapeTrait.self)
-            let hasCustomDecode = contexts.members.first { $0.decoding.fromCodable == nil } != nil
+        /*        var codingContext: ShapeCodingContext?
+         if isOutput {
+             let isResponse = shape.hasTrait(type: SotoResponseShapeTrait.self)
+             let hasCustomDecode = contexts.members.first { $0.memberCoding.codable == nil } != nil
+             let hasNonDecodableElements = contexts.members.first {
+                 $0.memberCoding.header != nil || $0.memberCoding.statusCode != nil || $0.memberCoding.rawPayload == true || $0.memberCoding.eventStream == true
+             } != nil
+             codingContext = .init(
+                 requiresResponse: hasNonDecodableElements && isResponse,
+                 requiresEvent: hasNonDecodableElements && !isResponse,
+                 requiresDecodeInit: hasCustomDecode,
+                 requiresEncode: false
+             )
+         }
+         if isInput {
+             let isRequest = shape.hasTrait(type: SotoRequestShapeTrait.self)
+         }*/
+
+        var codingContext: ShapeCodingContext?
+        let isRootShape = shape.hasTrait(type: SotoResponseShapeTrait.self) || shape.hasTrait(type: SotoRequestShapeTrait.self)
+        // Has elements that require some form of custom encoding/decoding
+        let hasCustomCodableElements = contexts.members.first { $0.memberCoding.codable == nil } != nil
+        if hasCustomCodableElements || typeIsUnion {
+            // Has elements that require a custom container
             let hasNonDecodableElements = contexts.members.first {
-                $0.decoding.fromHeader != nil || $0.decoding.fromStatusCode != nil || $0.decoding.fromRawPayload == true || $0.decoding.fromEventStream == true
+                $0.memberCoding.header != nil || $0.memberCoding.statusCode != nil || $0.memberCoding.rawPayload == true || $0.memberCoding.eventStream == true
             } != nil
-            decodeContext = .init(
-                requiresResponse: hasNonDecodableElements && isResponse,
-                requiresEvent: hasNonDecodableElements && !isResponse,
-                requiresDecodeInit: hasCustomDecode
+            codingContext = ShapeCodingContext(
+                requiresResponse: isRootShape && hasNonDecodableElements,
+                requiresEvent: !isRootShape && hasNonDecodableElements,
+                requiresDecodeInit: (hasCustomCodableElements || typeIsUnion) && isOutput,
+                requiresEncode: (hasCustomCodableElements || typeIsUnion) && isInput
             )
         }
         return StructureContext(
@@ -209,8 +230,7 @@ extension AwsService {
             payload: isInput ? payloadMember?.key.toSwiftLabelCase() : nil,
             options: shapeOptions.count > 0 ? shapeOptions.map { ".\($0)" }.joined(separator: ", ") : nil,
             namespace: xmlNamespace,
-            isEncodable: isInput,
-            decode: decodeContext,
+            shapeCoding: codingContext,
             encoding: contexts.encoding,
             members: contexts.members,
             initParameters: initParameters,
@@ -344,28 +364,28 @@ extension AwsService {
         let propertyWrapper = self.generatePropertyWrapper(member, name: name, optional: optional)
         let type = member.output(model)
 
-        let memberDecodeContext: MemberDecodeContext
+        let memberCodableContext: MemberCodableContext
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
-            memberDecodeContext = .init(fromHeader: headerTrait.value, decodeType: type)
+            memberCodableContext = .init(header: headerTrait.value, codableType: type)
         } else if let headerTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
-            memberDecodeContext = .init(fromHeader: headerTrait.value, decodeType: type)
+            memberCodableContext = .init(header: headerTrait.value, codableType: type)
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
-            memberDecodeContext = .init(fromStatusCode: true, decodeType: type)
+            memberCodableContext = .init(statusCode: true, codableType: type)
         } else if targetShape.hasTrait(type: StreamingTrait.self) {
             if targetShape is BlobShape {
-                memberDecodeContext = .init(fromRawPayload: true, decodeType: type)
+                memberCodableContext = .init(rawPayload: true, codableType: type)
             } else {
-                memberDecodeContext = .init(fromEventStream: true, decodeType: type)
+                memberCodableContext = .init(eventStream: true, codableType: type)
             }
         } else if member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self) {
             if targetShape is BlobShape {
-                memberDecodeContext = .init(fromRawPayload: true, decodeType: type)
+                memberCodableContext = .init(rawPayload: true, codableType: type)
             } else {
-                memberDecodeContext = .init(fromPayload: true, decodeType: type)
+                memberCodableContext = .init(payload: true, codableType: type)
             }
         } else {
             // Codable needs to decode property wrapper if it exists
-            memberDecodeContext = .init(fromCodable: true, decodeType: propertyWrapper ?? type)
+            memberCodableContext = .init(codable: true, codableType: propertyWrapper ?? type)
         }
         return MemberContext(
             variable: name.toSwiftVariableCase(),
@@ -377,7 +397,7 @@ extension AwsService {
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
             duplicate: false, // TODO: NEED to catch this
-            decoding: memberDecodeContext
+            memberCoding: memberCodableContext
         )
     }
 

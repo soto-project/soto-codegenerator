@@ -694,14 +694,14 @@ extension AwsService {
         let value: String
     }
 
-    struct MemberDecodeContext {
-        var fromHeader: String?
-        var fromPayload: Bool?
-        var fromRawPayload: Bool?
-        var fromEventStream: Bool?
-        var fromCodable: Bool?
-        var fromStatusCode: Bool?
-        var decodeType: String
+    struct MemberCodableContext {
+        var header: String?
+        var payload: Bool?
+        var rawPayload: Bool?
+        var eventStream: Bool?
+        var codable: Bool?
+        var statusCode: Bool?
+        var codableType: String
     }
 
     struct MemberContext {
@@ -714,7 +714,7 @@ extension AwsService {
         let comment: [String.SubSequence]
         let deprecated: Bool
         var duplicate: Bool
-        var decoding: MemberDecodeContext
+        var memberCoding: MemberCodableContext
     }
 
     struct InitParamContext {
@@ -779,10 +779,11 @@ extension AwsService {
         var endpoints: [(region: String, hostname: String)] = []
     }
 
-    struct DecodeContext {
+    struct ShapeCodingContext {
         let requiresResponse: Bool
         let requiresEvent: Bool
         let requiresDecodeInit: Bool
+        let requiresEncode: Bool
     }
 
     struct StructureContext {
@@ -792,8 +793,7 @@ extension AwsService {
         let payload: String?
         var options: String?
         let namespace: String?
-        let isEncodable: Bool
-        let decode: DecodeContext?
+        let shapeCoding: ShapeCodingContext?
         let encoding: [EncodingPropertiesContext]
         let members: [MemberContext]
         let initParameters: [InitParamContext]

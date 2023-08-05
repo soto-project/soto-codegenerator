@@ -91,28 +91,28 @@ extension Templates {
     {{/members}}
             }
     {{/empty(deprecatedMembers)}}
-    {{#decode.requiresDecodeInit}}
+    {{#shapeCoding.requiresDecodeInit}}
 
             {{scope}} init(from decoder: Decoder) throws {
-    {{#decode.requiresResponse}}
+    {{#shapeCoding.requiresResponse}}
                 let response = decoder.userInfo[.awsResponse]! as! ResponseDecodingContainer
-    {{/decode.requiresResponse}}
-    {{#decode.requiresEvent}}
+    {{/shapeCoding.requiresResponse}}
+    {{#shapeCoding.requiresEvent}}
                 let response = decoder.userInfo[.awsEvent]! as! EventDecodingContainer
-    {{/decode.requiresEvent}}
+    {{/shapeCoding.requiresEvent}}
     {{^empty(codingKeys)}}
                 let container = try decoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
-    {{#members}}{{#decoding}}{{#fromCodable}}
-                self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{decodeType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}{{/fromCodable}}{{#fromHeader}}
-                self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{decodeType}}.self, forHeader: "{{.}}"){{/fromHeader}}{{#fromRawPayload}}
-                self.{{variable}} = response.decodePayload(){{/fromRawPayload}}{{#fromEventStream}}
-                self.{{variable}} = response.decodeEventStream(){{/fromEventStream}}{{#fromPayload}}
-                self.{{variable}} = try .init(from: decoder){{/fromPayload}}{{#fromStatusCode}}
-                self.{{variable}} = response.decodeStatus(){{/fromStatusCode}}
-    {{/decoding}}{{/members}}
+    {{#members}}{{#memberCoding}}{{#codable}}
+                self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{codableType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}{{/codable}}{{#header}}
+                self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{codableType}}.self, forHeader: "{{.}}"){{/header}}{{#rawPayload}}
+                self.{{variable}} = response.decodePayload(){{/rawPayload}}{{#eventStream}}
+                self.{{variable}} = response.decodeEventStream(){{/eventStream}}{{#payload}}
+                self.{{variable}} = try .init(from: decoder){{/payload}}{{#statusCode}}
+                self.{{variable}} = response.decodeStatus(){{/statusCode}}
+    {{/memberCoding}}{{/members}}
             }
-    {{/decode.requiresDecodeInit}}
+    {{/shapeCoding.requiresDecodeInit}}
     {{! validate() function }}
     {{#first(validation)}}
 
