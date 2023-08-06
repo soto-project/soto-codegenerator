@@ -212,11 +212,14 @@ extension AwsService {
             let singleValueContainer = contexts.members.contains {
                 $0.memberCoding.isPayload == true || $0.memberCoding.isRawPayload == true
             }
+            // when setting values here. I am assuming that non root shapes must be events and require
+            // an event container instead of a request/response container. Also I am not outputting
+            // an encode for events as I don't support encoding tham at the moment
             codingContext = ShapeCodingContext(
                 requiresResponse: isRootShape && hasNonDecodableElements,
                 requiresEvent: !isRootShape && hasNonDecodableElements,
                 requiresDecodeInit: (hasCustomCodableElements || typeIsUnion) && isOutput,
-                requiresEncode: (hasCustomCodableElements || typeIsUnion) && isInput,
+                requiresEncode: ((hasCustomCodableElements && isRootShape) || typeIsUnion) && isInput,
                 singleValueContainer: singleValueContainer
             )
         }
