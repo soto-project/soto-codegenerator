@@ -699,7 +699,6 @@ extension AwsService {
             inHostPrefix: String? = nil,
             areQueryParams: Bool = false,
             isPayload: Bool = false,
-            isRawPayload: Bool = false,
             isEventStream: Bool = false,
             isCodable: Bool = false,
             isStatusCode: Bool = false,
@@ -711,7 +710,6 @@ extension AwsService {
             self.inHostPrefix = inHostPrefix
             self.areQueryParams = areQueryParams
             self.isPayload = isPayload
-            self.isRawPayload = isRawPayload
             self.isEventStream = isEventStream
             self.isCodable = isCodable
             self.isStatusCode = isStatusCode
@@ -724,7 +722,6 @@ extension AwsService {
         var inHostPrefix: String?
         var areQueryParams: Bool
         var isPayload: Bool
-        var isRawPayload: Bool
         var isEventStream: Bool
         var isCodable: Bool
         var isStatusCode: Bool

@@ -99,9 +99,14 @@ extension Templates {
     {{#shapeCoding.requiresEvent}}
                 let response = decoder.userInfo[.awsEvent]! as! EventDecodingContainer
     {{/shapeCoding.requiresEvent}}
+    {{#shapeCoding.singleValueContainer}}
+                let container = try decoder.singleValueContainer()
+    {{/shapeCoding.singleValueContainer}}
+    {{^shapeCoding.singleValueContainer}}
     {{^empty(codingKeys)}}
                 let container = try decoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
+    {{/shapeCoding.singleValueContainer}}
     {{#members}}{{#memberCoding}}
     {{#isCodable}}
                 self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{codableType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}
@@ -109,14 +114,11 @@ extension Templates {
     {{#inHeader}}
                 self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{codableType}}.self, forHeader: "{{.}}")
     {{/inHeader}}
-    {{#isRawPayload}}
-                self.{{variable}} = response.decodePayload()
-    {{/isRawPayload}}
     {{#isEventStream}}
                 self.{{variable}} = response.decodeEventStream()
     {{/isEventStream}}
     {{#isPayload}}
-                self.{{variable}} = try .init(from: decoder)
+                self.{{variable}} = try container.decode({{codableType}}.self)
     {{/isPayload}}
     {{#isStatusCode}}
                 self.{{variable}} = response.decodeStatus()
@@ -163,9 +165,6 @@ extension Templates {
     {{#isPayload}}
                 try container.encode(self.{{variable}})
     {{/isPayload}}
-    {{#isRawPayload}}
-                try container.encode(self.{{variable}})
-    {{/isRawPayload}}
     {{/memberCoding}}{{/members}}
             }
     {{/shapeCoding.requiresEncode}}

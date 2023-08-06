@@ -210,7 +210,7 @@ extension AwsService {
                 $0.memberCoding.isCodable == false && $0.memberCoding.isPayload == false
             }
             let singleValueContainer = contexts.members.contains {
-                $0.memberCoding.isPayload == true || $0.memberCoding.isRawPayload == true
+                $0.memberCoding.isPayload == true
             }
             // when setting values here. I am assuming that non root shapes must be events and require
             // an event container instead of a request/response container. Also I am not outputting
@@ -380,16 +380,12 @@ extension AwsService {
             memberCodableContext = .init(inURI: aliasTrait?.alias ?? name, codableType: type)
         } else if targetShape.hasTrait(type: StreamingTrait.self) {
             if targetShape is BlobShape {
-                memberCodableContext = .init(isRawPayload: true, codableType: type)
+                memberCodableContext = .init(isPayload: true, codableType: type)
             } else {
                 memberCodableContext = .init(isEventStream: true, codableType: type)
             }
         } else if member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self) {
-            if targetShape is BlobShape {
-                memberCodableContext = .init(isRawPayload: true, codableType: type)
-            } else {
-                memberCodableContext = .init(isPayload: true, codableType: type)
-            }
+            memberCodableContext = .init(isPayload: true, codableType: type)
         } else {
             // Codable needs to decode property wrapper if it exists
             memberCodableContext = .init(isCodable: true, codableType: propertyWrapper ?? type)
