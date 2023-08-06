@@ -112,11 +112,8 @@ extension Templates {
                 self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{codableType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}
     {{/isCodable}}
     {{#inHeader}}
-                self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{codableType}}.self, forHeader: "{{.}}")
+                self.{{variable}} = try response.decodeHeader{{^required}}IfPresent{{/required}}({{codableType}}.self, key: "{{.}}")
     {{/inHeader}}
-    {{#isEventStream}}
-                self.{{variable}} = response.decodeEventStream()
-    {{/isEventStream}}
     {{#isPayload}}
                 self.{{variable}} = try container.decode({{codableType}}.self)
     {{/isPayload}}

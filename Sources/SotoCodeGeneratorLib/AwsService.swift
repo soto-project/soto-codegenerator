@@ -615,6 +615,7 @@ struct AwsService {
         return !(member.hasTrait(type: HttpHeaderTrait.self) ||
             member.hasTrait(type: HttpPrefixHeadersTrait.self) ||
             (member.hasTrait(type: HttpQueryTrait.self) && !isOutputShape) ||
+            member.hasTrait(type: HttpQueryParamsTrait.self) ||
             member.hasTrait(type: HttpLabelTrait.self) ||
             member.hasTrait(type: HttpResponseCodeTrait.self))
     }
@@ -699,7 +700,6 @@ extension AwsService {
             inHostPrefix: String? = nil,
             areQueryParams: Bool = false,
             isPayload: Bool = false,
-            isEventStream: Bool = false,
             isCodable: Bool = false,
             isStatusCode: Bool = false,
             codableType: String
@@ -710,7 +710,6 @@ extension AwsService {
             self.inHostPrefix = inHostPrefix
             self.areQueryParams = areQueryParams
             self.isPayload = isPayload
-            self.isEventStream = isEventStream
             self.isCodable = isCodable
             self.isStatusCode = isStatusCode
             self.codableType = codableType
@@ -722,7 +721,6 @@ extension AwsService {
         var inHostPrefix: String?
         var areQueryParams: Bool
         var isPayload: Bool
-        var isEventStream: Bool
         var isCodable: Bool
         var isStatusCode: Bool
         var codableType: String

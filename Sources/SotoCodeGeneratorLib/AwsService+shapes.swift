@@ -378,13 +378,10 @@ extension AwsService {
         } else if member.hasTrait(type: HttpLabelTrait.self), !isOutputShape {
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
             memberCodableContext = .init(inURI: aliasTrait?.alias ?? name, codableType: type)
-        } else if targetShape.hasTrait(type: StreamingTrait.self) {
-            if targetShape is BlobShape {
-                memberCodableContext = .init(isPayload: true, codableType: type)
-            } else {
-                memberCodableContext = .init(isEventStream: true, codableType: type)
-            }
-        } else if member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self) {
+        } else if member.hasTrait(type: HttpPayloadTrait.self) ||
+            member.hasTrait(type: EventPayloadTrait.self) ||
+            targetShape.hasTrait(type: StreamingTrait.self)
+        {
             memberCodableContext = .init(isPayload: true, codableType: type)
         } else {
             // Codable needs to decode property wrapper if it exists
