@@ -142,7 +142,7 @@ extension Templates {
     {{/shapeCoding.singleValueContainer}}
     {{#members}}{{#memberCoding}}
     {{#isCodable}}
-                try container.encode(self.{{variable}}, forKey: .{{variable}})
+                try container.encode{{^required}}IfPresent{{/required}}(self.{{variable}}, forKey: .{{variable}})
     {{/isCodable}}
     {{#inHeader}}
                 request.encodeHeader(self.{{#propertyWrapper}}_{{/propertyWrapper}}{{variable}}, key: "{{.}}")
