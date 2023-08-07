@@ -104,7 +104,7 @@ extension MemberShape {
             return "String"
         } else if memberShape is BlobShape {
             if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSHTTPBody" }
-            else if self.hasTrait(type: EventPayloadTrait.self) { return "ByteBuffer" }
+            else if self.hasTrait(type: EventPayloadTrait.self) { return "AWSEventPayload" }
             return "AWSBase64Data"
         } else if memberShape is CollectionShape {
             if memberShape.hasTrait(type: StreamingTrait.self) {

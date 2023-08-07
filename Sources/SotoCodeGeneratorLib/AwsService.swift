@@ -623,9 +623,6 @@ struct AwsService {
             if usedInOutput {
                 shapeProtocol += " & AWSDecodableShape"
             }
-            if hasPayload {
-                shapeProtocol += " & AWSShapeWithPayload"
-            }
         } else if usedInOutput {
             shapeProtocol = "AWSDecodableShape"
         } else {
@@ -638,6 +635,7 @@ struct AwsService {
         return !(member.hasTrait(type: HttpHeaderTrait.self) ||
             member.hasTrait(type: HttpPrefixHeadersTrait.self) ||
             (member.hasTrait(type: HttpQueryTrait.self) && !isOutputShape) ||
+            member.hasTrait(type: HttpQueryParamsTrait.self) ||
             member.hasTrait(type: HttpLabelTrait.self) ||
             member.hasTrait(type: HttpResponseCodeTrait.self))
     }
@@ -714,14 +712,38 @@ extension AwsService {
         let value: String
     }
 
-    struct MemberDecodeContext {
-        var fromHeader: String?
-        var fromPayload: Bool?
-        var fromRawPayload: Bool?
-        var fromEventStream: Bool?
-        var fromCodable: Bool?
-        var fromStatusCode: Bool?
-        var decodeType: String
+    struct MemberCodableContext {
+        internal init(
+            inHeader: String? = nil,
+            inQuery: String? = nil,
+            inURI: String? = nil,
+            inHostPrefix: String? = nil,
+            areQueryParams: Bool = false,
+            isPayload: Bool = false,
+            isCodable: Bool = false,
+            isStatusCode: Bool = false,
+            codableType: String
+        ) {
+            self.inHeader = inHeader
+            self.inQuery = inQuery
+            self.inURI = inURI
+            self.inHostPrefix = inHostPrefix
+            self.areQueryParams = areQueryParams
+            self.isPayload = isPayload
+            self.isCodable = isCodable
+            self.isStatusCode = isStatusCode
+            self.codableType = codableType
+        }
+
+        var inHeader: String?
+        var inQuery: String?
+        var inURI: String?
+        var inHostPrefix: String?
+        var areQueryParams: Bool
+        var isPayload: Bool
+        var isCodable: Bool
+        var isStatusCode: Bool
+        var codableType: String
     }
 
     struct MemberContext {
@@ -734,7 +756,7 @@ extension AwsService {
         let comment: [String.SubSequence]
         let deprecated: Bool
         var duplicate: Bool
-        var decoding: MemberDecodeContext
+        var memberCoding: MemberCodableContext
     }
 
     struct InitParamContext {
@@ -799,21 +821,22 @@ extension AwsService {
         var endpoints: [(region: String, hostname: String)] = []
     }
 
-    struct DecodeContext {
+    struct ShapeCodingContext {
         let requiresResponse: Bool
         let requiresEvent: Bool
         let requiresDecodeInit: Bool
+        let requiresEncode: Bool
+        let singleValueContainer: Bool
     }
 
     struct StructureContext {
         let object: String
         let name: String
         let shapeProtocol: String
-        let payload: String?
         var options: String?
         let namespace: String?
-        let isEncodable: Bool
-        let decode: DecodeContext?
+        let xmlRootNodeName: String?
+        let shapeCoding: ShapeCodingContext?
         let encoding: [EncodingPropertiesContext]
         let members: [MemberContext]
         let initParameters: [InitParamContext]
