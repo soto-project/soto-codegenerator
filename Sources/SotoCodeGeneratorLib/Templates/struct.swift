@@ -17,13 +17,12 @@ extension Templates {
     {{%CONTENT_TYPE:TEXT}}
     {{! Template for a AWSShape }}
         {{scope}} {{object}} {{name}}: {{shapeProtocol}} {
-    {{#payload}}
-            /// The key for the payload
-            {{scope}} static let _payloadPath: String = "{{.}}"
-    {{/payload}}
     {{#options}}
             {{scope}} static let _options: AWSShapeOptions = [{{.}}]
     {{/options}}
+    {{#xmlRootNodeName}}
+            {{scope}} static let _xmlRootNodeName: String? = "{{.}}"
+    {{/xmlRootNodeName}}
     {{#namespace}}
             {{scope}} static let _xmlNamespace: String? = "{{.}}"
     {{/namespace}}
@@ -91,28 +90,81 @@ extension Templates {
     {{/members}}
             }
     {{/empty(deprecatedMembers)}}
-    {{#decode.requiresDecodeInit}}
+    {{#shapeCoding.requiresDecodeInit}}
 
             {{scope}} init(from decoder: Decoder) throws {
-    {{#decode.requiresResponse}}
+    {{#shapeCoding.requiresResponse}}
                 let response = decoder.userInfo[.awsResponse]! as! ResponseDecodingContainer
-    {{/decode.requiresResponse}}
-    {{#decode.requiresEvent}}
+    {{/shapeCoding.requiresResponse}}
+    {{#shapeCoding.requiresEvent}}
                 let response = decoder.userInfo[.awsEvent]! as! EventDecodingContainer
-    {{/decode.requiresEvent}}
+    {{/shapeCoding.requiresEvent}}
+    {{#shapeCoding.singleValueContainer}}
+                let container = try decoder.singleValueContainer()
+    {{/shapeCoding.singleValueContainer}}
+    {{^shapeCoding.singleValueContainer}}
     {{^empty(codingKeys)}}
                 let container = try decoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
-    {{#members}}{{#decoding}}{{#fromCodable}}
-                self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{decodeType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}{{/fromCodable}}{{#fromHeader}}
-                self.{{variable}} = try response.decode{{^required}}IfPresent{{/required}}({{decodeType}}.self, forHeader: "{{.}}"){{/fromHeader}}{{#fromRawPayload}}
-                self.{{variable}} = response.decodePayload(){{/fromRawPayload}}{{#fromEventStream}}
-                self.{{variable}} = response.decodeEventStream(){{/fromEventStream}}{{#fromPayload}}
-                self.{{variable}} = try .init(from: decoder){{/fromPayload}}{{#fromStatusCode}}
-                self.{{variable}} = response.decodeStatus(){{/fromStatusCode}}
-    {{/decoding}}{{/members}}
+    {{/shapeCoding.singleValueContainer}}
+    {{#members}}{{#memberCoding}}
+    {{#isCodable}}
+                self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{codableType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}
+    {{/isCodable}}
+    {{#inHeader}}
+                self.{{variable}} = try response.decodeHeader{{^required}}IfPresent{{/required}}({{codableType}}.self, key: "{{.}}")
+    {{/inHeader}}
+    {{#isPayload}}
+                self.{{variable}} = try container.decode({{codableType}}.self)
+    {{/isPayload}}
+    {{#isStatusCode}}
+                self.{{variable}} = response.decodeStatus()
+    {{/isStatusCode}}
+    {{/memberCoding}}{{/members}}
             }
-    {{/decode.requiresDecodeInit}}
+    {{/shapeCoding.requiresDecodeInit}}
+    {{#shapeCoding.requiresEncode}}
+
+            {{scope}} func encode(to encoder: Encoder) throws {
+    {{#shapeCoding.requiresResponse}}
+                let request = encoder.userInfo[.awsRequest]! as! RequestEncodingContainer
+    {{/shapeCoding.requiresResponse}}
+    {{#shapeCoding.singleValueContainer}}
+                var container = encoder.singleValueContainer()
+    {{/shapeCoding.singleValueContainer}}
+    {{^shapeCoding.singleValueContainer}}
+    {{^empty(codingKeys)}}
+                var container = encoder.container(keyedBy: CodingKeys.self)
+    {{/empty(codingKeys)}}
+    {{#empty(codingKeys)}}
+                _ = encoder.container(keyedBy: CodingKeys.self)
+    {{/empty(codingKeys)}}
+    {{/shapeCoding.singleValueContainer}}
+    {{#members}}{{#memberCoding}}
+    {{#isCodable}}
+                try container.encode{{^required}}IfPresent{{/required}}(self.{{variable}}, forKey: .{{variable}})
+    {{/isCodable}}
+    {{#inHeader}}
+                request.encodeHeader(self.{{#propertyWrapper}}_{{/propertyWrapper}}{{variable}}, key: "{{.}}")
+    {{/inHeader}}
+    {{#inQuery}}
+                request.encodeQuery(self.{{#propertyWrapper}}_{{/propertyWrapper}}{{variable}}, key: "{{.}}")
+    {{/inQuery}}
+    {{#areQueryParams}}
+                request.encodeQuery(self.{{#propertyWrapper}}_{{/propertyWrapper}}{{variable}})
+    {{/areQueryParams}}
+    {{#inURI}}
+                request.encodePath(self.{{variable}}, key: "{{.}}")
+    {{/inURI}}
+    {{#inHostPrefix}}
+                request.encodeHostPrefix(self.{{variable}}, key: "{{.}}")
+    {{/inHostPrefix}}
+    {{#isPayload}}
+                try container.encode(self.{{variable}})
+    {{/isPayload}}
+    {{/memberCoding}}{{/members}}
+            }
+    {{/shapeCoding.requiresEncode}}
     {{! validate() function }}
     {{#first(validation)}}
 

@@ -155,13 +155,26 @@ extension AwsService {
                 }
             }
         }
+        if serviceProtocolTrait is AwsProtocolsRestXmlTrait {
+            xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri
+        }
+        var xmlRootNodeName: String?
         // check streaming traits
         if let payloadMember = payloadMember, let payload = model.shape(for: payloadMember.value.target) {
+            if serviceProtocolTrait is AwsProtocolsRestXmlTrait {
+                if let namespace = payload.trait(type: XmlNamespaceTrait.self)?.uri {
+                    xmlNamespace = namespace
+                }
+            }
             if isOutput {
                 if payload is BlobShape || payload.hasTrait(type: StreamingTrait.self) {
                     shapeOptions.append("rawPayload")
                 }
             } else if isInput {
+                // set XML root node name.
+                if serviceProtocolTrait is AwsProtocolsRestXmlTrait {
+                    xmlRootNodeName = payloadMember.key
+                }
                 // currently only support request streaming of blobs
                 if payload is BlobShape,
                    payload.hasTrait(type: StreamingTrait.self)
@@ -176,9 +189,6 @@ extension AwsService {
                 }
             }
         }
-        if serviceProtocolTrait is AwsProtocolsRestXmlTrait {
-            xmlNamespace = shape.trait(type: XmlNamespaceTrait.self)?.uri
-        }
         let recursive = doesShapeHaveRecursiveOwnReference(shape, shapeId: shapeId)
         let initParameters = contexts.members.compactMap {
             !$0.deprecated ? InitParamContext(parameter: $0.parameter, type: $0.type, default: $0.default) : nil
@@ -189,28 +199,38 @@ extension AwsService {
         } else {
             object = recursive ? "final class" : "struct"
         }
-        var decodeContext: DecodeContext?
-        if isOutput {
-            let isResponse = shape.hasTrait(type: SotoResponseShapeTrait.self)
-            let hasCustomDecode = contexts.members.first { $0.decoding.fromCodable == nil } != nil
-            let hasNonDecodableElements = contexts.members.first {
-                $0.decoding.fromHeader != nil || $0.decoding.fromStatusCode != nil || $0.decoding.fromRawPayload == true || $0.decoding.fromEventStream == true
-            } != nil
-            decodeContext = .init(
-                requiresResponse: hasNonDecodableElements && isResponse,
-                requiresEvent: hasNonDecodableElements && !isResponse,
-                requiresDecodeInit: hasCustomDecode
+
+        var codingContext: ShapeCodingContext?
+        let isRootShape = shape.hasTrait(type: SotoResponseShapeTrait.self) || shape.hasTrait(type: SotoRequestShapeTrait.self)
+        // Has elements that require some form of custom encoding/decoding
+        let hasCustomCodableElements = contexts.members.contains { $0.memberCoding.isCodable == false }
+        if hasCustomCodableElements || typeIsUnion {
+            // Has elements that require a custom container
+            let hasNonDecodableElements = contexts.members.contains {
+                $0.memberCoding.isCodable == false && $0.memberCoding.isPayload == false
+            }
+            let singleValueContainer = contexts.members.contains {
+                $0.memberCoding.isPayload == true
+            }
+            // when setting values here. I am assuming that non root shapes must be events and require
+            // an event container instead of a request/response container. Also I am not outputting
+            // an encode for events as I don't support encoding tham at the moment
+            codingContext = ShapeCodingContext(
+                requiresResponse: isRootShape && hasNonDecodableElements,
+                requiresEvent: !isRootShape && hasNonDecodableElements,
+                requiresDecodeInit: (hasCustomCodableElements || typeIsUnion) && isOutput,
+                requiresEncode: ((hasCustomCodableElements && isRootShape) || typeIsUnion) && isInput,
+                singleValueContainer: singleValueContainer
             )
         }
         return StructureContext(
             object: object,
             name: shapeName.toSwiftClassCase(),
             shapeProtocol: shapeProtocol,
-            payload: isInput ? payloadMember?.key.toSwiftLabelCase() : nil,
             options: shapeOptions.count > 0 ? shapeOptions.map { ".\($0)" }.joined(separator: ", ") : nil,
             namespace: xmlNamespace,
-            isEncodable: isInput,
-            decode: decodeContext,
+            xmlRootNodeName: xmlRootNodeName,
+            shapeCoding: codingContext,
             encoding: contexts.encoding,
             members: contexts.members,
             initParameters: initParameters,
@@ -257,16 +277,6 @@ extension AwsService {
                 isOutputShape: isOutputShape
             ) {
                 contexts.codingKeys.append(codingKeyContext)
-            }
-            // member encoding context. We don't need this for response objects as a custom init(from:) as setup for these
-            if !shape.hasTrait(type: SotoResponseShapeTrait.self) {
-                let memberEncodingContext = self.generateMemberEncodingContext(
-                    member.value,
-                    name: member.key,
-                    isOutputShape: isOutputShape,
-                    isPropertyWrapper: memberContext.propertyWrapper != nil && isInputShape
-                )
-                contexts.awsShapeMembers += memberEncodingContext
             }
             // validation context
             if isInputShape {
@@ -344,28 +354,33 @@ extension AwsService {
         let propertyWrapper = self.generatePropertyWrapper(member, name: name, optional: optional)
         let type = member.output(model)
 
-        let memberDecodeContext: MemberDecodeContext
+        var memberCodableContext: MemberCodableContext
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
-            memberDecodeContext = .init(fromHeader: headerTrait.value, decodeType: type)
+            memberCodableContext = .init(inHeader: headerTrait.value, codableType: type)
         } else if let headerTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
-            memberDecodeContext = .init(fromHeader: headerTrait.value, decodeType: type)
-        } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
-            memberDecodeContext = .init(fromStatusCode: true, decodeType: type)
-        } else if targetShape.hasTrait(type: StreamingTrait.self) {
-            if targetShape is BlobShape {
-                memberDecodeContext = .init(fromRawPayload: true, decodeType: type)
-            } else {
-                memberDecodeContext = .init(fromEventStream: true, decodeType: type)
-            }
-        } else if member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self) {
-            if targetShape is BlobShape {
-                memberDecodeContext = .init(fromRawPayload: true, decodeType: type)
-            } else {
-                memberDecodeContext = .init(fromPayload: true, decodeType: type)
-            }
+            memberCodableContext = .init(inHeader: headerTrait.value, codableType: type)
+        } else if member.hasTrait(type: HttpResponseCodeTrait.self), isOutputShape {
+            memberCodableContext = .init(isStatusCode: true, codableType: type)
+        } else if let queryTrait = member.trait(type: HttpQueryTrait.self), !isOutputShape {
+            memberCodableContext = .init(inQuery: queryTrait.value, codableType: type)
+        } else if member.hasTrait(type: HttpQueryParamsTrait.self), !isOutputShape {
+            memberCodableContext = .init(areQueryParams: true, codableType: type)
+        } else if member.hasTrait(type: HttpLabelTrait.self), !isOutputShape {
+            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
+            memberCodableContext = .init(inURI: aliasTrait?.alias ?? name, codableType: type)
+        } else if member.hasTrait(type: HttpPayloadTrait.self) ||
+            member.hasTrait(type: EventPayloadTrait.self) ||
+            targetShape.hasTrait(type: StreamingTrait.self)
+        {
+            memberCodableContext = .init(isPayload: true, codableType: type)
         } else {
             // Codable needs to decode property wrapper if it exists
-            memberDecodeContext = .init(fromCodable: true, decodeType: propertyWrapper ?? type)
+            memberCodableContext = .init(isCodable: true, codableType: propertyWrapper ?? type)
+        }
+        if member.hasTrait(type: HostLabelTrait.self), !isOutputShape {
+            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
+            memberCodableContext.inHostPrefix = aliasTrait?.alias ?? name
+            memberCodableContext.isCodable = false
         }
         return MemberContext(
             variable: name.toSwiftVariableCase(),
@@ -377,52 +392,8 @@ extension AwsService {
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
             duplicate: false, // TODO: NEED to catch this
-            decoding: memberDecodeContext
+            memberCoding: memberCodableContext
         )
-    }
-
-    func generateMemberEncodingContext(_ member: MemberShape, name: String, isOutputShape: Bool, isPropertyWrapper: Bool) -> [MemberEncodingContext] {
-        var memberEncoding: [MemberEncodingContext] = []
-        // if header
-        if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
-            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            memberEncoding.append(.init(name: name, location: ".header(\"\(headerTrait.value)\")"))
-            // if prefix header
-        } else if let headerPrefixTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
-            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            memberEncoding.append(.init(name: name, location: ".headerPrefix(\"\(headerPrefixTrait.value)\")"))
-            // if query string
-        } else if let queryTrait = member.trait(type: HttpQueryTrait.self) {
-            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            memberEncoding.append(.init(name: name, location: ".querystring(\"\(queryTrait.value)\")"))
-            // if part of URL
-        } else if member.hasTrait(type: HttpLabelTrait.self) {
-            let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
-            memberEncoding.append(.init(name: labelName, location: ".uri(\"\(aliasTrait?.alias ?? name)\")"))
-            // if response status code
-        } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
-            let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            memberEncoding.append(.init(name: name, location: ".statusCode"))
-            // if payload and not a blob or shape is an output shape
-        } else if member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self),
-                  !(model.shape(for: member.target) is BlobShape) || isOutputShape
-        {
-            let aliasTrait = member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait
-            let payloadName = aliasTrait?.alias ?? name
-            let swiftLabelName = name.toSwiftLabelCase()
-            if swiftLabelName != payloadName {
-                let name = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-                memberEncoding.append(.init(name: name, location: ".body(\"\(payloadName)\")"))
-            }
-        }
-
-        if member.hasTrait(type: HostLabelTrait.self) {
-            let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
-            memberEncoding.append(.init(name: labelName, location: ".hostname(\"\(aliasTrait?.alias ?? name)\")"))
-        }
-        return memberEncoding
     }
 
     func generateCodingKeyContext(
