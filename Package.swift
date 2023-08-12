@@ -3,12 +3,13 @@ import PackageDescription
 
 let package = Package(
     name: "soto-codegenerator",
+    platforms: [.macOS(.v10_15)],
     products: [
         .executable(name: "SotoCodeGenerator", targets: ["SotoCodeGenerator"]),
         .plugin(name: "SotoCodeGeneratorPlugin", targets: ["SotoCodeGeneratorPlugin"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.3.1"),
+        .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.3.7"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.0.0"),
         .package(url: "https://github.com/hummingbird-project/hummingbird-mustache.git", from: "1.0.3"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
