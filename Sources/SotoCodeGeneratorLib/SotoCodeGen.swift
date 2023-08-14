@@ -48,60 +48,65 @@ public struct SotoCodeGen {
         var logger = Logging.Logger(label: "SotoCodeGenerator")
         logger.logLevel = self.command.logLevel.map { Logging.Logger.Level(rawValue: $0) ?? .info } ?? .info
         self.logger = logger
-        Smithy.registerAWSTraits()
-        Smithy.registerTraitTypes(
-            SotoInputShapeTrait.self,
-            SotoOutputShapeTrait.self
-        )
     }
 
-    public func generate() throws {
+    public func generate() async throws {
         let startTime = Date()
 
         // load JSON
         let config = try loadConfigFile()
         let endpoints = try loadEndpointJSON()
-        let models: [String: SotoSmithy.Model]
+        let modelFiles: [String]
         if self.command.smithy {
-            models = try self.loadSmithy()
+            modelFiles = self.getSmithyFiles()
         } else {
-            models = try self.loadModelJSON()
+            modelFiles = self.getModelFiles()
         }
-        let group = DispatchGroup()
 
-        models.forEach { model in
-            group.enter()
+        Smithy.registerShapesAndTraits()
+        Smithy.registerAWSTraits()
+        Smithy.registerTraitTypes(
+            SotoInputShapeTrait.self,
+            SotoOutputShapeTrait.self
+        )
 
-            DispatchQueue.global().async {
-                defer { group.leave() }
-                do {
-                    var service = try AwsService(
-                        model.value,
-                        endpoints: endpoints,
-                        outputHTMLComments: self.command.htmlComments,
-                        logger: self.logger
-                    )
-                    // get service filename without path and extension
-                    let filename = model.key
-                        .split(separator: "/", omittingEmptySubsequences: true).last!
-                    let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for file in modelFiles {
+                group.addTask {
+                    do {
+                        let model: SotoSmithy.Model
+                        if self.command.smithy {
+                            model = try self.loadSmithy(filename: file)
+                        } else {
+                            model = try self.loadJSONAST(filename: file)
+                        }
+                        var service = try AwsService(
+                            model,
+                            endpoints: endpoints,
+                            outputHTMLComments: self.command.htmlComments,
+                            logger: self.logger
+                        )
+                        // get service filename without path and extension
+                        let filename = file
+                            .split(separator: "/", omittingEmptySubsequences: true).last!
+                        let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
 
-                    if let serviceConfig = config.services?[filenameWithoutExtension], let filter = serviceConfig.operations {
-                        service.filterOperations(filter)
+                        if let serviceConfig = config.services?[filenameWithoutExtension], let filter = serviceConfig.operations {
+                            service.filterOperations(filter)
+                        }
+                        if self.command.output {
+                            try self.generateFiles(with: service, config: config)
+                        }
+                    } catch {
+                        self.logger.error("\(file): \(error)")
+                        exit(1)
                     }
-                    if self.command.output {
-                        try self.generateFiles(with: service, config: config)
-                    }
-                } catch {
-                    self.logger.error("\(model.key): \(error)")
-                    exit(1)
                 }
             }
+            try await group.waitForAll()
         }
 
-        group.wait()
-
-        if models.count > 1 {
+        if modelFiles.count > 1 {
             self.logger.info("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
         }
     }
@@ -151,31 +156,39 @@ public struct SotoCodeGen {
         let modelFiles = self.getModelFiles()
 
         return try .init(modelFiles.map {
-            do {
-                let data = try Data(contentsOf: URL(fileURLWithPath: $0))
-                let model = try Smithy().decodeAST(from: data)
-                try model.validate()
-                return (key: $0, value: model)
-            } catch {
-                throw FileError(filename: $0, error: error)
-            }
+            try (key: $0, value: self.loadJSONAST(filename: $0))
         }) { left, _ in left }
+    }
+
+    func loadJSONAST(filename: String) throws -> SotoSmithy.Model {
+        do {
+            let data = try Data(contentsOf: URL(fileURLWithPath: filename))
+            let model = try Smithy().decodeAST(from: data)
+            try model.validate()
+            return model
+        } catch {
+            throw FileError(filename: filename, error: error)
+        }
     }
 
     func loadSmithy() throws -> [String: SotoSmithy.Model] {
         let modelFiles = self.getSmithyFiles()
 
         return try .init(modelFiles.map {
-            do {
-                let data = try Data(contentsOf: URL(fileURLWithPath: $0))
-                let string = String(decoding: data, as: Unicode.UTF8.self)
-                let model = try Smithy().parse(string)
-                try model.validate()
-                return (key: $0, value: model)
-            } catch {
-                throw FileError(filename: $0, error: error)
-            }
+            try (key: $0, value: self.loadSmithy(filename: $0))
         }) { left, _ in left }
+    }
+
+    func loadSmithy(filename: String) throws -> SotoSmithy.Model {
+        do {
+            let data = try Data(contentsOf: URL(fileURLWithPath: filename))
+            let string = String(decoding: data, as: Unicode.UTF8.self)
+            let model = try Smithy().parse(string)
+            try model.validate()
+            return model
+        } catch {
+            throw FileError(filename: filename, error: error)
+        }
     }
 
     /// Generate service files from AWSService
