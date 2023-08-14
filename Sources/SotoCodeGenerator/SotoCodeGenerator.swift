@@ -17,7 +17,8 @@ import Foundation
 import Logging
 import SotoCodeGeneratorLib
 
-struct Command: ParsableCommand, SotoCodeGenCommand {
+@main
+struct Command: AsyncParsableCommand, SotoCodeGenCommand {
     @Option(name: .long, help: "Folder to output service files to")
     var outputFolder: String
 
@@ -63,9 +64,7 @@ struct Command: ParsableCommand, SotoCodeGenCommand {
     static var defaultInputFolder: String { return "\(rootPath)/aws/models" }
     static var defaultEndpoints: String { return "\(rootPath)/aws/endpoints.json" }
 
-    func run() throws {
-        try SotoCodeGen(command: self).generate()
+    func run() async throws {
+        try await SotoCodeGen(command: self).generate()
     }
 }
-
-Command.main()
