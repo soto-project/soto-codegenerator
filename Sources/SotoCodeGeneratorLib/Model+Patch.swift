@@ -126,11 +126,6 @@ extension Model {
             "com.amazonaws.route53#ListReusableDelegationSetsResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
         ],
         "S3": [
-            // https://github.com/soto-project/soto/issues/68
-            "com.amazonaws.s3#ReplicationStatus": MultiplePatch(
-                AddShapeMemberPatch<EnumShape>(name: "COMPLETED"),
-                RemoveShapeMemberPatch<EnumShape>(name: "COMPLETE")
-            ),
             // should be 64 bit number
             "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
             // https://github.com/soto-project/soto/issues/311
