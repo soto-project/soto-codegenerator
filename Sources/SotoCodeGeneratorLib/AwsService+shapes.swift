@@ -333,7 +333,7 @@ extension AwsService {
             // if part of URL
         } else if member.hasTrait(type: HttpLabelTrait.self) {
             let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
+            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait
             memberEncoding.append(.init(name: labelName, location: ".uri(\"\(aliasTrait?.alias ?? name)\")"))
             // if response status code
         } else if member.hasTrait(type: HttpResponseCodeTrait.self) {
@@ -343,7 +343,7 @@ extension AwsService {
         } else if member.hasTrait(type: HttpPayloadTrait.self),
                   !(model.shape(for: member.target) is BlobShape) || isOutputShape
         {
-            let aliasTrait = member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait
+            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait
             let payloadName = aliasTrait?.alias ?? name
             let swiftLabelName = name.toSwiftLabelCase()
             if swiftLabelName != payloadName {
@@ -354,7 +354,7 @@ extension AwsService {
 
         if member.hasTrait(type: HostLabelTrait.self) {
             let labelName = isPropertyWrapper ? "_\(name.toSwiftLabelCase())" : name.toSwiftLabelCase()
-            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? AliasTrait
+            let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait
             memberEncoding.append(.init(name: labelName, location: ".hostname(\"\(aliasTrait?.alias ?? name)\")"))
         }
         return memberEncoding
@@ -371,7 +371,9 @@ extension AwsService {
             return nil
         }
         var rawValue: String = name
-        if let aliasTrait = member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait {
+        if let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait {
+            rawValue = aliasTrait.alias
+        } else if let aliasTrait = member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait {
             rawValue = aliasTrait.alias
         }
         let variable = name.toSwiftVariableCase()

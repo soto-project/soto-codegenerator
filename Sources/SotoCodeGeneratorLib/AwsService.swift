@@ -288,14 +288,14 @@ struct AwsService {
 
     func getListEntryName(member: MemberShape, list: ListShape) -> String? {
         guard !member.hasTrait(type: XmlFlattenedTrait.self) else { return nil }
-        guard let memberName = list.member.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait else { return "member" }
+        guard let memberName = list.member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait else { return "member" }
         return memberName.alias
     }
 
     func getMapEntryNames(member: MemberShape, map: MapShape) -> (entry: String?, key: String, value: String) {
         let flattened = member.hasTrait(type: XmlFlattenedTrait.self)
-        let keyTrait = map.key.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait
-        let valueTrait = map.value.traits?.first(where: { $0 is AliasTrait }) as? AliasTrait
+        let keyTrait = map.key.trait(named: self.serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait
+        let valueTrait = map.value.trait(named: self.serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait
         return (entry: flattened ? nil : "entry", key: keyTrait?.alias ?? "key", value: valueTrait?.alias ?? "value")
     }
 

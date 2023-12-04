@@ -23,15 +23,19 @@ protocol AliasTrait: StaticTrait {
     var alias: String { get }
 }
 
+protocol ProtocolAliasTrait: StaticTrait {
+    var alias: String { get }
+}
+
 protocol AwsServiceProtocol: SotoOutput {
-    var nameTrait: AliasTrait.Type { get }
+    var nameTrait: ProtocolAliasTrait.Type { get }
     var requiresCollectionCoders: Bool { get }
 }
 
 // MARK: Alias traits
 
-extension JsonNameTrait: AliasTrait { var alias: String { return value } }
-extension XmlNameTrait: AliasTrait { var alias: String { return value } }
+extension JsonNameTrait: ProtocolAliasTrait { var alias: String { return value } }
+extension XmlNameTrait: ProtocolAliasTrait { var alias: String { return value } }
 // going to have to assume EC2 name isn't used and use Header name
 // extension AwsProtocolsEc2QueryNameTrait: AliasTrait { var alias: String { return value } }
 extension HttpHeaderTrait: AliasTrait { var alias: String { return value } }
@@ -42,37 +46,37 @@ extension HttpQueryTrait: AliasTrait { var alias: String { return value } }
 
 extension AwsProtocolsRestJson1Trait: AwsServiceProtocol {
     var output: String { ".restjson" }
-    var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
+    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
     var requiresCollectionCoders: Bool { return false }
 }
 
 extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.0\")" }
-    var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
+    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
     var requiresCollectionCoders: Bool { return false }
 }
 
 extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.1\")" }
-    var nameTrait: AliasTrait.Type { return JsonNameTrait.self }
+    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
     var requiresCollectionCoders: Bool { return false }
 }
 
 extension AwsProtocolsAwsQueryTrait: AwsServiceProtocol {
     var output: String { ".query" }
-    var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
+    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
     var requiresCollectionCoders: Bool { return true }
 }
 
 extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol {
     var output: String { ".ec2" }
-    var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
+    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
     var requiresCollectionCoders: Bool { return true }
 }
 
 extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
     var output: String { ".restxml" }
-    var nameTrait: AliasTrait.Type { return XmlNameTrait.self }
+    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
     var requiresCollectionCoders: Bool { return true }
 }
 
