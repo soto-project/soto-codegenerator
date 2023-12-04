@@ -450,6 +450,26 @@ struct AwsService {
         }
     }
 
+    /// The JSON decoder requires an array to exist, even if it is empty so we have to make
+    /// all arrays in output shapes optional
+    func removeRequiredTraitFromOutputCollections(_ model: Model) {
+        guard self.serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait ||
+            self.serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait ||
+            self.serviceProtocolTrait is AwsProtocolsRestJson1Trait else { return }
+
+        for shape in model.shapes {
+            guard shape.value.hasTrait(type: SotoOutputShapeTrait.self) else { continue }
+            guard let structure = shape.value as? StructureShape else { continue }
+            guard let members = structure.members else { continue }
+            for member in members.values {
+                let shape = model.shape(for: member.target)
+                if shape is ListShape || shape is SetShape || shape is MapShape {
+                    member.remove(trait: RequiredTrait.self)
+                }
+            }
+        }
+    }
+
     /// convert paginator token to KeyPath
     func toKeyPath(token: String, structure: StructureShape) -> String {
         var split = token.split(separator: ".")

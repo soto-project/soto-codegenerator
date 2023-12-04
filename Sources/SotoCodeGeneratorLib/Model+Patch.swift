@@ -148,6 +148,14 @@ extension Model {
                 AddTraitPatch(trait: SotoExtensibleEnumTrait()),
             ]),
         ],
+        "SQS": [
+            "com.amazonaws.sqs#ChangeMessageVisibilityBatchResult$Successful": RemoveTraitPatch(trait: RequiredTrait.self),
+            "com.amazonaws.sqs#ChangeMessageVisibilityBatchResult$Failed": RemoveTraitPatch(trait: RequiredTrait.self),
+            "com.amazonaws.sqs#DeleteMessageBatchResult$Successful": RemoveTraitPatch(trait: RequiredTrait.self),
+            "com.amazonaws.sqs#DeleteMessageBatchResult$Failed": RemoveTraitPatch(trait: RequiredTrait.self),
+            "com.amazonaws.sqs#SendMessageBatchResult$Successful": RemoveTraitPatch(trait: RequiredTrait.self),
+            "com.amazonaws.sqs#SendMessageBatchResult$Failed": RemoveTraitPatch(trait: RequiredTrait.self),
+        ],
         "SageMaker": [
             // pagination tokens in response shouldnt be required
             "com.amazonaws.sagemaker#ListFeatureGroupsResponse$NextToken": RemoveTraitPatch(trait: RequiredTrait.self),
