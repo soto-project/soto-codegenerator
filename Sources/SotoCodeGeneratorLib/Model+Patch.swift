@@ -156,10 +156,6 @@ extension Model {
             "com.amazonaws.sqs#SendMessageBatchResult$Successful": RemoveTraitPatch(trait: RequiredTrait.self),
             "com.amazonaws.sqs#SendMessageBatchResult$Failed": RemoveTraitPatch(trait: RequiredTrait.self),
         ],
-        "SageMaker": [
-            // pagination tokens in response shouldnt be required
-            "com.amazonaws.sagemaker#ListFeatureGroupsResponse$NextToken": RemoveTraitPatch(trait: RequiredTrait.self),
-        ],
         "Savingsplans": [
             // service name change
             "com.amazonaws.savingsplans#AWSSavingsPlan": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "SavingsPlans") },
