@@ -17,7 +17,7 @@ extension Templates {
     {{%CONTENT_TYPE:TEXT}}
     {{>header}}
 
-    #if os(Linux)
+    #if os(Linux) && compiler(<5.10)
     // swift-corelibs-foundation hasn't been updated with Sendable conformances
     @preconcurrency import Foundation
     #else
