@@ -17,51 +17,87 @@ import Foundation
 @main
 struct SotoCodeModelDownloader: CommandPlugin {
         
-    func performCommand(context: PackagePlugin.PluginContext, arguments: [String]) async throws {
- 
-        // get config File
-        let configfile = context.package.targets.compactMap({ $0 as? SourceModuleTarget })
-                                             .compactMap({ $0.sourceFiles
-                                                 .first(where: { $0.path.lastComponent
-                                                     .contains("soto.config.json") })?.path }).first
+    struct ModelDownloaderArguments {
+        let inputFolder: String
+        let outputFolder: String
+        let configFile: String?
         
-        guard let configfile else {
-            Diagnostics.error("can not find the soto.config.json file in the target")
+        func getArguments() -> [String] {
+            // Construct the command line arguments for the model downloader
+            var arguments = ["--input-folder", inputFolder,
+                             "--output-folder", outputFolder]
+            if let configFilePath = configFile {
+                arguments.append(contentsOf: ["--config", configFilePath])
+            }
+            return arguments
+        }
+    }
+
+    func performCommand(context: PackagePlugin.PluginContext, arguments: [String]) async throws {
+        // Get the path to the SotoModelDownloader executable
+        let sotoModelDownloaderTool = try context.tool(named: "SotoModelDownloader")
+        let sotoModelDownloaderURL = URL(filePath: sotoModelDownloaderTool.path.string)
+        
+        // Find the config file (soto.config.json) in the package targets
+        let configFile = context.package.targets
+            .compactMap({ $0 as? SourceModuleTarget })
+            .compactMap({ $0.sourceFiles.first(where: { $0.path.lastComponent.contains("soto.config.json") })?.path })
+            .first
+        
+        // Ensure the config file is found
+        guard let configFile else {
+            Diagnostics.error("Cannot find the soto.config.json file in the target")
             return
         }
         
-        // extracting services from config
-        let services = try getSerivesFrom(path: configfile.string)
+        // Determine the main directory and output folder for the downloaded resources
+        let mainDirectory = configFile.removingLastComponent()
+        let outputFolderPath = mainDirectory.appending("aws").string
+
+        // Prepare arguments for downloading model files
+        let modelDownloaderArgs = ModelDownloaderArguments(
+            inputFolder: Repo.modelDirectory,
+            outputFolder: outputFolderPath + "/models",
+            configFile: configFile.string
+        )
         
-        let mainDirectory = configfile.removingLastComponent()
-        let outputFolder = mainDirectory.appending("aws").string
-        
-        // Download Model files
-        let modelDownloader = GitHubResource(inputFolder: Repo.modelDirectory,
-                                          outputFolder: outputFolder + "/models",
-                                          expectedServices: services)
-        // Download Endpoint File
-        let endpointDownloader = GitHubResource(inputFolder: Repo.endpointsDirectory,
-                                            outputFolder: outputFolder)
-        
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            for resource in [endpointDownloader, modelDownloader] {
-                group.addTask {
-                    try await resource.download()
-                }
+        // Prepare arguments for downloading endpoint files
+        let endpointDownloaderArgs = ModelDownloaderArguments(
+            inputFolder: Repo.endpointsDirectory,
+            outputFolder: outputFolderPath,
+            configFile: nil
+        )
+
+        // Iterate over the download tasks (models and endpoints)
+        for resourceArgs in [endpointDownloaderArgs, modelDownloaderArgs] {
+            // Set up the process to run the SotoModelDownloader
+            let process = Process()
+            process.executableURL = sotoModelDownloaderURL
+            process.arguments = resourceArgs.getArguments()
+            
+            // Run the process and wait for it to complete
+            try process.run()
+            process.waitUntilExit()
+            
+            // Check the process termination status
+            if process.terminationReason == .exit && process.terminationStatus == 0 {
+                print("Downloaded resources to: \(outputFolderPath)")
+            } else {
+                let terminationDescription = "\(process.terminationReason):\(process.terminationStatus)"
+                throw "get-soto-models invocation failed: \(terminationDescription)"
             }
-            try await group.waitForAll()
         }
-        print("Downloaded resources in : \(outputFolder)")
     }
+}
+
+extension String: Error {}
+
+// MARK: - Model and Endpoint URLs -
+
+enum Repo {
+    /// Model files github directory.
+    static let modelDirectory = "https://github.com/soto-project/soto/tree/main/models"
     
-    private func getSerivesFrom(path: String) throws -> [String] {
-        let data = try Data(contentsOf: URL(filePath: path))
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String : Any] else { return [] }
-        if let services = json["services"] as? [String : Any] {
-            let servicesName = services.keys.map({ $0 })
-            return servicesName
-        }
-        return []
-    }
+    /// Endpoints github directory.
+    static let endpointsDirectory = "https://github.com/soto-project/soto/tree/main/models/endpoints"
 }

@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2022 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,16 +12,20 @@
 //
 //===----------------------------------------------------------------------===//
 
- struct ConfigFile: Decodable {
+import Foundation
+struct ConfigFile: Decodable {
     struct ServiceConfig: Decodable {
         let operations: [String]?
     }
 
-    enum AccessControl: String, Decodable {
-        case `public`
-        case `internal`
-    }
-
     let services: [String: ServiceConfig]?
-    let access: AccessControl?
+}
+
+extension ConfigFile {
+    
+   static func decodeFrom(file configFile: String) throws -> Self {
+        let data = try Data(contentsOf: URL(fileURLWithPath: configFile))
+        let sotoConfig = try JSONDecoder().decode(ConfigFile.self, from: data)
+        return sotoConfig
+    }
 }
