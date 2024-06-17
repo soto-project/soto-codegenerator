@@ -47,14 +47,6 @@ extension Model {
             // service name change
             "com.amazonaws.codestarnotifications#CodeStarNotifications_20191015": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "CodeStarNotifications") },
         ],
-        "CognitoIdentityProvider": [
-            // https://github.com/soto-project/soto/issues/478
-            "com.amazonaws.cognitoidentityprovider#UserStatusType": AddShapeMemberPatch<EnumShape>(
-                name: "EXTERNAL_PROVIDER",
-                shapeId: "smithy.api#Unit",
-                traits: [EnumValueTrait(value: .string("EXTERNAL_PROVIDER"))]
-            ),
-        ],
         "DynamoDB": [
             // Make TransactWriteItem an enum with associated values
             "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
