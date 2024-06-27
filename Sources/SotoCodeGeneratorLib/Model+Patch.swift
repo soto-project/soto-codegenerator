@@ -98,7 +98,13 @@ extension Model {
             ),
             "com.amazonaws.lambda#ListFunctionsRequest$MasterRegion": EditShapePatch { (shape: MemberShape) in
                 return MemberShape(target: "com.amazonaws.lambda#SotoCore.Region", traits: shape.traits)
-            }
+            },
+            // https://github.com/soto-project/soto/issues/720
+            "com.amazonaws.lambda#LastUpdateStatusReasonCode": AddShapeMemberPatch<EnumShape>(
+                name: "Creating",
+                shapeId: "smithy.api#Unit",
+                traits: [EnumValueTrait(value: .string("Creating"))]
+            ),
         ],
         "MediaConvert": [
             "com.amazonaws.mediaconvert#__stringPatternS3": EditTraitPatch { _ in PatternTrait(value: "^s3:\\/\\/") }
