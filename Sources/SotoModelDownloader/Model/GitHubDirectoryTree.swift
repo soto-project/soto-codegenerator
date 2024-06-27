@@ -2,7 +2,7 @@
 //
 // This source file is part of the Soto for AWS open source project
 //
-// Copyright (c) 2017-2022 the Soto project authors
+// Copyright (c) 2017-2023 the Soto project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -11,17 +11,17 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 //===----------------------------------------------------------------------===//
-
- struct ConfigFile: Decodable {
-    struct ServiceConfig: Decodable {
-        let operations: [String]?
+import Foundation
+/// Represents the structure of a GitHub directory tree
+struct GitHubDirectoryTree: Decodable {
+    
+    /// Represents the content within the GitHub directory tree.
+    struct Content: Decodable {
+        var type: String
+        let url: URL
+        let size: Int?
+        let path: String
     }
-
-    enum AccessControl: String, Decodable {
-        case `public`
-        case `internal`
-    }
-
-    let services: [String: ServiceConfig]?
-    let access: AccessControl?
+    
+    let tree: [Content]
 }
