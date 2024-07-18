@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
-import HummingbirdMustache
 import Logging
+import Mustache
 import SotoSmithy
 import SotoSmithyAWS
 
@@ -39,7 +39,7 @@ public struct SotoCodeGen {
     }
 
     let command: SotoCodeGenCommand
-    let library: HBMustacheLibrary
+    let library: MustacheLibrary
     let logger: Logging.Logger
 
     public init(command: SotoCodeGenCommand) throws {
