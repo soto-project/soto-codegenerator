@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
-import HummingbirdMustache
 import Logging
+import Mustache
 import SotoSmithy
 import SotoSmithyAWS
 
@@ -360,7 +360,6 @@ struct AwsService {
                             TreeHashMiddleware(header: \"x-amz-sha256-tree-hash\")
                         }
             """
-
         case "S3":
             return "S3Middleware()"
         default:
@@ -568,7 +567,7 @@ struct AwsService {
                 }
                 endpointValue = endpointValue.applyingPartitionDefaults(partition.defaults)
                 guard let variants = endpointValue.variants else { return }
-                variants.forEach { variant in
+                for variant in variants {
                     let variantString = variant.tags
                         .map { ".\($0)" }
                         .sorted()
@@ -577,7 +576,7 @@ struct AwsService {
                     guard let dnsSuffix = getDefaultValue(partition: partition, service: service, getValue: { defaults in
                         return defaults.variants?.first(where: { $0.tags == variant.tags })?.dnsSuffix
                     }) else {
-                        return
+                        continue
                     }
                     if variantEndpoints[variantString] == nil {
                         variantEndpoints[variantString] = .init()
@@ -713,7 +712,7 @@ extension AwsService {
     }
 
     struct MemberCodableContext {
-        internal init(
+        init(
             inHeader: String? = nil,
             inQuery: String? = nil,
             inURI: String? = nil,
@@ -770,7 +769,7 @@ extension AwsService {
         let location: String?
     }
 
-    class ValidationContext: HBMustacheTransformable {
+    class ValidationContext: MustacheTransformable {
         let name: String
         let shape: Bool
         let required: Bool

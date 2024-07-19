@@ -107,7 +107,8 @@ extension Templates {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
     {{/shapeCoding.singleValueContainer}}
-    {{#members}}{{#memberCoding}}
+    {{#members}}
+    {{#memberCoding}}
     {{#isCodable}}
                 self.{{variable}} = try container.decode{{^propertyWrapper}}{{^required}}IfPresent{{/required}}{{/propertyWrapper}}({{codableType}}.self, forKey: .{{variable}}){{#propertyWrapper}}.wrappedValue{{/propertyWrapper}}
     {{/isCodable}}
@@ -120,7 +121,8 @@ extension Templates {
     {{#isStatusCode}}
                 self.{{variable}} = response.decodeStatus()
     {{/isStatusCode}}
-    {{/memberCoding}}{{/members}}
+    {{/memberCoding}}
+    {{/members}}
             }
     {{/shapeCoding.requiresDecodeInit}}
     {{#shapeCoding.requiresEncode}}
@@ -140,7 +142,8 @@ extension Templates {
                 _ = encoder.container(keyedBy: CodingKeys.self)
     {{/empty(codingKeys)}}
     {{/shapeCoding.singleValueContainer}}
-    {{#members}}{{#memberCoding}}
+    {{#members}}
+    {{#memberCoding}}
     {{#isCodable}}
                 try container.encode{{^required}}IfPresent{{/required}}(self.{{variable}}, forKey: .{{variable}})
     {{/isCodable}}
@@ -162,7 +165,8 @@ extension Templates {
     {{#isPayload}}
                 try container.encode(self.{{variable}})
     {{/isPayload}}
-    {{/memberCoding}}{{/members}}
+    {{/memberCoding}}
+    {{/members}}
             }
     {{/shapeCoding.requiresEncode}}
     {{! validate() function }}

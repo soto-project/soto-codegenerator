@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import HummingbirdMustache
+import Mustache
 
 enum Templates {
     static var values: [String: String] = [
@@ -28,10 +28,10 @@ enum Templates {
         "waiters": waiterTemplate,
     ]
 
-    static func createLibrary() throws -> HBMustacheLibrary {
-        let library = HBMustacheLibrary()
+    static func createLibrary() throws -> MustacheLibrary {
+        var library = MustacheLibrary()
         for v in self.values {
-            let template = try HBMustacheTemplate(string: v.value)
+            let template = try MustacheTemplate(string: v.value)
             library.register(template, named: v.key)
         }
         return library
