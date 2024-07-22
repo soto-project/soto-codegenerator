@@ -9,7 +9,7 @@ let package = Package(
         .plugin(name: "SotoCodeGeneratorPlugin", targets: ["SotoCodeGeneratorPlugin"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.4.0"),
+        .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.4.1"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.0.0"),
         .package(url: "https://github.com/hummingbird-project/swift-mustache.git", from: "2.0.0-beta"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
