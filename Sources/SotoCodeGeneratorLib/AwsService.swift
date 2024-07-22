@@ -356,7 +356,7 @@ struct AwsService {
         case "Glacier":
             return """
             AWSMiddlewareStack {
-                            AWSEditHeadersMiddleware(.add(name: \"x-amz-glacier-version\", value: \"\(service.version)\"))
+                            AWSEditHeadersMiddleware(.add(name: \"x-amz-glacier-version\", value: \"\(service.version ?? "2012-06-01")\"))
                             TreeHashMiddleware(header: \"x-amz-sha256-tree-hash\")
                         }
             """
