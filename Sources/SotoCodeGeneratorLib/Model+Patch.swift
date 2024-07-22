@@ -17,6 +17,15 @@ import SotoSmithyAWS
 
 extension Model {
     static let patches: [String: [ShapeId: ShapePatch]] = [
+        "ACM": [
+            "com.amazonaws.acm#KeyAlgorithm$RSA_1024": EditTraitPatch { _ in EnumValueTrait(value: .string("RSA-1024")) },
+            "com.amazonaws.acm#KeyAlgorithm$RSA_2048": EditTraitPatch { _ in EnumValueTrait(value: .string("RSA-2048")) },
+            "com.amazonaws.acm#KeyAlgorithm$RSA_3072": EditTraitPatch { _ in EnumValueTrait(value: .string("RSA-3072")) },
+            "com.amazonaws.acm#KeyAlgorithm$RSA_4096": EditTraitPatch { _ in EnumValueTrait(value: .string("RSA-4096")) },
+            "com.amazonaws.acm#KeyAlgorithm$EC_prime256v1": EditTraitPatch { _ in EnumValueTrait(value: .string("EC-prime256v1")) },
+            "com.amazonaws.acm#KeyAlgorithm$EC_secp384r1": EditTraitPatch { _ in EnumValueTrait(value: .string("EC-secp384r1")) },
+            "com.amazonaws.acm#KeyAlgorithm$EC_secp521r1": EditTraitPatch { _ in EnumValueTrait(value: .string("EC-secp521r1")) },
+        ],
         "Amplify": [
             // https://github.com/soto-project/soto/issues/474
             "com.amazonaws.amplify#App$description": RemoveTraitPatch(trait: RequiredTrait.self),
