@@ -390,26 +390,28 @@ struct AwsService {
         return nil
     }
 
-    /// return if shape has a recursive reference (function only tests 2 levels)
+    /// return if shape has a recursive reference (checks 4 layers of references)
     func doesShapeHaveRecursiveOwnReference(_ shape: CollectionShape, shapeId: ShapeId) -> Bool {
-        guard let members = shape.members else { return false }
-        let hasRecursiveOwnReference = members.values.contains(where: { member in
-            // does shape have a member of same type as itself
-            if member.target == shapeId {
-                return true
-            } else {
-                guard let shape = model.shape(for: member.target) else { return false }
-                switch shape {
-                case let structure as StructureShape:
-                    return structure.members?.first { $0.value.target == shapeId } != nil
-                default:
-                    break
+        func hasRecursiveOwnReference(_ shape: CollectionShape, count: Int) -> Bool {
+            if count > 4 { return false }
+            guard let members = shape.members else { return false }
+            return members.values.contains(where: { member in
+                // does shape have a member of same type as itself
+                if member.target == shapeId {
+                    return true
+                } else {
+                    guard let shape = model.shape(for: member.target) else { return false }
+                    switch shape {
+                    case let collection as CollectionShape:
+                        return hasRecursiveOwnReference(collection, count: count + 1)
+                    default:
+                        break
+                    }
+                    return false
                 }
-                return false
-            }
-        })
-
-        return hasRecursiveOwnReference
+            })
+        }
+        return hasRecursiveOwnReference(shape, count: 0)
     }
 
     /// mark up model with Soto traits for input and output shapes
