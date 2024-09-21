@@ -69,6 +69,7 @@ extension Templates {
             {{scope}} init() {}
     {{/empty(members)}}
     {{^empty(members)}}
+            @inlinable
             {{scope}} init({{#initParameters}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/initParameters}}) {
     {{#members}}
     {{^deprecated}}
@@ -84,6 +85,7 @@ extension Templates {
     {{^empty(deprecatedMembers)}}
 
             @available(*, deprecated, message: "Members {{#deprecatedMembers}}{{.}}{{^last()}}, {{/last()}}{{/deprecatedMembers}} have been deprecated")
+            @inlinable
             {{scope}} init({{#members}}{{parameter}}: {{type}}{{#default}} = {{.}}{{/default}}{{^last()}}, {{/last()}}{{/members}}) {
     {{#members}}
                 self.{{variable}} = {{variable}}
