@@ -87,13 +87,14 @@ struct AwsService {
     }
 
     /// Generate context for rendering service template
-    func generateServiceContext(_: ShapesContext) throws -> [String: Any] {
+    func generateServiceContext() throws -> [String: Any] {
         var context: [String: Any] = [:]
         guard let serviceEntry = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object") }
         let serviceId = serviceEntry.key
         let service = serviceEntry.value
         let authSigV4 = service.trait(type: AwsAuthSigV4Trait.self)
-        let operations = try generateOperationContexts()
+
+        let operationContexts = try self.generateOperationContexts()
 
         context["name"] = self.serviceName
         context["description"] = self.processDocs(from: service)
@@ -134,9 +135,18 @@ struct AwsService {
         context["variantEndpoints"] = self.getVariantEndpoints()
             .map { (variant: $0.key, endpoints: $0.value) }
             .sorted { $0.variant < $1.variant }
-        context["operations"] = operations.operations
-        context["streamingOperations"] = operations.streamingOperations
+        context["operations"] = operationContexts.values.sorted { $0.funcName < $1.funcName }
+        let paginators = try self.generatePaginatorContext(operationContexts)
+        let waiters = try self.generateWaiterContexts(operationContexts)
+        if paginators["paginators"] != nil {
+            context["paginators"] = paginators
+        }
+        if waiters["waiters"] != nil {
+            context["waiters"] = waiters
+        }
+
         context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
+
         return context
     }
 
@@ -175,10 +185,9 @@ struct AwsService {
         return context
     }
 
-    /// Generate list of operation and streaming operation contexts
-    func generateOperationContexts() throws -> (operations: [OperationContext], streamingOperations: [OperationContext]) {
-        var operationContexts: [OperationContext] = []
-        var streamingOperationContexts: [OperationContext] = []
+    /// Generate map of operation
+    func generateOperationContexts() throws -> [ShapeId: OperationContext] {
+        var operationContexts: [ShapeId: OperationContext] = [:]
         let operations = self.operations
         for operation in operations {
             let operationContext = try generateOperationContext(
@@ -186,27 +195,9 @@ struct AwsService {
                 operationName: operation.key,
                 streaming: false
             )
-            operationContexts.append(operationContext)
-
-            if let output = operation.value.output,
-               let outputShape = model.shape(for: output.target) as? StructureShape,
-               let payloadMember = getPayloadMember(from: outputShape),
-               let payloadShape = model.shape(for: payloadMember.value.target),
-               payloadShape.trait(type: StreamingTrait.self) != nil,
-               payloadShape is BlobShape
-            {
-                let operationContext = try generateOperationContext(
-                    operation.value,
-                    operationName: operation.key,
-                    streaming: true
-                )
-                streamingOperationContexts.append(operationContext)
-            }
+            operationContexts[operation.key] = operationContext
         }
-        return (
-            operations: operationContexts.sorted { $0.funcName < $1.funcName },
-            streamingOperations: streamingOperationContexts.sorted { $0.funcName < $1.funcName }
-        )
+        return operationContexts
     }
 
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`

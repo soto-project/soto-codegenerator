@@ -17,17 +17,18 @@ import SotoSmithy
 
 extension AwsService {
     /// Generate list of waiter contexts
-    func generateWaiterContexts() throws -> [String: Any] {
+    func generateWaiterContexts(_ operationContexts: [ShapeId: OperationContext]) throws -> [String: Any] {
         var context: [String: Any] = [:]
         context["name"] = self.serviceName
         var waiters: [WaiterContext] = []
         for operation in self.operations {
             guard let trait = operation.value.trait(type: WaitableTrait.self) else { continue }
+            guard let operationContext = operationContexts[operation.key] else { continue }
             for waiter in trait.value {
                 let waiterContext = try generateWaiterContext(
                     waiter.value,
                     name: waiter.key,
-                    operation: operation.value,
+                    operationContext: operationContext,
                     operationName: operation.key
                 )
                 waiters.append(waiterContext)
@@ -40,12 +41,11 @@ extension AwsService {
     }
 
     /// Generate waiter context from waiter
-    func generateWaiterContext(_ waiter: WaitableTrait.Waiter, name: String, operation: OperationShape, operationName: ShapeId) throws -> WaiterContext {
+    func generateWaiterContext(_ waiter: WaitableTrait.Waiter, name: String, operationContext: OperationContext, operationName: ShapeId) throws -> WaiterContext {
         var acceptorContexts: [AcceptorContext] = []
         for acceptor in waiter.acceptors {
             acceptorContexts.append(self.generateAcceptorContext(acceptor))
         }
-        let operationContext = try self.generateOperationContext(operation, operationName: operationName, streaming: false)
         return .init(
             waiterName: name,
             operation: operationContext,

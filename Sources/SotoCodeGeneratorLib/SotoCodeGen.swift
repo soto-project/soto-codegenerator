@@ -207,17 +207,9 @@ public struct SotoCodeGen {
         let scope = config.access == .internal ? "internal" : "public"
 
         var shapesContext = try service.generateShapesContext()
+        var apiContext = try service.generateServiceContext()
         shapesContext.scope = scope
-        var apiContext = try service.generateServiceContext(shapesContext)
-        let paginators = try service.generatePaginatorContext()
-        let waiters = try service.generateWaiterContexts()
         apiContext["scope"] = scope
-        if paginators["paginators"] != nil {
-            apiContext["paginators"] = paginators
-        }
-        if waiters["waiters"] != nil {
-            apiContext["waiters"] = waiters
-        }
 
         let api = self.library.render(apiContext, withTemplate: "api")!
         if try api
