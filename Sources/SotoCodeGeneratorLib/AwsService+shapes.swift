@@ -18,10 +18,7 @@ import SotoSmithyAWS
 
 extension AwsService {
     /// Generate context for outputting Shapes
-    func generateShapesContext() throws -> [String: Any] {
-        var context: [String: Any] = [:]
-        context["name"] = serviceName
-
+    func generateShapesContext() throws -> ShapesContext {
         // generate enums
         let traitEnums: [EnumContext] = try model
             .select(from: "[trait|enum]")
@@ -30,13 +27,13 @@ extension AwsService {
             .select(type: EnumShape.self)
             .compactMap { self.generateEnumContext($0.value, shapeName: $0.key.shapeName) }
         let enums = (traitEnums + shapeEnums).sorted { $0.name < $1.name }
-        var shapeContexts: [[String: Any]] = enums.map { ["enum": $0] }
+        var shapeContexts: [ShapesContext.ShapeType] = enums.map { .enum($0) }
 
         // generate structures
         let structures = model.select(type: StructureShape.self).sorted { $0.key.shapeName < $1.key.shapeName }
         for structure in structures {
             guard let shapeContext = self.generateStructureContext(structure.value, shapeId: structure.key, typeIsUnion: false) else { continue }
-            shapeContexts.append(["struct": shapeContext])
+            shapeContexts.append(.struct(shapeContext))
         }
 
         // generate unions
@@ -46,16 +43,20 @@ extension AwsService {
             let typeIsUnion = union.value.members?.count == 1 ? false : true
             guard let shapeContext = self.generateStructureContext(union.value, shapeId: union.key, typeIsUnion: typeIsUnion) else { continue }
             if typeIsUnion {
-                shapeContexts.append(["enumWithValues": shapeContext])
+                shapeContexts.append(.enumWithValues(shapeContext))
             } else {
-                shapeContexts.append(["struct": shapeContext])
+                shapeContexts.append(.struct(shapeContext))
             }
         }
+        let errorContext = try self.generateErrorContext()
 
-        if shapeContexts.count > 0 {
-            context["shapes"] = shapeContexts
-        }
-        return context
+        return .init(
+            name: self.serviceName,
+            shapes: shapeContexts,
+            errors: errorContext.count > 0 ? errorContext : nil,
+            scope: "internal",
+            extraCode: nil /* self.generateExtraCode() */
+        )
     }
 
     /// Generate the context information for outputting an enum from strings with enum traits
@@ -621,5 +622,43 @@ extension AwsService {
             }
         }
         return nil
+    }
+
+    func generateExtraCode() -> String? {
+        switch self.serviceName {
+        case "DynamoDB":
+            """
+            extension DynamoDB.AttributeValue: Equatable {
+                public static func == (lhs: Self, rhs: Self) -> Bool {
+                    switch (lhs, rhs) {
+                    case (.b(let lhs), .b(let rhs)):
+                        return lhs == rhs
+                    case (.bool(let lhs), .bool(let rhs)):
+                        return lhs == rhs
+                    case (.bs(let lhs), .bs(let rhs)):
+                        return lhs == rhs
+                    case (.l(let lhs), .l(let rhs)):
+                        return lhs == rhs
+                    case (.m(let lhs), .m(let rhs)):
+                        return lhs == rhs
+                    case (.n(let lhs), .n(let rhs)):
+                        return lhs == rhs
+                    case (.ns(let lhs), .ns(let rhs)):
+                        return lhs == rhs
+                    case (.null(let lhs), .null(let rhs)):
+                        return lhs == rhs
+                    case (.s(let lhs), .s(let rhs)):
+                        return lhs == rhs
+                    case (.ss(let lhs), .ss(let rhs)):
+                        return lhs == rhs
+                    default:
+                        return false
+                    }
+                }
+            }
+            """
+        default:
+            nil
+        }
     }
 }

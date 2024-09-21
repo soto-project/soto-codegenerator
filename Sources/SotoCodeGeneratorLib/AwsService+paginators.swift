@@ -53,9 +53,13 @@ extension AwsService {
                 inputKeyToken = nil
             }
 
+            var operation = try self.generateOperationContext(operationShape, operationName: operation.key, streaming: false)
+            if let inputKeyToken {
+                operation.initParameters = operation.initParameters?.filter { $0.parameter != inputKeyToken.toSwiftVariableCase() }
+            }
             paginatorContexts.append(
                 PaginatorContext(
-                    operation: try self.generateOperationContext(operationShape, operationName: operation.key, streaming: false),
+                    operation: operation,
                     inputKey: inputKeyToken.map { self.toKeyPath(token: $0, structure: inputShape) },
                     outputKey: self.toKeyPath(token: outputToken, structure: outputShape),
                     moreResultsKey: paginatedTruncatedTrait.map { self.toKeyPath(token: $0.isTruncated, structure: outputShape) }

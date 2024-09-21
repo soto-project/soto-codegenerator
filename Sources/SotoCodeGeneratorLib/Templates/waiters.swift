@@ -25,7 +25,7 @@ extension Templates {
             maxWaitTime: TimeAmount? = nil,
             logger: Logger = AWSClient.loggingDisabled
         ) async throws {
-            let waiter = AWSClient.Waiter(
+            let waiter = AWSClient.Waiter<{{operation.inputShape}}, _>(
                 acceptors: [
     {{#acceptors}}
     {{#matcher.jmesPath}}

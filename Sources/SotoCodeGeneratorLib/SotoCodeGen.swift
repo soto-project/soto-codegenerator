@@ -206,7 +206,9 @@ public struct SotoCodeGen {
         }
         let scope = config.access == .internal ? "internal" : "public"
 
-        var apiContext = try service.generateServiceContext()
+        var shapesContext = try service.generateShapesContext()
+        shapesContext.scope = scope
+        var apiContext = try service.generateServiceContext(shapesContext)
         let paginators = try service.generatePaginatorContext()
         let waiters = try service.generateWaiterContexts()
         apiContext["scope"] = scope
@@ -222,13 +224,6 @@ public struct SotoCodeGen {
             .writeIfChanged(toFile: "\(basePath)/\(prefix)_api.swift")
         {
             self.logger.info("Wrote \(prefix)_api.swift")
-        }
-
-        var shapesContext = try service.generateShapesContext()
-        let errorContext = try service.generateErrorContext()
-        shapesContext["scope"] = scope
-        if errorContext["errors"] != nil {
-            shapesContext["errors"] = errorContext
         }
 
         let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
