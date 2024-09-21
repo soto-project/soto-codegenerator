@@ -737,7 +737,7 @@ extension AwsService {
         let streaming: String?
         let documentationUrl: String?
         let endpointRequired: DiscoverableEndpoint?
-        var initParameters: [OperationInitParamContext]?
+        var initParameters: [OperationInitParamContext]
     }
 
     struct OperationInitParamContext {

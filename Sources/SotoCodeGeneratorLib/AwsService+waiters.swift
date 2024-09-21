@@ -88,7 +88,7 @@ extension AwsService {
     /// Basically convert all fields into format used for variables - ie lowercase first character
     func generatePathArgument(argument: String) -> String {
         // a field is any series of letters that doesn't end with a `(`
-        var output: String = ""
+        var output = ""
         var index = argument.startIndex
         var fieldStartIndex: String.Index?
         while index != argument.endIndex {

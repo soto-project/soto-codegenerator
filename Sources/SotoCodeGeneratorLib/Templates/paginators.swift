@@ -23,7 +23,7 @@ extension Templates {
         /// Return PaginatorSequence for operation ``{{operation.funcName}}(_:logger:)``.
         ///
         /// - Parameters:
-        ///   - input: Input for request
+        ///   - input: Input for operation
         ///   - logger: Logger used for logging
     {{#operation.deprecated}}
         @available(*, deprecated, message: "{{.}}")

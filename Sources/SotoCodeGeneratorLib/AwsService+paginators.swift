@@ -55,7 +55,8 @@ extension AwsService {
 
             var operation = try self.generateOperationContext(operationShape, operationName: operation.key, streaming: false)
             if let inputKeyToken {
-                operation.initParameters = operation.initParameters?.filter { $0.parameter != inputKeyToken.toSwiftVariableCase() }
+                // remove input key from list of parameters to paginator function
+                operation.initParameters = operation.initParameters.filter { $0.parameter != inputKeyToken.toSwiftVariableCase() }
             }
             paginatorContexts.append(
                 PaginatorContext(
