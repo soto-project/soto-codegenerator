@@ -20,17 +20,15 @@ extension Templates {
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     extension {{name}} {
     {{#paginators}}
-    {{#operation.comment}}
-        {{>comment}}
-    {{/operation.comment}}
-        /// Return PaginatorSequence for operation.
+        /// Return PaginatorSequence for operation ``{{operation.funcName}}(_:logger:)``.
         ///
         /// - Parameters:
-        ///   - input: Input for request
-        ///   - logger: Logger used flot logging
+        ///   - input: Input for operation
+        ///   - logger: Logger used for logging
     {{#operation.deprecated}}
         @available(*, deprecated, message: "{{.}}")
     {{/operation.deprecated}}
+        @inlinable
         {{scope}} func {{operation.funcName}}Paginator(
             _ input: {{operation.inputShape}},
             logger: {{logger}} = AWSClient.loggingDisabled
@@ -48,6 +46,36 @@ extension Templates {
                 logger: logger
             )
         }
+    {{#operation}}    
+    {{#inputShape}}
+        /// Return PaginatorSequence for operation ``{{operation.funcName}}(_:logger:)``.
+        ///
+        /// - Parameters:
+        {{#initParameters}}
+        ///   - {{parameter}}: {{first(comment)}}
+        {{/initParameters}}
+        ///   - logger: Logger used for logging
+    {{#deprecated}}
+        @available(*, deprecated, message: "{{.}}")
+    {{/deprecated}}
+        @inlinable
+        {{scope}} func {{funcName}}Paginator(
+            {{#initParameters}}
+            {{parameter}}: {{type}}{{#default}} = {{.}}{{/default}},
+            {{/initParameters}}
+            logger: {{logger}} = AWSClient.loggingDisabled        
+        ) -> AWSClient.PaginatorSequence<{{operation.inputShape}}, {{operation.outputShape}}> {
+            let input = {{inputShape}}(
+    {{^empty(initParameters)}}
+            {{#initParameters}}
+                {{parameter}}: {{variable}}{{^last()}}, {{/last()}}
+            {{/initParameters}}
+    {{/empty(initParameters)}}
+            )
+            return self.{{funcName}}Paginator(input, logger: logger)
+        }
+    {{/inputShape}}
+    {{/operation}}    
     {{^last()}}
 
     {{/last()}}
@@ -56,6 +84,7 @@ extension Templates {
 
     {{#paginatorShapes}}
     extension {{name}}.{{inputShape}}: {{paginatorProtocol}} {
+        @inlinable
         {{scope}} func usingPaginationToken(_ token: {{tokenType}}) -> {{name}}.{{inputShape}} {
             return .init(
     {{#initParams}}

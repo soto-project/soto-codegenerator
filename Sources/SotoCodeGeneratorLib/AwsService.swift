@@ -50,6 +50,8 @@ struct AwsService {
         self.logger = logger
 
         self.markInputOutputShapes(model)
+        // this is a breaking change (maybe for v8)
+        // self.removeEmptyInputs(model)
     }
 
     /// Return service name from API
@@ -91,7 +93,8 @@ struct AwsService {
         let serviceId = serviceEntry.key
         let service = serviceEntry.value
         let authSigV4 = service.trait(type: AwsAuthSigV4Trait.self)
-        let operations = try generateOperationContexts()
+
+        let operationContexts = try self.generateOperationContexts()
 
         context["name"] = self.serviceName
         context["description"] = self.processDocs(from: service)
@@ -132,9 +135,18 @@ struct AwsService {
         context["variantEndpoints"] = self.getVariantEndpoints()
             .map { (variant: $0.key, endpoints: $0.value) }
             .sorted { $0.variant < $1.variant }
-        context["operations"] = operations.operations
-        context["streamingOperations"] = operations.streamingOperations
+        context["operations"] = operationContexts.values.sorted { $0.funcName < $1.funcName }
+        let paginators = try self.generatePaginatorContext(operationContexts)
+        let waiters = try self.generateWaiterContexts(operationContexts)
+        if paginators["paginators"] != nil {
+            context["paginators"] = paginators
+        }
+        if waiters["waiters"] != nil {
+            context["waiters"] = waiters
+        }
+
         context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
+
         return context
     }
 
@@ -173,34 +185,27 @@ struct AwsService {
         return context
     }
 
-    /// Generate list of operation and streaming operation contexts
-    func generateOperationContexts() throws -> (operations: [OperationContext], streamingOperations: [OperationContext]) {
-        var operationContexts: [OperationContext] = []
-        var streamingOperationContexts: [OperationContext] = []
+    /// Generate map of operation
+    func generateOperationContexts() throws -> [ShapeId: OperationContext] {
+        var operationContexts: [ShapeId: OperationContext] = [:]
         let operations = self.operations
         for operation in operations {
-            let operationContext = try generateOperationContext(operation.value, operationName: operation.key, streaming: false)
-            operationContexts.append(operationContext)
-
-            if let output = operation.value.output,
-               let outputShape = model.shape(for: output.target) as? StructureShape,
-               let payloadMember = getPayloadMember(from: outputShape),
-               let payloadShape = model.shape(for: payloadMember.value.target),
-               payloadShape.trait(type: StreamingTrait.self) != nil,
-               payloadShape is BlobShape
-            {
-                let operationContext = try generateOperationContext(operation.value, operationName: operation.key, streaming: true)
-                streamingOperationContexts.append(operationContext)
-            }
+            let operationContext = try generateOperationContext(
+                operation.value,
+                operationName: operation.key,
+                streaming: false
+            )
+            operationContexts[operation.key] = operationContext
         }
-        return (
-            operations: operationContexts.sorted { $0.funcName < $1.funcName },
-            streamingOperations: streamingOperationContexts.sorted { $0.funcName < $1.funcName }
-        )
+        return operationContexts
     }
 
     /// Generate context for rendering a single operation. Used by both `generateServiceContext` and `generatePaginatorContext`
-    func generateOperationContext(_ operation: OperationShape, operationName: ShapeId, streaming: Bool) throws -> OperationContext {
+    func generateOperationContext(
+        _ operation: OperationShape,
+        operationName: ShapeId,
+        streaming: Bool
+    ) throws -> OperationContext {
         let httpTrait = operation.trait(type: HttpTrait.self)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         let endpointTrait = operation.trait(type: EndpointTrait.self)
@@ -216,6 +221,11 @@ struct AwsService {
         if outputShapeTarget == "smithy.api#Unit" {
             outputShapeTarget = nil
         }
+        // get member contexts from shape
+        var initParamContext: [OperationInitParamContext] = []
+        if let inputShapeTarget {
+            initParamContext = self.generateInitParameterContexts(inputShapeTarget)
+        }
         return OperationContext(
             comment: self.processDocs(from: operation),
             funcName: operationName.shapeName.toSwiftVariableCase(),
@@ -228,8 +238,42 @@ struct AwsService {
             deprecated: deprecatedTrait?.message,
             streaming: streaming ? "ByteBuffer" : nil,
             documentationUrl: nil, // added to comment
-            endpointRequired: requireEndpointDiscovery.map { OperationContext.DiscoverableEndpoint(required: $0) }
+            endpointRequired: requireEndpointDiscovery.map { OperationContext.DiscoverableEndpoint(required: $0) },
+            initParameters: initParamContext
         )
+    }
+
+    func generateInitParameterContexts(_ inputShapeId: ShapeId) -> [OperationInitParamContext] {
+        guard let shape = self.model.shape(for: inputShapeId) as? StructureShape else { return [] }
+        guard let members = shape.members else { return [] }
+        let sortedMembers = members.map { $0 }.sorted { $0.key.lowercased() < $1.key.lowercased() }
+        var contexts: [MemberContext] = []
+        for member in sortedMembers {
+            guard let targetShape = self.model.shape(for: member.value.target) else { continue }
+            // member context
+            let memberContext = self.generateMemberContext(
+                member.value,
+                targetShape: targetShape,
+                name: member.key,
+                shapeName: inputShapeId.shapeName,
+                typeIsUnion: false,
+                isOutputShape: false
+            )
+            contexts.append(memberContext)
+        }
+        return contexts.compactMap {
+            if !$0.deprecated {
+                OperationInitParamContext(
+                    variable: $0.variable,
+                    parameter: $0.parameter,
+                    type: $0.type,
+                    default: $0.default,
+                    comment: $0.comment
+                )
+            } else {
+                nil
+            }
+        }
     }
 
     static func getTrait<T: StaticTrait>(from shape: SotoSmithy.Shape, trait: T.Type, id: ShapeId) throws -> T {
@@ -456,6 +500,24 @@ struct AwsService {
         }
     }
 
+    func removeEmptyInputs(_ model: Model) {
+        for operation in self.operations {
+            if let input = operation.value.input {
+                if let shape = model.shape(for: input.target) {
+                    if let structureShape = shape as? StructureShape {
+                        if let members = structureShape.members {
+                            if members.count == 0 {
+                                operation.value.input = nil
+                            }
+                        } else {
+                            operation.value.input = nil
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// The JSON decoder requires an array to exist, even if it is empty so we have to make
     /// all arrays in output shapes optional
     func removeRequiredTraitFromOutputCollections(_ model: Model) {
@@ -666,6 +728,29 @@ extension AwsService {
         let streaming: String?
         let documentationUrl: String?
         let endpointRequired: DiscoverableEndpoint?
+        var initParameters: [OperationInitParamContext]
+    }
+
+    struct OperationInitParamContext {
+        let variable: String
+        let parameter: String
+        let type: String
+        let `default`: String?
+        let comment: [String.SubSequence]
+    }
+
+    struct ShapesContext {
+        enum ShapeType {
+            case `enum`(EnumContext)
+            case `struct`(StructureContext)
+            case enumWithValues(StructureContext)
+        }
+
+        let name: String
+        let shapes: [ShapeType]
+        let errors: [String: Any]?
+        var scope: String
+        let extraCode: String?
     }
 
     struct PaginatorContext {

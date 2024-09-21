@@ -17,7 +17,7 @@ import SotoSmithy
 
 extension AwsService {
     /// Generate paginator context
-    func generatePaginatorContext() throws -> [String: Any] {
+    func generatePaginatorContext(_ operationContexts: [ShapeId: OperationContext]) throws -> [String: Any] {
         let paginatorOperations = self.operations.filter { $0.value.hasTrait(type: PaginatedTrait.self) }
         guard paginatorOperations.count > 0 else { return [:] }
         var context: [String: Any] = ["name": serviceName]
@@ -53,9 +53,14 @@ extension AwsService {
                 inputKeyToken = nil
             }
 
+            guard var operation = operationContexts[operation.key] else { continue }
+            if let inputKeyToken {
+                // remove input key from list of parameters to paginator function
+                operation.initParameters = operation.initParameters.filter { $0.parameter != inputKeyToken.toSwiftVariableCase() }
+            }
             paginatorContexts.append(
                 PaginatorContext(
-                    operation: try self.generateOperationContext(operationShape, operationName: operation.key, streaming: false),
+                    operation: operation,
                     inputKey: inputKeyToken.map { self.toKeyPath(token: $0, structure: inputShape) },
                     outputKey: self.toKeyPath(token: outputToken, structure: outputShape),
                     moreResultsKey: paginatedTruncatedTrait.map { self.toKeyPath(token: $0.isTruncated, structure: outputShape) }

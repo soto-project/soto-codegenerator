@@ -17,6 +17,12 @@ extension Templates {
     {{%CONTENT_TYPE:TEXT}}
     {{>header}}
 
+    #if os(Linux) && compiler(<5.10)
+    // swift-corelibs-foundation hasn't been updated with Sendable conformances
+    @preconcurrency import Foundation
+    #else
+    import Foundation
+    #endif
     @_exported import SotoCore
 
     {{#middlewareFramework}}
@@ -39,6 +45,7 @@ extension Templates {
         {{scope}} let config: AWSServiceConfig
     {{#endpointDiscovery}}
         /// endpoint storage
+        @usableFromInline 
         let endpointStorage: AWSEndpointStorage
     {{/endpointDiscovery}}
 
@@ -242,8 +249,9 @@ extension Templates {
         @available(*, deprecated, message: "{{.}}")
     {{/deprecated}}
         @Sendable
+        @inlinable
         {{scope}} func {{funcName}}({{#inputShape}}_ input: {{.}}, {{/inputShape}}logger: {{logger}} = AWSClient.loggingDisabled) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
-            return try await self.client.execute(
+            try await self.client.execute(
                 operation: "{{name}}", 
                 path: "{{path}}", 
                 httpMethod: .{{httpMethod}}, 
@@ -255,10 +263,45 @@ extension Templates {
                 logger: logger
             )
         }
+    {{#inputShape}}
+    {{#comment}}
+        {{>comment}}
+    {{/comment}}
+    {{#documentationUrl}}
+        /// {{.}}
+    {{/documentationUrl}}
+        ///
+        /// Parameters:
+        {{#initParameters}}
+        ///   - {{parameter}}: {{first(comment)}}
+        {{/initParameters}}
+        ///   - logger: Logger use during operation
+    {{#deprecated}}
+        @available(*, deprecated, message: "{{.}}")
+    {{/deprecated}}
+        @inlinable
+        {{scope}} func {{funcName}}(
+            {{#initParameters}}
+            {{parameter}}: {{type}}{{#default}} = {{.}}{{/default}},
+            {{/initParameters}}
+            logger: {{logger}} = AWSClient.loggingDisabled        
+        ) async throws{{#outputShape}} -> {{.}}{{/outputShape}} {
+            let input = {{inputShape}}(
+    {{^empty(initParameters)}}
+            {{#initParameters}}
+                {{parameter}}: {{variable}}{{^last()}}, {{/last()}}
+            {{/initParameters}}
+    {{/empty(initParameters)}}
+            )
+            return try await self.{{funcName}}(input, logger: logger)
+        }
+    {{/inputShape}}
     {{/operations}}
     {{#endpointDiscovery}}
 
-        @Sendable func getEndpoint(logger: Logger) async throws -> AWSEndpoints {
+        @Sendable 
+        @usableFromInline 
+        func getEndpoint(logger: Logger) async throws -> AWSEndpoints {
             let response = try await self.describeEndpoints(.init(), logger: logger)
             return .init(endpoints: response.endpoints.map {
                 .init(address: "https://\($0.address)", cachePeriodInMinutes: $0.cachePeriodInMinutes)
