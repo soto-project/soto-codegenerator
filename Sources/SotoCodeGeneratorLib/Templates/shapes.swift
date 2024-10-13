@@ -52,6 +52,9 @@ extension Templates {
 
     {{>errors}}
     {{/errors}}
+    {{#extraCode}}
 
+    {{.}}
+    {{/extraCode}}
     """
 }

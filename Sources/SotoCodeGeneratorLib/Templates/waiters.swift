@@ -20,12 +20,18 @@ extension Templates {
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     extension {{name}} {
     {{#waiters}}
+        /// Waiter for operation ``{{operation.funcName}}(_:logger:)``.
+        ///
+        /// - Parameters:
+        ///   - input: Input for operation
+        ///   - logger: Logger used for logging
+        @inlinable
         {{scope}} func waitUntil{{waiterName}}(
             _ input: {{operation.inputShape}},
             maxWaitTime: TimeAmount? = nil,
             logger: Logger = AWSClient.loggingDisabled
         ) async throws {
-            let waiter = AWSClient.Waiter(
+            let waiter = AWSClient.Waiter<{{operation.inputShape}}, _>(
                 acceptors: [
     {{#acceptors}}
     {{#matcher.jmesPath}}
@@ -58,6 +64,31 @@ extension Templates {
             )
             return try await self.client.waitUntil(input, waiter: waiter, maxWaitTime: maxWaitTime, logger: logger)
         }
+    {{#inputKey}}
+        /// Waiter for operation ``{{operation.funcName}}(_:logger:)``.
+        ///
+        /// - Parameters:
+        {{#operation.initParameters}}
+        ///   - {{parameter}}: {{first(comment)}}
+        {{/operation.initParameters}}
+        ///   - logger: Logger used for logging
+        @inlinable
+        {{scope}} func waitUntil{{waiterName}}(
+            {{#operation.initParameters}}
+            {{parameter}}: {{type}}{{#default}} = {{.}}{{/default}},
+            {{/operation.initParameters}}
+            logger: {{logger}} = AWSClient.loggingDisabled        
+        ) async throws {
+            let input = {{operation.inputShape}}(
+            {{^empty(operation.initParameters)}}
+            {{#operation.initParameters}}
+                {{parameter}}: {{variable}}{{^last()}}, {{/last()}}
+            {{/operation.initParameters}}
+            {{/empty(operation.initParameters)}}
+            )
+            try await self.waitUntil{{waiterName}}(input, logger: logger)
+        }
+    {{/inputKey}}
     {{^last()}}
 
     {{/last()}}
