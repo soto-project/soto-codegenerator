@@ -174,7 +174,12 @@ extension AwsService {
             } else if isInput {
                 // set XML root node name.
                 if serviceProtocolTrait is AwsProtocolsRestXmlTrait {
-                    xmlRootNodeName = payloadMember.key
+                    // use XML name if trait exists
+                    if let xmlNameTrait = payloadMember.value.trait(type: XmlNameTrait.self) {
+                        xmlRootNodeName = xmlNameTrait.value
+                    } else {
+                        xmlRootNodeName = payloadMember.key
+                    }
                 }
                 // currently only support request streaming of blobs
                 if payload is BlobShape,
