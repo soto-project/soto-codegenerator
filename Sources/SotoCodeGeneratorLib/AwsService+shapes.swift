@@ -55,7 +55,7 @@ extension AwsService {
             shapes: shapeContexts,
             errors: errorContext.count > 0 ? errorContext : nil,
             scope: "public",
-            extraCode: nil /* self.generateExtraCode() */
+            extraCode: self.generateExtraCode()
         )
     }
 
