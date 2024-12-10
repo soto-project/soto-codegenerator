@@ -32,6 +32,9 @@ extension Model {
             "com.amazonaws.amplify#App$environmentVariables": RemoveTraitPatch(trait: RequiredTrait.self),
             "com.amazonaws.amplify#App$repository": RemoveTraitPatch(trait: RequiredTrait.self),
         ],
+        "BedrockAgentRuntime": [
+            "com.amazonaws.bedrockagentruntime#FlowOutputEvent$nodeType": RemoveTraitPatch(trait: RequiredTrait.self),
+        ],
         "CloudFront": [
             // `DistributionConfig` and `DistributionSummary` both use `HttpVersion`. One expects it to be lowercase
             // and the other expects it to be uppercase. Solution create new enum `UppercaseHttpVersion` for
