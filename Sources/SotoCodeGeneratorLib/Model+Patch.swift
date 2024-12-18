@@ -33,7 +33,7 @@ extension Model {
             "com.amazonaws.amplify#App$repository": RemoveTraitPatch(trait: RequiredTrait.self),
         ],
         "BedrockAgentRuntime": [
-            "com.amazonaws.bedrockagentruntime#FlowOutputEvent$nodeType": RemoveTraitPatch(trait: RequiredTrait.self),
+            "com.amazonaws.bedrockagentruntime#FlowOutputEvent$nodeType": RemoveTraitPatch(trait: RequiredTrait.self)
         ],
         "CloudFront": [
             // `DistributionConfig` and `DistributionSummary` both use `HttpVersion`. One expects it to be lowercase
@@ -45,23 +45,29 @@ extension Model {
             ),
             "com.amazonaws.cloudfront#DistributionSummary$HttpVersion": EditShapePatch { (shape: MemberShape) in
                 return MemberShape(target: "com.amazonaws.cloudfront#UppercaseHttpVersion", traits: shape.traits)
-            }
+            },
         ],
         "CloudWatch": [
             // Dashboard not found code is the same as ResourceNotFound
-            "com.amazonaws.cloudwatch#DashboardNotFoundError": RemoveTraitPatch(trait: AwsProtocolsAwsQueryErrorTrait.self),
+            "com.amazonaws.cloudwatch#DashboardNotFoundError": RemoveTraitPatch(trait: AwsProtocolsAwsQueryErrorTrait.self)
         ],
         "Codeartifact": [
             // service name change
-            "com.amazonaws.codeartifact#CodeArtifactControlPlaneService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "CodeArtifact") },
+            "com.amazonaws.codeartifact#CodeArtifactControlPlaneService": EditTraitPatch { trait -> AwsServiceTrait in
+                trait.with(sdkId: "CodeArtifact")
+            }
         ],
         "CodestarNotifications": [
             // service name change
-            "com.amazonaws.codestarnotifications#CodeStarNotifications_20191015": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "CodeStarNotifications") },
+            "com.amazonaws.codestarnotifications#CodeStarNotifications_20191015": EditTraitPatch { trait -> AwsServiceTrait in
+                trait.with(sdkId: "CodeStarNotifications")
+            }
         ],
         "DynamoDB": [
             // Make TransactWriteItem an enum with associated values
-            "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in return UnionShape(traits: shape.traits, members: shape.members) },
+            "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in
+                return UnionShape(traits: shape.traits, members: shape.members)
+            }
         ],
         "EC2": [
             "com.amazonaws.ec2#PlatformValues$Windows": EditTraitPatch { _ in EnumValueTrait(value: .string("windows")) },
@@ -72,31 +78,31 @@ extension Model {
         ],
         "ECRPUBLIC": [
             // service name change
-            "com.amazonaws.ecrpublic#SpencerFrontendService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "ECRPublic") },
+            "com.amazonaws.ecrpublic#SpencerFrontendService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "ECRPublic") }
         ],
         "ElasticLoadBalancing": [
             // https://github.com/soto-project/soto/pull/88
-            "com.amazonaws.elasticloadbalancing#SecurityGroupOwnerAlias": ShapeTypePatch(shape: IntegerShape()),
+            "com.amazonaws.elasticloadbalancing#SecurityGroupOwnerAlias": ShapeTypePatch(shape: IntegerShape())
         ],
         "Fis": [
             // service name change
-            "com.amazonaws.fis#FaultInjectionSimulator": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "FIS") },
+            "com.amazonaws.fis#FaultInjectionSimulator": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "FIS") }
         ],
         "IAM": [
             // Missing Enum value
-            "com.amazonaws.iam#PolicySourceType": AddShapeMemberPatch<EnumShape>(name: "IAM Policy"),
+            "com.amazonaws.iam#PolicySourceType": AddShapeMemberPatch<EnumShape>(name: "IAM Policy")
         ],
         "Identitystore": [
             // service name change
-            "com.amazonaws.identitystore#AWSIdentityStore": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IdentityStore") },
+            "com.amazonaws.identitystore#AWSIdentityStore": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IdentityStore") }
         ],
         "IotDeviceAdvisor": [
             // service name change
-            "com.amazonaws.iotdeviceadvisor#IotSenateService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IoTDeviceAdvisor") },
+            "com.amazonaws.iotdeviceadvisor#IotSenateService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IoTDeviceAdvisor") }
         ],
         "Ivs": [
             // service name change
-            "com.amazonaws.ivs#AmazonInteractiveVideoService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IVS") },
+            "com.amazonaws.ivs#AmazonInteractiveVideoService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IVS") }
         ],
         "Lambda": [
             // Replace lambda ListFunctionsRequest.MasterRegion with SotoCore.Region.
@@ -123,11 +129,11 @@ extension Model {
         ],
         "Mq": [
             // service name change
-            "com.amazonaws.mq#mq": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "MQ") },
+            "com.amazonaws.mq#mq": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "MQ") }
         ],
         "RDSData": [
             // See https://github.com/soto-project/soto/issues/471
-            "com.amazonaws.rdsdata#Arn": EditTraitPatch { trait in return LengthTrait(min: trait.min, max: 2048) },
+            "com.amazonaws.rdsdata#Arn": EditTraitPatch { trait in return LengthTrait(min: trait.min, max: 2048) }
         ],
         "Route53": [
             // pagination tokens in response shouldnt be required
@@ -150,13 +156,15 @@ extension Model {
             "com.amazonaws.s3#ListParts": AddTraitPatch(trait: SotoPaginationTruncatedTrait(isTruncated: "IsTruncated")),
             //
             "com.amazonaws.s3#StorageClass": AddShapeMemberPatch<EnumShape>(name: "NONE"),
+            // Missing ChecksumAlgorithm https://github.com/soto-project/soto/issues/745
+            "com.amazonaws.s3#ChecksumAlgorithm": AddShapeMemberPatch<EnumShape>(name: "CRC64NVME"),
         ],
         "S3Control": [
             // Similar to the same issue in S3
             "com.amazonaws.s3control#BucketLocationConstraint": MultiplePatch([
                 AddShapeMemberPatch<EnumShape>(name: "us_east_1"),
                 AddTraitPatch(trait: SotoExtensibleEnumTrait()),
-            ]),
+            ])
         ],
         "SQS": [
             "com.amazonaws.sqs#ChangeMessageVisibilityBatchResult$Successful": RemoveTraitPatch(trait: RequiredTrait.self),
@@ -168,11 +176,11 @@ extension Model {
         ],
         "Savingsplans": [
             // service name change
-            "com.amazonaws.savingsplans#AWSSavingsPlan": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "SavingsPlans") },
+            "com.amazonaws.savingsplans#AWSSavingsPlan": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "SavingsPlans") }
         ],
         "Textract": [
-            "com.amazonaws.textract#ValueType$DATE": EditTraitPatch { _ in EnumValueTrait(value: .string("Date")) },
-        ]
+            "com.amazonaws.textract#ValueType$DATE": EditTraitPatch { _ in EnumValueTrait(value: .string("Date")) }
+        ],
     ]
     func patch(serviceName: String) throws {
         if let servicePatches = Self.patches[serviceName] {
@@ -187,8 +195,8 @@ extension Model {
             do {
                 if let newShape = try patch.patch(shape: shape) {
                     if let member = shapeId.member,
-                       let collectionShape = shapes[shapeId.rootShapeId] as? CollectionShape,
-                       let newMemberShape = newShape as? MemberShape
+                        let collectionShape = shapes[shapeId.rootShapeId] as? CollectionShape,
+                        let newMemberShape = newShape as? MemberShape
                     {
                         collectionShape.members?[member] = newMemberShape
                     } else {
