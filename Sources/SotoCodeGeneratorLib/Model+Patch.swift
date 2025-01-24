@@ -156,8 +156,6 @@ extension Model {
             "com.amazonaws.s3#ListParts": AddTraitPatch(trait: SotoPaginationTruncatedTrait(isTruncated: "IsTruncated")),
             //
             "com.amazonaws.s3#StorageClass": AddShapeMemberPatch<EnumShape>(name: "NONE"),
-            // Missing ChecksumAlgorithm https://github.com/soto-project/soto/issues/745
-            "com.amazonaws.s3#ChecksumAlgorithm": AddShapeMemberPatch<EnumShape>(name: "CRC64NVME"),
         ],
         "S3Control": [
             // Similar to the same issue in S3
