@@ -34,50 +34,50 @@ protocol AwsServiceProtocol: SotoOutput {
 
 // MARK: Alias traits
 
-extension JsonNameTrait: ProtocolAliasTrait { var alias: String { return value } }
-extension XmlNameTrait: ProtocolAliasTrait { var alias: String { return value } }
+extension JsonNameTrait: ProtocolAliasTrait { var alias: String { value } }
+extension XmlNameTrait: ProtocolAliasTrait { var alias: String { value } }
 // going to have to assume EC2 name isn't used and use Header name
 // extension AwsProtocolsEc2QueryNameTrait: AliasTrait { var alias: String { return value } }
-extension HttpHeaderTrait: AliasTrait { var alias: String { return value } }
-extension HttpPrefixHeadersTrait: AliasTrait { var alias: String { return value } }
-extension HttpQueryTrait: AliasTrait { var alias: String { return value } }
+extension HttpHeaderTrait: AliasTrait { var alias: String { value } }
+extension HttpPrefixHeadersTrait: AliasTrait { var alias: String { value } }
+extension HttpQueryTrait: AliasTrait { var alias: String { value } }
 
 // MARK: Service protocol
 
 extension AwsProtocolsRestJson1Trait: AwsServiceProtocol {
     var output: String { ".restjson" }
-    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
-    var requiresCollectionCoders: Bool { return false }
+    var nameTrait: ProtocolAliasTrait.Type { JsonNameTrait.self }
+    var requiresCollectionCoders: Bool { false }
 }
 
 extension AwsProtocolsAwsJson1_0Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.0\")" }
-    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
-    var requiresCollectionCoders: Bool { return false }
+    var nameTrait: ProtocolAliasTrait.Type { JsonNameTrait.self }
+    var requiresCollectionCoders: Bool { false }
 }
 
 extension AwsProtocolsAwsJson1_1Trait: AwsServiceProtocol {
     var output: String { ".json(version: \"1.1\")" }
-    var nameTrait: ProtocolAliasTrait.Type { return JsonNameTrait.self }
-    var requiresCollectionCoders: Bool { return false }
+    var nameTrait: ProtocolAliasTrait.Type { JsonNameTrait.self }
+    var requiresCollectionCoders: Bool { false }
 }
 
 extension AwsProtocolsAwsQueryTrait: AwsServiceProtocol {
     var output: String { ".query" }
-    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
-    var requiresCollectionCoders: Bool { return true }
+    var nameTrait: ProtocolAliasTrait.Type { XmlNameTrait.self }
+    var requiresCollectionCoders: Bool { true }
 }
 
 extension AwsProtocolsEc2QueryTrait: AwsServiceProtocol {
     var output: String { ".ec2" }
-    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
-    var requiresCollectionCoders: Bool { return true }
+    var nameTrait: ProtocolAliasTrait.Type { XmlNameTrait.self }
+    var requiresCollectionCoders: Bool { true }
 }
 
 extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
     var output: String { ".restxml" }
-    var nameTrait: ProtocolAliasTrait.Type { return XmlNameTrait.self }
-    var requiresCollectionCoders: Bool { return true }
+    var nameTrait: ProtocolAliasTrait.Type { XmlNameTrait.self }
+    var requiresCollectionCoders: Bool { true }
 }
 
 // MARK: Shape types
@@ -91,9 +91,9 @@ extension FloatShape: SotoOutput { var output: String { "Float" } }
 extension DoubleShape: SotoOutput { var output: String { "Double" } }
 extension BigIntegerShape: SotoOutput { var output: String { "Int64" } }
 extension BigDecimalShape: SotoOutput { var output: String { "Double" } }
-extension TimestampShape: SotoOutput { var output: String { "Date" }}
-extension DocumentShape: SotoOutput { var output: String { "String" }}
-extension UnitShape: SotoOutput { var output: String { "Void" }}
+extension TimestampShape: SotoOutput { var output: String { "Date" } }
+extension DocumentShape: SotoOutput { var output: String { "AWSDocument" } }
+extension UnitShape: SotoOutput { var output: String { "Void" } }
 
 extension MemberShape {
     func output(_ model: Model) -> String {
@@ -103,8 +103,11 @@ extension MemberShape {
             if memberShape.hasTrait(type: EnumTrait.self) { return self.target.shapeName.toSwiftClassCase() }
             return "String"
         } else if memberShape is BlobShape {
-            if self.hasTrait(type: HttpPayloadTrait.self) { return "AWSHTTPBody" }
-            else if self.hasTrait(type: EventPayloadTrait.self) { return "AWSEventPayload" }
+            if self.hasTrait(type: HttpPayloadTrait.self) {
+                return "AWSHTTPBody"
+            } else if self.hasTrait(type: EventPayloadTrait.self) {
+                return "AWSEventPayload"
+            }
             return "AWSBase64Data"
         } else if memberShape is CollectionShape {
             if memberShape.hasTrait(type: StreamingTrait.self) {
@@ -145,7 +148,8 @@ extension MemberShape {
         } else if let setShape = memberShape as? SetShape {
             return "Set<\(setShape.member.output(model, withServiceName: withServiceName))>"
         } else if let mapShape = memberShape as? MapShape {
-            return "[\(mapShape.key.output(model, withServiceName: withServiceName)): \(mapShape.value.output(model, withServiceName: withServiceName))]"
+            return
+                "[\(mapShape.key.output(model, withServiceName: withServiceName)): \(mapShape.value.output(model, withServiceName: withServiceName))]"
         } else if let sotoMemberShape = memberShape as? SotoOutput {
             return sotoMemberShape.output
         }
