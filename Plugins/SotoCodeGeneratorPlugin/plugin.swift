@@ -71,7 +71,7 @@ import PackagePlugin
                     "--output-folder",
                     genSourcesDir,
                     "--endpoints",
-                    "\(endpoints)"
+                    "\(endpoints)",
                 ] + configArgs,
                 inputFiles: inputFiles,
                 outputFiles: outputFiles

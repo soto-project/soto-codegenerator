@@ -14,89 +14,89 @@
 
 extension Templates {
     static let paginatorTemplate = #"""
-    {{%CONTENT_TYPE:TEXT}}
-    // MARK: Paginators
+        {{%CONTENT_TYPE:TEXT}}
+        // MARK: Paginators
 
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    extension {{name}} {
-    {{#paginators}}
-        /// Return PaginatorSequence for operation ``{{operation.funcName}}(_:logger:)``.
-        ///
-        /// - Parameters:
-        ///   - input: Input for operation
-        ///   - logger: Logger used for logging
-    {{#operation.deprecated}}
-        @available(*, deprecated, message: "{{.}}")
-    {{/operation.deprecated}}
-        @inlinable
-        {{scope}} func {{operation.funcName}}Paginator(
-            _ input: {{operation.inputShape}},
-            logger: {{logger}} = AWSClient.loggingDisabled
-        ) -> AWSClient.PaginatorSequence<{{operation.inputShape}}, {{operation.outputShape}}> {
-            return .init(
-                input: input,
-                command: self.{{operation.funcName}},
-    {{#inputKey}}
-                inputKey: \{{operation.inputShape}}.{{.}},
-    {{/inputKey}}
-                outputKey: \{{operation.outputShape}}.{{outputKey}},
-    {{#moreResultsKey}}
-                moreResultsKey: \{{operation.outputShape}}.{{.}},
-    {{/moreResultsKey}}
-                logger: logger
-            )
-        }
-    {{#operation}}    
-    {{#inputShape}}
-        /// Return PaginatorSequence for operation ``{{operation.funcName}}(_:logger:)``.
-        ///
-        /// - Parameters:
-        {{#initParameters}}
-        ///   - {{parameter}}: {{first(comment)}}
-        {{/initParameters}}
-        ///   - logger: Logger used for logging
-    {{#deprecated}}
-        @available(*, deprecated, message: "{{.}}")
-    {{/deprecated}}
-        @inlinable
-        {{scope}} func {{funcName}}Paginator(
+        @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+        extension {{name}} {
+        {{#paginators}}
+            /// Return PaginatorSequence for operation ``{{operation.funcName}}(_:logger:)``.
+            ///
+            /// - Parameters:
+            ///   - input: Input for operation
+            ///   - logger: Logger used for logging
+        {{#operation.deprecated}}
+            @available(*, deprecated, message: "{{.}}")
+        {{/operation.deprecated}}
+            @inlinable
+            {{scope}} func {{operation.funcName}}Paginator(
+                _ input: {{operation.inputShape}},
+                logger: {{logger}} = AWSClient.loggingDisabled
+            ) -> AWSClient.PaginatorSequence<{{operation.inputShape}}, {{operation.outputShape}}> {
+                return .init(
+                    input: input,
+                    command: self.{{operation.funcName}},
+        {{#inputKey}}
+                    inputKey: \{{operation.inputShape}}.{{.}},
+        {{/inputKey}}
+                    outputKey: \{{operation.outputShape}}.{{outputKey}},
+        {{#moreResultsKey}}
+                    moreResultsKey: \{{operation.outputShape}}.{{.}},
+        {{/moreResultsKey}}
+                    logger: logger
+                )
+            }
+        {{#operation}}    
+        {{#inputShape}}
+            /// Return PaginatorSequence for operation ``{{operation.funcName}}(_:logger:)``.
+            ///
+            /// - Parameters:
             {{#initParameters}}
-            {{parameter}}: {{type}}{{#default}} = {{.}}{{/default}},
+            ///   - {{parameter}}: {{first(comment)}}
             {{/initParameters}}
-            logger: {{logger}} = AWSClient.loggingDisabled        
-        ) -> AWSClient.PaginatorSequence<{{operation.inputShape}}, {{operation.outputShape}}> {
-            let input = {{inputShape}}(
-    {{^empty(initParameters)}}
-            {{#initParameters}}
-                {{parameter}}: {{variable}}{{^last()}}, {{/last()}}
-            {{/initParameters}}
-    {{/empty(initParameters)}}
-            )
-            return self.{{funcName}}Paginator(input, logger: logger)
+            ///   - logger: Logger used for logging
+        {{#deprecated}}
+            @available(*, deprecated, message: "{{.}}")
+        {{/deprecated}}
+            @inlinable
+            {{scope}} func {{funcName}}Paginator(
+                {{#initParameters}}
+                {{parameter}}: {{type}}{{#default}} = {{.}}{{/default}},
+                {{/initParameters}}
+                logger: {{logger}} = AWSClient.loggingDisabled        
+            ) -> AWSClient.PaginatorSequence<{{operation.inputShape}}, {{operation.outputShape}}> {
+                let input = {{inputShape}}(
+        {{^empty(initParameters)}}
+                {{#initParameters}}
+                    {{parameter}}: {{variable}}{{^last()}}, {{/last()}}
+                {{/initParameters}}
+        {{/empty(initParameters)}}
+                )
+                return self.{{funcName}}Paginator(input, logger: logger)
+            }
+        {{/inputShape}}
+        {{/operation}}    
+        {{^last()}}
+
+        {{/last()}}
+        {{/paginators}}
         }
-    {{/inputShape}}
-    {{/operation}}    
-    {{^last()}}
 
-    {{/last()}}
-    {{/paginators}}
-    }
-
-    {{#paginatorShapes}}
-    extension {{name}}.{{inputShape}}: {{paginatorProtocol}} {
-        @inlinable
-        {{scope}} func usingPaginationToken(_ token: {{tokenType}}) -> {{name}}.{{inputShape}} {
-            return .init(
-    {{#initParams}}
-                {{.}}{{^last()}},{{/last()}}
-    {{/initParams}}
-            )
+        {{#paginatorShapes}}
+        extension {{name}}.{{inputShape}}: {{paginatorProtocol}} {
+            @inlinable
+            {{scope}} func usingPaginationToken(_ token: {{tokenType}}) -> {{name}}.{{inputShape}} {
+                return .init(
+        {{#initParams}}
+                    {{.}}{{^last()}},{{/last()}}
+        {{/initParams}}
+                )
+            }
         }
-    }
-    {{^last()}}
+        {{^last()}}
 
-    {{/last()}}
-    {{/paginatorShapes}}
+        {{/last()}}
+        {{/paginatorShapes}}
 
-    """#
+        """#
 }

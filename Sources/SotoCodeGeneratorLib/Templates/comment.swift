@@ -14,13 +14,13 @@
 
 extension Templates {
     static let commentTemplate = """
-    {{%CONTENT_TYPE:TEXT}}
-    {{^empty(.)}}
-    /// {{.}}
-    {{/empty(.)}}
-    {{#empty(.)}}
-    ///{{.}}
-    {{/empty(.)}}
+        {{%CONTENT_TYPE:TEXT}}
+        {{^empty(.)}}
+        /// {{.}}
+        {{/empty(.)}}
+        {{#empty(.)}}
+        ///{{.}}
+        {{/empty(.)}}
 
-    """
+        """
 }

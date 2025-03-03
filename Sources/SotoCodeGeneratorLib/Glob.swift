@@ -12,12 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
+
 #if os(Linux)
 import Glibc
 #else
 import Darwin.C
 #endif
-import Foundation
 
 public enum Glob {
     public static func entries(pattern: String) -> [String] {

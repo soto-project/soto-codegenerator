@@ -87,7 +87,8 @@ public struct SotoCodeGen {
                             logger: self.logger
                         )
                         // get service filename without path and extension
-                        let filename = file
+                        let filename =
+                            file
                             .split(separator: "/", omittingEmptySubsequences: true).last!
                         let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
 
@@ -155,9 +156,11 @@ public struct SotoCodeGen {
     func loadModelJSON() throws -> [String: SotoSmithy.Model] {
         let modelFiles = self.getModelFiles()
 
-        return try .init(modelFiles.map {
-            try (key: $0, value: self.loadJSONAST(filename: $0))
-        }) { left, _ in left }
+        return try .init(
+            modelFiles.map {
+                try (key: $0, value: self.loadJSONAST(filename: $0))
+            }
+        ) { left, _ in left }
     }
 
     func loadJSONAST(filename: String) throws -> SotoSmithy.Model {
@@ -174,9 +177,11 @@ public struct SotoCodeGen {
     func loadSmithy() throws -> [String: SotoSmithy.Model] {
         let modelFiles = self.getSmithyFiles()
 
-        return try .init(modelFiles.map {
-            try (key: $0, value: self.loadSmithy(filename: $0))
-        }) { left, _ in left }
+        return try .init(
+            modelFiles.map {
+                try (key: $0, value: self.loadSmithy(filename: $0))
+            }
+        ) { left, _ in left }
     }
 
     func loadSmithy(filename: String) throws -> SotoSmithy.Model {
@@ -219,9 +224,11 @@ public struct SotoCodeGen {
         }
 
         let shapes = self.library.render(shapesContext, withTemplate: "shapes")!
-        if self.command.output, try shapes.writeIfChanged(
-            toFile: "\(basePath)/\(prefix)_shapes.swift"
-        ) {
+        if self.command.output,
+            try shapes.writeIfChanged(
+                toFile: "\(basePath)/\(prefix)_shapes.swift"
+            )
+        {
             self.logger.info("Wrote \(prefix)_shapes.swift")
         }
         self.logger.debug("Succesfully Generated \(service.serviceName)")
