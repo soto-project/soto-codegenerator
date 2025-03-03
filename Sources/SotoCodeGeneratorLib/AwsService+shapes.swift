@@ -20,10 +20,12 @@ extension AwsService {
     /// Generate context for outputting Shapes
     func generateShapesContext() throws -> ShapesContext {
         // generate enums
-        let traitEnums: [EnumContext] = try model
+        let traitEnums: [EnumContext] =
+            try model
             .select(from: "[trait|enum]")
             .compactMap { self.generateEnumTraitContext($0.value, shapeName: $0.key.shapeName) }
-        let shapeEnums: [EnumContext] = model
+        let shapeEnums: [EnumContext] =
+            model
             .select(type: EnumShape.self)
             .compactMap { self.generateEnumContext($0.value, shapeName: $0.key.shapeName) }
         let enums = (traitEnums + shapeEnums).sorted { $0.name < $1.name }
@@ -141,8 +143,8 @@ extension AwsService {
         if operationShape?.hasTrait(type: AwsHttpChecksumTrait.self) == true {
             shapeOptions.append("checksumHeader")
         }
-        if operationShape?.hasTrait(type: HttpChecksumRequiredTrait.self) == true ||
-            operationShape?.trait(type: AwsHttpChecksumTrait.self)?.requestChecksumRequired == true
+        if operationShape?.hasTrait(type: HttpChecksumRequiredTrait.self) == true
+            || operationShape?.trait(type: AwsHttpChecksumTrait.self)?.requestChecksumRequired == true
         {
             shapeOptions.append("checksumRequired")
         }
@@ -183,12 +185,12 @@ extension AwsService {
                 }
                 // currently only support request streaming of blobs
                 if payload is BlobShape,
-                   payload.hasTrait(type: StreamingTrait.self)
+                    payload.hasTrait(type: StreamingTrait.self)
                 {
                     shapeOptions.append("allowStreaming")
                     if !payload.hasTrait(type: RequiresLengthTrait.self),
-                       let operationShape = operationShape,
-                       operationShape.hasTrait(type: AwsAuthUnsignedPayloadTrait.self)
+                        let operationShape = operationShape,
+                        operationShape.hasTrait(type: AwsAuthUnsignedPayloadTrait.self)
                     {
                         shapeOptions.append("allowChunkedStreaming")
                     }
@@ -305,8 +307,9 @@ extension AwsService {
         typeIsUnion: Bool,
         isOutputShape: Bool
     ) -> MemberContext {
-        var required = member.hasTrait(type: RequiredTrait.self) ||
-            ((member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self)) && isOutputShape)
+        var required =
+            member.hasTrait(type: RequiredTrait.self)
+            || ((member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self)) && isOutputShape)
         let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
         let deprecated = member.hasTrait(type: DeprecatedTrait.self)
         precondition((required && deprecated) == false, "Member cannot be required and deprecated")
@@ -374,9 +377,8 @@ extension AwsService {
         } else if member.hasTrait(type: HttpLabelTrait.self), !isOutputShape {
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait
             memberCodableContext = .init(inURI: aliasTrait?.alias ?? name, codableType: type)
-        } else if member.hasTrait(type: HttpPayloadTrait.self) ||
-            member.hasTrait(type: EventPayloadTrait.self) ||
-            targetShape.hasTrait(type: StreamingTrait.self)
+        } else if member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self)
+            || targetShape.hasTrait(type: StreamingTrait.self)
         {
             memberCodableContext = .init(isPayload: true, codableType: type)
         } else {
@@ -397,7 +399,7 @@ extension AwsService {
             type: type + (optional ? "?" : ""),
             comment: processMemberDocs(from: member),
             deprecated: deprecated,
-            duplicate: false, // TODO: NEED to catch this
+            duplicate: false,  // TODO: NEED to catch this
             memberCoding: memberCodableContext
         )
     }
@@ -409,9 +411,9 @@ extension AwsService {
         isOutputShape: Bool
     ) -> CodingKeysContext? {
         guard isMemberInBody(member, isOutputShape: isOutputShape),
-              !member.hasTrait(type: HttpPayloadTrait.self),
-              !member.hasTrait(type: EventPayloadTrait.self),
-              !targetShape.hasTrait(type: StreamingTrait.self)
+            !member.hasTrait(type: HttpPayloadTrait.self),
+            !member.hasTrait(type: EventPayloadTrait.self),
+            !targetShape.hasTrait(type: StreamingTrait.self)
         else {
             return nil
         }
@@ -504,7 +506,13 @@ extension AwsService {
         }
     }
 
-    func generateValidationContext(_ shapeId: ShapeId, name: String, required: Bool, container: Bool = false, alreadyProcessed: Set<ShapeId>) -> ValidationContext? {
+    func generateValidationContext(
+        _ shapeId: ShapeId,
+        name: String,
+        required: Bool,
+        container: Bool = false,
+        alreadyProcessed: Set<ShapeId>
+    ) -> ValidationContext? {
         guard !alreadyProcessed.contains(shapeId) else { return nil }
         guard let shape = model.shape(for: shapeId) else { return nil }
         guard !shape.hasTrait(type: EnumTrait.self) else { return nil }
@@ -591,7 +599,7 @@ extension AwsService {
             for member in members {
                 let memberRequired =
                     (member.value.hasTrait(type: RequiredTrait.self) && !member.value.hasTrait(type: ClientOptionalTrait.self))
-                        || (member.value.hasTrait(type: HttpPayloadTrait.self) && shape.hasTrait(type: SotoOutputShapeTrait.self))
+                    || (member.value.hasTrait(type: HttpPayloadTrait.self) && shape.hasTrait(type: SotoOutputShapeTrait.self))
                 var alreadyProcessed2 = alreadyProcessed
                 alreadyProcessed2.insert(shapeId)
                 if self.generateValidationContext(

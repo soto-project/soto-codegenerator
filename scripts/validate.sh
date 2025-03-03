@@ -3,7 +3,7 @@
 ##
 ## This source file is part of the SwiftNIO open source project
 ##
-## Copyright (c) 2017-2021 Apple Inc. and the SwiftNIO project authors
+## Copyright (c) 2017-2023 Apple Inc. and the SwiftNIO project authors
 ## Licensed under Apache License v2.0
 ##
 ## See LICENSE.txt for license information
@@ -13,28 +13,19 @@
 ##
 ##===----------------------------------------------------------------------===##
 
-SWIFT_VERSION=5.2
-SWIFTFORMAT_VERSION=0.48.17
-
 set -eu
 here="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-which swiftformat > /dev/null 2>&1 || (echo "swiftformat not installed. You can install it using 'mint install swiftformat'" ; exit -1)
-
 function replace_acceptable_years() {
     # this needs to replace all acceptable forms with 'YEARS'
-    sed -e 's/20[12][0123456789]-20[12][0123456789]/YEARS/' -e 's/20[12][0123456789]/YEARS/' -e '/^#!/ d'
+    sed -e 's/20[12][8901234567]-20[12][8901234567]/YEARS/' -e 's/20[12][8901234567]/YEARS/' -e '/^#!/ d'
 }
 
 printf "=> Checking format... "
 FIRST_OUT="$(git status --porcelain)"
-if [[ -n "${CI-""}" ]]; then
-  printf "(using v$(mint run NickLockwood/SwiftFormat@$SWIFTFORMAT_VERSION --version)) "
-  mint run NickLockwood/SwiftFormat@$SWIFTFORMAT_VERSION . > /dev/null 2>&1
-else
-  printf "(using v$(swiftformat --version)) "
-  swiftformat . > /dev/null 2>&1
-fi
+git ls-files -z '*.swift' | xargs -0 swift format format --parallel --in-place
+git diff --exit-code '*.swift'
+
 SECOND_OUT="$(git status --porcelain)"
 if [[ "$FIRST_OUT" != "$SECOND_OUT" ]]; then
   printf "\033[0;31mformatting issues!\033[0m\n"
@@ -45,7 +36,7 @@ else
 fi
 
 printf "=> Checking license headers... "
-tmp=$(mktemp /tmp/.soto-core-sanity_XXXXXX)
+tmp=$(mktemp /tmp/.soto-codegenerator-validate_XXXXXX)
 
 for language in swift-or-c; do
   declare -a matching_files
@@ -54,7 +45,7 @@ for language in swift-or-c; do
   matching_files=( -name '*' )
   case "$language" in
       swift-or-c)
-        exceptions=( -path '*Sources/INIParser/*' -o -path '*Sources/CSotoExpat/*' -o -path '*Benchmark/.build/*' -o -name Package.swift -o -name Package@swift-5.4.swift -o -name Package@swift-5.5.swift)
+        exceptions=( -path '*Sources/INIParser/*' -o -path '*Sources/CSotoExpat/*' -o -path '*Benchmark/.build/*' -o -name Package.swift)
         matching_files=( -name '*.swift' -o -name '*.c' -o -name '*.h' )
         cat > "$tmp" <<"EOF"
 //===----------------------------------------------------------------------===//

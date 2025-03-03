@@ -41,7 +41,12 @@ extension AwsService {
     }
 
     /// Generate waiter context from waiter
-    func generateWaiterContext(_ waiter: WaitableTrait.Waiter, name: String, operationContext: OperationContext, operationName: ShapeId) throws -> WaiterContext {
+    func generateWaiterContext(
+        _ waiter: WaitableTrait.Waiter,
+        name: String,
+        operationContext: OperationContext,
+        operationName: ShapeId
+    ) throws -> WaiterContext {
         var acceptorContexts: [AcceptorContext] = []
         for acceptor in waiter.acceptors {
             acceptorContexts.append(self.generateAcceptorContext(acceptor))
@@ -118,6 +123,6 @@ extension AwsService {
     }
 
     func generateExpectedValue(expected: String) -> String {
-        return "\"\(expected)\""
+        "\"\(expected)\""
     }
 }

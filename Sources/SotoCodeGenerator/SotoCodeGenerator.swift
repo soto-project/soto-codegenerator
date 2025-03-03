@@ -53,16 +53,16 @@ struct Command: AsyncParsableCommand, SotoCodeGenCommand {
     var logLevel: String?
 
     static var rootPath: String {
-        return #file
+        #file
             .split(separator: "/", omittingEmptySubsequences: false)
             .dropLast(3)
             .map { String(describing: $0) }
             .joined(separator: "/")
     }
 
-    static var defaultOutputFolder: String { return "\(rootPath)/aws/services" }
-    static var defaultInputFolder: String { return "\(rootPath)/aws/models" }
-    static var defaultEndpoints: String { return "\(rootPath)/aws/endpoints.json" }
+    static var defaultOutputFolder: String { "\(rootPath)/aws/services" }
+    static var defaultInputFolder: String { "\(rootPath)/aws/models" }
+    static var defaultEndpoints: String { "\(rootPath)/aws/endpoints.json" }
 
     func run() async throws {
         try await SotoCodeGen(command: self).generate()

@@ -14,47 +14,47 @@
 
 extension Templates {
     static let shapesTemplate = """
-    {{%CONTENT_TYPE:TEXT}}
-    {{>header}}
+        {{%CONTENT_TYPE:TEXT}}
+        {{>header}}
 
-    #if os(Linux) && compiler(<5.10)
-    // swift-corelibs-foundation hasn't been updated with Sendable conformances
-    @preconcurrency import Foundation
-    #else
-    import Foundation
-    #endif
-    @_spi(SotoInternal) import SotoCore
+        #if os(Linux) && compiler(<5.10)
+        // swift-corelibs-foundation hasn't been updated with Sendable conformances
+        @preconcurrency import Foundation
+        #else
+        import Foundation
+        #endif
+        @_spi(SotoInternal) import SotoCore
 
-    extension {{name}} {
-        // MARK: Enums
-    {{#shapes}}
-    {{#enum}}
+        extension {{name}} {
+            // MARK: Enums
+        {{#shapes}}
+        {{#enum}}
 
-    {{>enum}}
-    {{/enum}}
-    {{/shapes}}
-    {{#shapes}}
-    {{#enumWithValues}}
+        {{>enum}}
+        {{/enum}}
+        {{/shapes}}
+        {{#shapes}}
+        {{#enumWithValues}}
 
-    {{>enumWithValues}}
-    {{/enumWithValues}}
-    {{/shapes}}
+        {{>enumWithValues}}
+        {{/enumWithValues}}
+        {{/shapes}}
 
-        // MARK: Shapes
-    {{#shapes}}
-    {{#struct}}
+            // MARK: Shapes
+        {{#shapes}}
+        {{#struct}}
 
-    {{>struct}}
-    {{/struct}}
-    {{/shapes}}
-    }
-    {{#errors}}
+        {{>struct}}
+        {{/struct}}
+        {{/shapes}}
+        }
+        {{#errors}}
 
-    {{>errors}}
-    {{/errors}}
-    {{#extraCode}}
+        {{>errors}}
+        {{/errors}}
+        {{#extraCode}}
 
-    {{.}}
-    {{/extraCode}}
-    """
+        {{.}}
+        {{/extraCode}}
+        """
 }

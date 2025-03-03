@@ -12,8 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-@testable import SotoCodeGeneratorLib
 import XCTest
+
+@testable import SotoCodeGeneratorLib
 
 /// Tests for String extensions
 final class StringTests: XCTestCase {

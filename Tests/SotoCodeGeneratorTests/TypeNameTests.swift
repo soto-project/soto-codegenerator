@@ -12,8 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-@testable import SotoCodeGeneratorLib
 import XCTest
+
+@testable import SotoCodeGeneratorLib
 
 final class TypeNameTests: XCTestCase {
     func testLabels() {

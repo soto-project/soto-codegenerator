@@ -24,22 +24,22 @@ extension String {
     }
 
     public func toSwiftVariableCase() -> String {
-        return self.toSwiftLabelCase().reservedwordEscaped()
+        self.toSwiftLabelCase().reservedwordEscaped()
     }
 
     public func toSwiftClassCase() -> String {
-        return self.replacingOccurrences(of: "-", with: "_")
+        self.replacingOccurrences(of: "-", with: "_")
             .camelCased(capitalize: true)
             .reservedwordEscaped()
     }
 
     // for some reason the Region and Partition enum are not camel cased
     public func toSwiftRegionEnumCase() -> String {
-        return self.replacingOccurrences(of: "-", with: "")
+        self.replacingOccurrences(of: "-", with: "")
     }
 
     public func toSwiftEnumCase() -> String {
-        return self
+        self
             .replacingOccurrences(of: ".", with: "_")
             .replacingOccurrences(of: ":", with: "_")
             .replacingOccurrences(of: "-", with: "_")
@@ -53,7 +53,7 @@ extension String {
     }
 
     public func tagStriped() -> String {
-        return self.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression, range: nil)
+        self.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression, range: nil)
     }
 
     /// back slash encode special characters
@@ -124,7 +124,7 @@ extension String {
     }
 
     func removingWhitespaces() -> String {
-        return components(separatedBy: .whitespaces).joined()
+        components(separatedBy: .whitespaces).joined()
     }
 
     mutating func removeWhitespaces() {
@@ -132,7 +132,7 @@ extension String {
     }
 
     func removingCharacterSet(in characterset: CharacterSet) -> String {
-        return components(separatedBy: characterset).joined()
+        components(separatedBy: characterset).joined()
     }
 
     mutating func removeCharacterSet(in characterset: CharacterSet) {
@@ -140,7 +140,7 @@ extension String {
     }
 
     private func capitalizingFirstLetter() -> String {
-        return prefix(1).capitalized + dropFirst()
+        prefix(1).capitalized + dropFirst()
     }
 
     private mutating func capitalizeFirstLetter() {
@@ -176,11 +176,11 @@ extension StringProtocol {
     }
 
     private func lowerFirst() -> String {
-        return String(self[startIndex]).lowercased() + self[index(after: startIndex)...]
+        String(self[startIndex]).lowercased() + self[index(after: startIndex)...]
     }
 
     fileprivate func upperFirst() -> String {
-        return String(self[self.startIndex]).uppercased() + self[index(after: startIndex)...]
+        String(self[self.startIndex]).uppercased() + self[index(after: startIndex)...]
     }
 
     /// Lowercase first letter, or if first word is an uppercase acronym then lowercase the whole of the acronym
@@ -221,7 +221,7 @@ extension StringProtocol {
 
 extension Character {
     fileprivate func isSnakeUppercase() -> Bool {
-        return self.isNumber || ("A"..."Z").contains(self) || self == "_"
+        self.isNumber || ("A"..."Z").contains(self) || self == "_"
     }
 }
 

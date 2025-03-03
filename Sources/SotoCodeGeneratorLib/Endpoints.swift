@@ -41,7 +41,7 @@ struct Endpoints: Decodable {
 
         // apply service defaults to endpoint
         func applyingDefaults(_ defaults: Defaults) -> Endpoint {
-            return .init(
+            .init(
                 credentialScope: self.credentialScope ?? defaults.credentialScope,
                 hostname: self.hostname ?? defaults.hostname,
                 protocols: self.protocols ?? defaults.protocols,

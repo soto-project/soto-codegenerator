@@ -14,34 +14,34 @@
 
 extension Templates {
     static let enumTemplate = """
-    {{%CONTENT_TYPE:TEXT}}
-    {{#isExtensible}}
-        {{scope}} struct {{name}}: RawRepresentable, Equatable, Codable, Sendable, CodingKeyRepresentable {
-            {{scope}} var rawValue: String
+        {{%CONTENT_TYPE:TEXT}}
+        {{#isExtensible}}
+            {{scope}} struct {{name}}: RawRepresentable, Equatable, Codable, Sendable, CodingKeyRepresentable {
+                {{scope}} var rawValue: String
 
-            {{scope}} init(rawValue: String) {
-                self.rawValue = rawValue
+                {{scope}} init(rawValue: String) {
+                    self.rawValue = rawValue
+                }
+
+        {{#values}}
+        {{#documentation}}
+                {{>comment}}
+        {{/documentation}}
+                {{scope}} static var {{case}}: Self { .init(rawValue: "{{rawValue}}") }
+        {{/values}}
             }
+        {{/isExtensible}}
+        {{^isExtensible}}
+            {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, Sendable, CodingKeyRepresentable {
+        {{#values}}
+        {{#documentation}}
+                {{>comment}}
+        {{/documentation}}
+                case {{case}} = "{{rawValue}}"
+        {{/values}}
+                {{scope}} var description: String { return self.rawValue }
+            }
+        {{/isExtensible}}
 
-    {{#values}}
-    {{#documentation}}
-            {{>comment}}
-    {{/documentation}}
-            {{scope}} static var {{case}}: Self { .init(rawValue: "{{rawValue}}") }
-    {{/values}}
-        }
-    {{/isExtensible}}
-    {{^isExtensible}}
-        {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, Sendable, CodingKeyRepresentable {
-    {{#values}}
-    {{#documentation}}
-            {{>comment}}
-    {{/documentation}}
-            case {{case}} = "{{rawValue}}"
-    {{/values}}
-            {{scope}} var description: String { return self.rawValue }
-        }
-    {{/isExtensible}}
-
-    """
+        """
 }

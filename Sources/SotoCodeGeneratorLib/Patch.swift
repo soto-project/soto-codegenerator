@@ -25,7 +25,7 @@ protocol ShapePatch {
 struct ShapeTypePatch: ShapePatch {
     let shape: Shape
     func patch(shape: Shape) -> Shape? {
-        return self.shape
+        self.shape
     }
 }
 
@@ -93,11 +93,11 @@ struct CreateShapePatch: ShapePatch {
     }
 
     func create() throws -> Shape? {
-        return try self.patch(shape: self.shape)
+        try self.patch(shape: self.shape)
     }
 
     func patch(shape: Shape) throws -> Shape? {
-        return try self.patch?.patch(shape: shape) ?? shape
+        try self.patch?.patch(shape: shape) ?? shape
     }
 }
 
