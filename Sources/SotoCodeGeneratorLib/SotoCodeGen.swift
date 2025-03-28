@@ -213,7 +213,7 @@ public struct SotoCodeGen {
             basePath = "\(self.command.outputFolder)"
             prefix = self.command.prefix.map { $0.replacingOccurrences(of: "-", with: "_") } ?? service.serviceName
         }
-        let scope = config.access == .internal ? "internal" : "public"
+        let scope = config.access?.rawValue ?? "public"
 
         var shapesContext = try service.generateShapesContext()
         var apiContext = try service.generateServiceContext()

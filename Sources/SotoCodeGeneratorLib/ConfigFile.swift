@@ -20,6 +20,7 @@ struct ConfigFile: Decodable {
     enum AccessControl: String, Decodable {
         case `public`
         case `internal`
+        case `package`
     }
 
     let services: [String: ServiceConfig]?
