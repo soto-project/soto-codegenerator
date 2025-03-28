@@ -35,7 +35,7 @@ struct Command: AsyncParsableCommand, SotoCodeGenCommand {
     var prefix: String?
 
     @Option(name: .shortAndLong, help: "Endpoint JSON file")
-    var endpoints: String = Self.defaultEndpoints
+    var endpoints: String?
 
     @Option(name: .shortAndLong, help: "Only output files for specified module")
     var module: String?
@@ -62,7 +62,6 @@ struct Command: AsyncParsableCommand, SotoCodeGenCommand {
 
     static var defaultOutputFolder: String { "\(rootPath)/aws/services" }
     static var defaultInputFolder: String { "\(rootPath)/aws/models" }
-    static var defaultEndpoints: String { "\(rootPath)/aws/endpoints.json" }
 
     func run() async throws {
         try await SotoCodeGen(command: self).generate()
