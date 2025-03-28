@@ -32,7 +32,17 @@ import PackagePlugin
 
         // get endpoint file
         let endpointInTarget = target.sourceFiles.first { $0.path.lastComponent == "endpoints.json" }?.path
-        let endpoints = endpointInTarget ?? context.package.directory.appending("endpoints.json")
+        let endpoints: Path?
+        if let endpointInTarget {
+            endpoints = endpointInTarget
+        } else {
+            let endpointInBaseFolder = context.package.directory.appending("endpoints.json")
+            if FileManager.default.fileExists(atPath: endpointInBaseFolder.string) {
+                endpoints = endpointInBaseFolder
+            } else {
+                endpoints = nil
+            }
+        }
 
         // get config file
         let configFile = target.sourceFiles.first { $0.path.lastComponent == "soto.config.json" }?.path
@@ -49,12 +59,13 @@ import PackagePlugin
             if let endpointInTarget = endpointInTarget {
                 inputFiles.append(endpointInTarget)
             }
-            let configArgs: [String]
-            if let configFile = configFile {
-                configArgs = ["--config", "\(configFile)"]
+            var additionalArgs: [String] = []
+            if let endpoints {
+                additionalArgs.append(contentsOf: ["--endpoints", "\(endpoints)"])
+            }
+            if let configFile {
+                additionalArgs.append(contentsOf: ["--config", "\(configFile)"])
                 inputFiles.append(configFile)
-            } else {
-                configArgs = []
             }
             let outputFiles: [Path] = [
                 genSourcesDir.appending("\(prefix)_api.swift"),
@@ -70,9 +81,7 @@ import PackagePlugin
                     prefix,
                     "--output-folder",
                     genSourcesDir,
-                    "--endpoints",
-                    "\(endpoints)",
-                ] + configArgs,
+                ] + additionalArgs,
                 inputFiles: inputFiles,
                 outputFiles: outputFiles
             )

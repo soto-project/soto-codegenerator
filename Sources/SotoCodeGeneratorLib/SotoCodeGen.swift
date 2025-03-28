@@ -24,7 +24,7 @@ public protocol SotoCodeGenCommand {
     var prefix: String? { get }
     var outputFolder: String { get }
     var inputFolder: String? { get }
-    var endpoints: String { get }
+    var endpoints: String? { get }
     var module: String? { get }
     var output: Bool { get }
     var htmlComments: Bool { get }
@@ -149,8 +149,12 @@ public struct SotoCodeGen {
     }
 
     func loadEndpointJSON() throws -> Endpoints {
-        let data = try Data(contentsOf: URL(fileURLWithPath: self.command.endpoints))
-        return try JSONDecoder().decode(Endpoints.self, from: data)
+        if let endpoints = self.command.endpoints {
+            let data = try Data(contentsOf: URL(fileURLWithPath: endpoints))
+            return try JSONDecoder().decode(Endpoints.self, from: data)
+        } else {
+            return .init(partitions: [])
+        }
     }
 
     func loadModelJSON() throws -> [String: SotoSmithy.Model] {
