@@ -134,6 +134,7 @@ extension AwsService {
         let isInput = shape.hasTrait(type: SotoInputShapeTrait.self)
         let isOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
 
+        // Return if decodable, encodable or both. If none of these then don't output the shape
         guard let shapeProtocol = getShapeProtocol(shape, hasPayload: payloadMember != nil) else { return nil }
 
         let contexts = self.generateMembersContexts(shape, shapeName: shapeName, typeIsUnion: typeIsUnion)
