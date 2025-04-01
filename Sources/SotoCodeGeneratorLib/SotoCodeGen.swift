@@ -80,21 +80,20 @@ public struct SotoCodeGen {
                         } else {
                             model = try self.loadJSONAST(filename: file)
                         }
-                        var service = try AwsService(
-                            model,
-                            endpoints: endpoints,
-                            outputHTMLComments: self.command.htmlComments,
-                            logger: self.logger
-                        )
                         // get service filename without path and extension
                         let filename =
                             file
                             .split(separator: "/", omittingEmptySubsequences: true).last!
                         let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
+                        let filter = config.services?[filenameWithoutExtension]?.operations
+                        let service = try AwsService(
+                            model,
+                            endpoints: endpoints,
+                            filter: filter,
+                            outputHTMLComments: self.command.htmlComments,
+                            logger: self.logger
+                        )
 
-                        if let serviceConfig = config.services?[filenameWithoutExtension], let filter = serviceConfig.operations {
-                            service.filterOperations(filter)
-                        }
                         if self.command.output {
                             try self.generateFiles(with: service, config: config)
                         }

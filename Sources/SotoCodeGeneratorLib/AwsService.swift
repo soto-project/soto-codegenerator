@@ -30,7 +30,7 @@ struct AwsService {
     let outputHTMLComments: Bool
     let logger: Logger
 
-    init(_ model: SotoSmithy.Model, endpoints: Endpoints, outputHTMLComments: Bool, logger: Logger) throws {
+    init(_ model: SotoSmithy.Model, endpoints: Endpoints, filter: [String]?, outputHTMLComments: Bool, logger: Logger) throws {
         guard let service = model.select(type: SotoSmithy.ServiceShape.self).first else { throw Error(reason: "No service object") }
 
         self.model = model
@@ -43,11 +43,18 @@ struct AwsService {
         self.serviceEndpointPrefix = try Self.getServiceEndpointPrefix(service: service.value, id: service.key) ?? serviceName.lowercased()
         self.serviceProtocolTrait = try Self.getServiceProtocol(service.value)
 
-        self.operations = Self.getOperations(service.value, model: model)
-
         self.endpoints = endpoints
         self.outputHTMLComments = outputHTMLComments
         self.logger = logger
+
+        let operations = Self.getOperations(service.value, model: model)
+        if let filter {
+            self.operations = operations.filter { key, _ in
+                filter.contains(key.shapeName.toSwiftVariableCase())
+            }
+        } else {
+            self.operations = operations
+        }
 
         self.markInputOutputShapes(model)
         // this is a breaking change (maybe for v8)
@@ -149,13 +156,6 @@ struct AwsService {
         context["logger"] = self.getSymbol(for: "Logger", from: "Logging", model: self.model, namespace: serviceId.namespace ?? "")
 
         return context
-    }
-
-    /// filter operations list
-    mutating func filterOperations(_ filter: [String]) {
-        self.operations = self.operations.filter { key, _ in
-            filter.contains(key.shapeName.toSwiftVariableCase())
-        }
     }
 
     /// Generate the context information for outputting the error enums
