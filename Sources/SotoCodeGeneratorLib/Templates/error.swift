@@ -51,6 +51,16 @@ extension Templates {
         {{/errors}}
         }
 
+        {{#first(errorMap)}}
+        extension {{errorName}}: AWSServiceErrorType {
+            {{scope}} static let errorCodeMap: [String: AWSErrorShape.Type] = [
+        {{#errorMap}}
+                "{{code}}": {{name}}.{{error}}.self{{^last()}},{{/last()}}
+        {{/errorMap}}
+            ]
+        }
+
+        {{/first(errorMap)}}
         extension {{errorName}}: Equatable {
             {{scope}} static func == (lhs: {{errorName}}, rhs: {{errorName}}) -> Bool {
                 lhs.error == rhs.error

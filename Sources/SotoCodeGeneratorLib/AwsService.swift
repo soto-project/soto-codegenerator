@@ -183,6 +183,15 @@ struct AwsService {
         if errorContexts.count > 0 {
             context["errors"] = errorContexts
         }
+
+        var errorMapContexts = errorShapes.compactMap { shape -> ErrorMapContext? in
+            guard let errorTrait = shape.value.trait(type: SotoErrorShapeTrait.self) else { return nil }
+            return ErrorMapContext(code: errorTrait.errorCode, error: shape.key.shapeName)
+        }
+        errorMapContexts.sort { $0.code < $1.code }
+        if errorMapContexts.count > 0 {
+            context["errorMap"] = errorMapContexts
+        }
         return context
     }
 
@@ -522,6 +531,24 @@ struct AwsService {
                 }
                 addTrait(to: output.target, trait: SotoOutputShapeTrait())
             }
+            if let errors = operation.value.errors {
+                for error in errors {
+                    if let shape = model.shape(for: error.target) {
+                        // Only add error trait to errors with more properties than just a message
+                        switch shape {
+                        case let shape as StructureShape:
+                            guard let members = shape.members, members.count > 0 else { continue }
+                            if members.count == 1 && members.keys.first?.lowercased() == "message" { continue }
+                        case is UnionShape:
+                            break
+                        default:
+                            continue
+                        }
+                        shape.add(trait: SotoErrorShapeTrait(errorCode: error.target.shapeName))
+                    }
+                    addTrait(to: error.target, trait: SotoOutputShapeTrait())
+                }
+            }
         }
     }
 
@@ -718,12 +745,15 @@ struct AwsService {
     func getShapeProtocol(_ shape: Shape, hasPayload: Bool) -> String? {
         let usedInInput = shape.hasTrait(type: SotoInputShapeTrait.self)
         let usedInOutput = shape.hasTrait(type: SotoOutputShapeTrait.self)
+        let isError = shape.hasTrait(type: SotoErrorShapeTrait.self)
         var shapeProtocol: String
         if usedInInput {
             shapeProtocol = "AWSEncodableShape"
             if usedInOutput {
                 shapeProtocol += " & AWSDecodableShape"
             }
+        } else if isError {
+            shapeProtocol = "AWSErrorShape"
         } else if usedInOutput {
             shapeProtocol = "AWSDecodableShape"
         } else {
@@ -815,6 +845,11 @@ extension AwsService {
         let `enum`: String
         let string: String
         let comment: [String.SubSequence]
+    }
+
+    struct ErrorMapContext {
+        let code: String
+        let error: String
     }
 
     struct EnumContext {

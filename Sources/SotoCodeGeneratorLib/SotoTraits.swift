@@ -24,6 +24,14 @@ struct SotoOutputShapeTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#outputShape"
 }
 
+struct SotoErrorShapeTrait: StaticTrait {
+    static let staticName: ShapeId = "soto.api#errorShape"
+    public let errorCode: String
+    public init(errorCode: String) {
+        self.errorCode = errorCode
+    }
+}
+
 struct SotoRequestShapeTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#requestShape"
     public let operationShape: OperationShape

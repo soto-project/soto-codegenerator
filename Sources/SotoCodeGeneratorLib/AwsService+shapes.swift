@@ -210,7 +210,9 @@ extension AwsService {
         }
 
         var codingContext: ShapeCodingContext?
-        let isRootShape = shape.hasTrait(type: SotoResponseShapeTrait.self) || shape.hasTrait(type: SotoRequestShapeTrait.self)
+        let isRootShape =
+            shape.hasTrait(type: SotoResponseShapeTrait.self) || shape.hasTrait(type: SotoRequestShapeTrait.self)
+            || shape.hasTrait(type: SotoErrorShapeTrait.self)
         // Has elements that require some form of custom encoding/decoding
         let hasCustomCodableElements = contexts.members.contains { $0.memberCoding.isCodable == false }
         if hasCustomCodableElements || typeIsUnion {
