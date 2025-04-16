@@ -17,9 +17,8 @@ extension Templates {
         {{%CONTENT_TYPE:TEXT}}
         {{>header}}
 
-        #if os(Linux) && compiler(<5.10)
-        // swift-corelibs-foundation hasn't been updated with Sendable conformances
-        @preconcurrency import Foundation
+        #if canImport(FoundationEssentials)
+        import FoundationEssentials
         #else
         import Foundation
         #endif
