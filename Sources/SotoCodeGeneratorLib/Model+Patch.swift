@@ -33,6 +33,7 @@ extension Model {
             "com.amazonaws.amplify#App$repository": RemoveTraitPatch(trait: RequiredTrait.self),
         ],
         "BedrockAgentRuntime": [
+            // https://github.com/soto-project/soto/issues/744
             "com.amazonaws.bedrockagentruntime#FlowOutputEvent$nodeType": RemoveTraitPatch(trait: RequiredTrait.self)
         ],
         "CloudFront": [
@@ -80,10 +81,10 @@ extension Model {
             // service name change
             "com.amazonaws.ecrpublic#SpencerFrontendService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "ECRPublic") }
         ],
-        "ElasticLoadBalancing": [
+        /*"ElasticLoadBalancing": [
             // https://github.com/soto-project/soto/pull/88
             "com.amazonaws.elasticloadbalancing#SecurityGroupOwnerAlias": ShapeTypePatch(shape: IntegerShape())
-        ],
+        ],*/
         "Fis": [
             // service name change
             "com.amazonaws.fis#FaultInjectionSimulator": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "FIS") }
@@ -142,8 +143,6 @@ extension Model {
             "com.amazonaws.route53#ListReusableDelegationSetsResponse$Marker": RemoveTraitPatch(trait: RequiredTrait.self),
         ],
         "S3": [
-            // should be 64 bit number
-            "com.amazonaws.s3#Size": ShapeTypePatch(shape: LongShape()),
             // https://github.com/soto-project/soto/issues/311
             "com.amazonaws.s3#CopySource": EditTraitPatch { _ in return PatternTrait(value: ".+\\/.+") },
             "com.amazonaws.s3#LifecycleRule$Filter": AddTraitPatch(trait: RequiredTrait()),
