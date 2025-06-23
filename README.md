@@ -24,9 +24,9 @@ And the target you want to add the generated Soto code to should be setup as fol
 )
 ```
 
-You need a couple of files from the Soto repository. 
-- The region endpoint definition file [endpoints.json](https://github.com/soto-project/soto/blob/main/models/endpoints/endpoints.json). This file isn't totally necessary but if your service has custom endpoints you will need access to you will need it.
-- The model file for the service you want to use. You can find these [here](https://github.com/soto-project/soto/blob/main/models/). 
+You need a couple of files. 
+- The region endpoint definition file [endpoints.json](https://aws-toolkit-endpoints.s3.amazonaws.com/endpoints.json). This file isn't totally necessary but if your service has custom endpoints you will need access to you will need it.
+- The model file for the service you want to use. You can find these in the [aws/api-models-aws](https://github.com/aws/api-models-aws/tree/main/models) repository. 
 
 The Build Plugin will search for the `endpoints.json` first in the root of your target and then the root of your project. The model file should be added to your target. Unless you are using a new region endpoint or new functionality from a service you shouldn't need to update these again.
 
