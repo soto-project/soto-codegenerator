@@ -116,9 +116,12 @@ public struct SotoCodeGen {
             return [input]
         } else if let inputFolder = self.command.inputFolder {
             if let module = command.module {
-                return Glob.entries(pattern: "\(inputFolder)/\(module)*.json")
+                return Glob.entries(pattern: "\(inputFolder)/\(module)*/service/*/*.json")
+                    + Glob.entries(pattern: "\(inputFolder)/\(module)*.json")
+            } else {
+                return Glob.entries(pattern: "\(inputFolder)/*/service/*/*.json")
+                    + Glob.entries(pattern: "\(inputFolder)/*.json")
             }
-            return Glob.entries(pattern: "\(inputFolder)/*.json")
         } else {
             return []
         }
@@ -129,9 +132,12 @@ public struct SotoCodeGen {
             return [input]
         } else if let inputFolder = self.command.inputFolder {
             if let module = command.module {
-                return Glob.entries(pattern: "\(inputFolder)/\(module)*.smithy")
+                return Glob.entries(pattern: "\(inputFolder)/\(module)*/service/*/*.smithy")
+                    + Glob.entries(pattern: "\(inputFolder)/\(module)*.smithy")
+            } else {
+                return Glob.entries(pattern: "\(inputFolder)/*/service/*/*.smithy")
+                    + Glob.entries(pattern: "\(inputFolder)/*.smithy")
             }
-            return Glob.entries(pattern: "\(inputFolder)/*.smithy")
         } else {
             return []
         }
