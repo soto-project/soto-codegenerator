@@ -886,6 +886,7 @@ extension AwsService {
             inURI: String? = nil,
             inHostPrefix: String? = nil,
             areQueryParams: Bool = false,
+            isUnit: Bool = false,
             isPayload: Bool = false,
             isCodable: Bool = false,
             isStatusCode: Bool = false,
@@ -896,6 +897,7 @@ extension AwsService {
             self.inURI = inURI
             self.inHostPrefix = inHostPrefix
             self.areQueryParams = areQueryParams
+            self.isUnit = isUnit
             self.isPayload = isPayload
             self.isCodable = isCodable
             self.isStatusCode = isStatusCode
@@ -907,6 +909,7 @@ extension AwsService {
         var inURI: String?
         var inHostPrefix: String?
         var areQueryParams: Bool
+        var isUnit: Bool
         var isPayload: Bool
         var isCodable: Bool
         var isStatusCode: Bool
