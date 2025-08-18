@@ -384,6 +384,8 @@ extension AwsService {
             || targetShape.hasTrait(type: StreamingTrait.self)
         {
             memberCodableContext = .init(isPayload: true, codableType: type)
+        } else if model.shape(for: member.target)?.hasTrait(type: UnitTypeTrait.self) == true {
+            memberCodableContext = .init(isUnit: true, codableType: type)
         } else {
             // Codable needs to decode property wrapper if it exists
             memberCodableContext = .init(isCodable: true, codableType: propertyWrapper ?? type)

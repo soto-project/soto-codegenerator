@@ -34,7 +34,12 @@ extension Templates {
         {{#comment}}
                 {{>comment}}
         {{/comment}}
+        {{^memberCoding.isUnit}}
                 case {{variable}}({{type}})
+        {{/memberCoding.isUnit}}
+        {{#memberCoding.isUnit}}
+                case {{variable}}
+        {{/memberCoding.isUnit}}
         {{/members}}
         {{#shapeCoding.requiresDecodeInit}}
 
@@ -50,8 +55,13 @@ extension Templates {
                     switch key {
         {{#members}}
                     case .{{variable}}:
+        {{^memberCoding.isUnit}}
                         let value = try container.decode({{type}}.self, forKey: .{{variable}})
                         self = .{{variable}}(value)
+        {{/memberCoding.isUnit}}
+        {{#memberCoding.isUnit}}
+                        self = .{{variable}}
+        {{/memberCoding.isUnit}}
         {{/members}}
                     }
                 }
@@ -62,8 +72,14 @@ extension Templates {
                     var container = encoder.container(keyedBy: CodingKeys.self)
                     switch self {
         {{#members}}
+        {{^memberCoding.isUnit}}
                     case .{{variable}}(let value):
                         try container.encode(value, forKey: .{{variable}})
+        {{/memberCoding.isUnit}}
+        {{#memberCoding.isUnit}}
+                    case .{{variable}}:
+                        try container.encode([String: String](), forKey: .{{variable}})
+        {{/memberCoding.isUnit}}
         {{/members}}
                     }
                 }
