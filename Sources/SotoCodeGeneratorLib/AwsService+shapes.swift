@@ -369,6 +369,8 @@ extension AwsService {
         var memberCodableContext: MemberCodableContext
         if let headerTrait = member.trait(type: HttpHeaderTrait.self) {
             memberCodableContext = .init(inHeader: headerTrait.value, codableType: type)
+        } else if let _ = member.trait(type: EventHeaderTrait.self) {
+            memberCodableContext = .init(inHeader: name, codableType: type)
         } else if let headerTrait = member.trait(type: HttpPrefixHeadersTrait.self) {
             memberCodableContext = .init(inHeader: headerTrait.value, codableType: type)
         } else if member.hasTrait(type: HttpResponseCodeTrait.self), isOutputShape {
