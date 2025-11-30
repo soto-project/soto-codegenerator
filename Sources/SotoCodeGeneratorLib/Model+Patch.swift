@@ -45,7 +45,7 @@ extension Model {
                 patch: AddTraitPatch(trait: EnumTrait(value: .init([.init(value: "HTTP1_1"), .init(value: "HTTP2")])))
             ),
             "com.amazonaws.cloudfront#DistributionSummary$HttpVersion": EditShapePatch { (shape: MemberShape) in
-                return MemberShape(target: "com.amazonaws.cloudfront#UppercaseHttpVersion", traits: shape.traits)
+                MemberShape(target: "com.amazonaws.cloudfront#UppercaseHttpVersion", traits: shape.traits)
             },
         ],
         "CloudWatch": [
@@ -67,7 +67,7 @@ extension Model {
         "DynamoDB": [
             // Make TransactWriteItem an enum with associated values
             "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in
-                return UnionShape(traits: shape.traits, members: shape.members)
+                UnionShape(traits: shape.traits, members: shape.members)
             }
         ],
         "EC2": [
@@ -116,7 +116,7 @@ extension Model {
                 )
             ),
             "com.amazonaws.lambda#ListFunctionsRequest$MasterRegion": EditShapePatch { (shape: MemberShape) in
-                return MemberShape(target: "com.amazonaws.lambda#SotoCore.Region", traits: shape.traits)
+                MemberShape(target: "com.amazonaws.lambda#SotoCore.Region", traits: shape.traits)
             },
             // https://github.com/soto-project/soto/issues/720
             "com.amazonaws.lambda#LastUpdateStatusReasonCode": AddShapeMemberPatch<EnumShape>(
@@ -134,7 +134,7 @@ extension Model {
         ],
         "RDSData": [
             // See https://github.com/soto-project/soto/issues/471
-            "com.amazonaws.rdsdata#Arn": EditTraitPatch { trait in return LengthTrait(min: trait.min, max: 2048) }
+            "com.amazonaws.rdsdata#Arn": EditTraitPatch { trait in LengthTrait(min: trait.min, max: 2048) }
         ],
         "Route53": [
             // pagination tokens in response shouldnt be required
@@ -144,7 +144,7 @@ extension Model {
         ],
         "S3": [
             // https://github.com/soto-project/soto/issues/311
-            "com.amazonaws.s3#CopySource": EditTraitPatch { _ in return PatternTrait(value: ".+\\/.+") },
+            "com.amazonaws.s3#CopySource": EditTraitPatch { _ in PatternTrait(value: ".+\\/.+") },
             "com.amazonaws.s3#LifecycleRule$Filter": AddTraitPatch(trait: RequiredTrait()),
             // https://github.com/soto-project/soto/issues/502
             "com.amazonaws.s3#BucketLocationConstraint": MultiplePatch(
