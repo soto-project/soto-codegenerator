@@ -23,15 +23,16 @@ extension Templates {
                     self.rawValue = rawValue
                 }
 
-        {{#values}}
+        {{#stringValues.values}}
         {{#documentation}}
                 {{>comment}}
         {{/documentation}}
                 {{scope}} static var {{case}}: Self { .init(rawValue: "{{rawValue}}") }
-        {{/values}}
+        {{/stringValues.values}}
             }
         {{/isExtensible}}
         {{^isExtensible}}
+        {{#stringValues}}
             {{scope}} enum {{name}}: String, CustomStringConvertible, Codable, Sendable, CodingKeyRepresentable {
         {{#values}}
         {{#documentation}}
@@ -41,6 +42,18 @@ extension Templates {
         {{/values}}
                 {{scope}} var description: String { return self.rawValue }
             }
+        {{/stringValues}}
+        {{#intValues}}
+            {{scope}} enum {{name}}: Int, CustomStringConvertible, Codable, Sendable, CodingKeyRepresentable {
+        {{#values}}
+        {{#documentation}}
+                {{>comment}}
+        {{/documentation}}
+                case {{case}} = {{rawValue}}
+        {{/values}}
+                {{scope}} var description: String { return "\\(self.rawValue)" }
+            }
+        {{/intValues}}
         {{/isExtensible}}
 
         """
