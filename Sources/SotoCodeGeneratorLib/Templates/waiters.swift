@@ -25,6 +25,9 @@ extension Templates {
             /// - Parameters:
             ///   - input: Input for operation
             ///   - logger: Logger used for logging
+        {{#operation.deprecated}}
+            @available(*, deprecated, message: "{{.}}")
+        {{/operation.deprecated}}
             @inlinable
             {{scope}} func waitUntil{{waiterName}}(
                 _ input: {{operation.inputShape}},
@@ -72,6 +75,9 @@ extension Templates {
             ///   - {{parameter}}: {{first(comment)}}
             {{/operation.initParameters}}
             ///   - logger: Logger used for logging
+        {{#operation.deprecated}}
+            @available(*, deprecated, message: "{{.}}")
+        {{/operation.deprecated}}
             @inlinable
             {{scope}} func waitUntil{{waiterName}}(
                 {{#operation.initParameters}}
