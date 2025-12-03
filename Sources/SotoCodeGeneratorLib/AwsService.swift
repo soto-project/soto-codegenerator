@@ -765,9 +765,13 @@ struct AwsService {
     }
 
     func isMemberInBody(_ member: MemberShape, isOutputShape: Bool) -> Bool {
-        !(member.hasTrait(type: HttpHeaderTrait.self) || member.hasTrait(type: HttpPrefixHeadersTrait.self)
-            || (member.hasTrait(type: HttpQueryTrait.self) && !isOutputShape) || member.hasTrait(type: HttpQueryParamsTrait.self)
-            || member.hasTrait(type: HttpLabelTrait.self) || member.hasTrait(type: HttpResponseCodeTrait.self))
+        !(member.hasTrait(type: HttpHeaderTrait.self)
+            || member.hasTrait(type: EventHeaderTrait.self)
+            || member.hasTrait(type: HttpPrefixHeadersTrait.self)
+            || (member.hasTrait(type: HttpQueryTrait.self) && !isOutputShape)
+            || member.hasTrait(type: HttpQueryParamsTrait.self)
+            || member.hasTrait(type: HttpLabelTrait.self)
+            || member.hasTrait(type: HttpResponseCodeTrait.self))
     }
 }
 
