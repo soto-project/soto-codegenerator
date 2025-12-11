@@ -859,9 +859,16 @@ extension AwsService {
     }
 
     struct EnumContext {
+        struct IntValues {
+            let values: [IntEnumMemberContext]
+        }
+        struct StringValues {
+            let values: [EnumMemberContext]
+        }
         let name: String
         let documentation: [String.SubSequence]
-        let values: [EnumMemberContext]
+        let stringValues: StringValues?
+        let intValues: IntValues?
         let isExtensible: Bool
     }
 
@@ -869,6 +876,12 @@ extension AwsService {
         let `case`: String
         let documentation: [String.SubSequence]
         let rawValue: String
+    }
+
+    struct IntEnumMemberContext {
+        let `case`: String
+        let documentation: [String.SubSequence]
+        let rawValue: Int
     }
 
     struct ArrayEncodingPropertiesContext: EncodingPropertiesContext {

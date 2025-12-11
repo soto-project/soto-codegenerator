@@ -28,7 +28,11 @@ extension AwsService {
             model
             .select(type: EnumShape.self)
             .compactMap { self.generateEnumContext($0.value, shapeName: $0.key.shapeName) }
-        let enums = (traitEnums + shapeEnums).sorted { $0.name < $1.name }
+        let intEnums: [EnumContext] =
+            model
+            .select(type: IntEnumShape.self)
+            .compactMap { self.generateIntEnumContext($0.value, shapeName: $0.key.shapeName) }
+        let enums = (traitEnums + shapeEnums + intEnums).sorted { $0.name < $1.name }
         var shapeContexts: [ShapesContext.ShapeType] = enums.map { .enum($0) }
 
         // generate structures
@@ -81,7 +85,8 @@ extension AwsService {
         return EnumContext(
             name: shapeName.toSwiftClassCase(),
             documentation: processDocs(from: shape),
-            values: valueContexts,
+            stringValues: .init(values: valueContexts),
+            intValues: nil,
             isExtensible: shape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
     }
@@ -103,9 +108,8 @@ extension AwsService {
                 switch enumValueTrait.value {
                 case .string(let name):
                     value = name
-                case .integer(let integer):
-                    value = integer.description
-                    fatalError("intEnum is currently not supported")
+                case .integer:
+                    fatalError("String enumerations shouldn't have integer based values")
                 }
             } else {
                 value = enumerated.element.key
@@ -120,7 +124,46 @@ extension AwsService {
         return EnumContext(
             name: shapeName.toSwiftClassCase(),
             documentation: processDocs(from: enumShape),
-            values: valueContexts.sorted { $0.case < $1.case },
+            stringValues: .init(values: valueContexts.sorted { $0.case < $1.case }),
+            intValues: nil,
+            isExtensible: enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
+        )
+    }
+
+    /// Generate the context information for outputting an enum from strings with enum traits
+    func generateIntEnumContext(_ enumShape: IntEnumShape, shapeName: String) -> EnumContext? {
+        let usedInInput = enumShape.hasTrait(type: SotoInputShapeTrait.self)
+        let usedInOutput = enumShape.hasTrait(type: SotoOutputShapeTrait.self)
+        guard usedInInput || usedInOutput else { return nil }
+        guard let members = enumShape.members else { return nil }
+        // Operations
+        let valueContexts: [IntEnumMemberContext] = members.enumerated().map { enumerated -> IntEnumMemberContext in
+            var key = enumerated.element.key.toSwiftEnumCase()
+            if key.allLetterIsNumeric() {
+                key = "\(shapeName.toSwiftVariableCase())\(key)"
+            }
+            let value: Int
+            let enumValueTrait = enumerated.element.value.trait(type: EnumValueTrait.self)
+            switch enumValueTrait?.value {
+            case .string:
+                fatalError("Int enumerations shouldn't have string based values")
+            case .integer(let integer):
+                value = integer
+            case .none:
+                fatalError("Int enumerations require integer value")
+            }
+            let documentation = enumerated.element.value.trait(type: DocumentationTrait.self)
+            return IntEnumMemberContext(
+                case: key,
+                documentation: documentation.map { processDocs($0.value) } ?? [],
+                rawValue: value
+            )
+        }
+        return EnumContext(
+            name: shapeName.toSwiftClassCase(),
+            documentation: processDocs(from: enumShape),
+            stringValues: nil,
+            intValues: .init(values: valueContexts.sorted { $0.case < $1.case }),
             isExtensible: enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
     }
