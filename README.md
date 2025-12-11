@@ -11,8 +11,8 @@ The Soto repository is very large and in general most projects only need a few o
 Replace your dependency on Soto in the Package.swift with the following
 
 ```swift
-.package(url: "https://github.com/soto-project/soto-codegenerator", from: "0.6.0"),
-.package(url: "https://github.com/soto-project/soto-core.git", from: "6.4.0")
+.package(url: "https://github.com/soto-project/soto-codegenerator", from: "7.8.1"),
+.package(url: "https://github.com/soto-project/soto-core.git", from: "7.9.0"),
 ```
 
 And the target you want to add the generated Soto code to should be setup as follows
