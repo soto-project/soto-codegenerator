@@ -36,6 +36,11 @@ extension Model {
             // https://github.com/soto-project/soto/issues/744
             "com.amazonaws.bedrockagentruntime#FlowOutputEvent$nodeType": RemoveTraitPatch(trait: RequiredTrait.self)
         ],
+        "Bedrock": [
+            // https://github.com/soto-project/soto/issues/781
+            // Missing Enum value
+            "com.amazonaws.bedrock#InferenceType": AddShapeMemberPatch<EnumShape>(name: "INFERENCE_PROFILE")
+        ],
         "CloudFront": [
             // `DistributionConfig` and `DistributionSummary` both use `HttpVersion`. One expects it to be lowercase
             // and the other expects it to be uppercase. Solution create new enum `UppercaseHttpVersion` for
