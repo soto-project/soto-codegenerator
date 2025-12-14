@@ -39,7 +39,12 @@ extension Model {
         "Bedrock": [
             // https://github.com/soto-project/soto/issues/781
             // Missing Enum value
-            "com.amazonaws.bedrock#InferenceType": AddShapeMemberPatch<EnumShape>(name: "INFERENCE_PROFILE")
+            "com.amazonaws.bedrock#InferenceType": AddShapeMemberPatch<EnumShape>(name: "INFERENCE_PROFILE"),
+            "com.amazonaws.bedrock#ModelModality": MultiplePatch(
+                AddShapeMemberPatch<EnumShape>(name: "AUDIO"),
+                AddShapeMemberPatch<EnumShape>(name: "VIDEO"),
+                AddShapeMemberPatch<EnumShape>(name: "SPEECH")
+            ),
         ],
         "CloudFront": [
             // `DistributionConfig` and `DistributionSummary` both use `HttpVersion`. One expects it to be lowercase
