@@ -46,6 +46,11 @@ extension Model {
                 AddShapeMemberPatch<EnumShape>(name: "SPEECH")
             ),
         ],
+        "BedrockRuntime": [
+            // https://github.com/soto-project/soto/issues/785
+            // Missing Enum value
+            "com.amazonaws.bedrockruntime#ToolUseType": AddShapeMemberPatch<EnumShape>(name: "tool_use")
+        ],
         "CloudFront": [
             // `DistributionConfig` and `DistributionSummary` both use `HttpVersion`. One expects it to be lowercase
             // and the other expects it to be uppercase. Solution create new enum `UppercaseHttpVersion` for
