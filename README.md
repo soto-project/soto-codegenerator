@@ -11,8 +11,8 @@ The Soto repository is very large and in general most projects only need a few o
 Replace your dependency on Soto in the Package.swift with the following
 
 ```swift
-.package(url: "https://github.com/soto-project/soto-codegenerator", from: "7.8.1"),
-.package(url: "https://github.com/soto-project/soto-core.git", from: "7.9.0"),
+.package(url: "https://github.com/soto-project/soto-codegenerator", from: "7.8.4"),
+.package(url: "https://github.com/soto-project/soto-core.git", from: "7.13.0"),
 ```
 
 And the target you want to add the generated Soto code to should be setup as follows
@@ -24,19 +24,36 @@ And the target you want to add the generated Soto code to should be setup as fol
 )
 ```
 
-You need a couple of files. 
-- The region endpoint definition file [endpoints.json](https://aws-toolkit-endpoints.s3.amazonaws.com/endpoints.json). This file isn't totally necessary but if your service has custom endpoints you will need access to you will need it.
+Add a `soto.config.json` configuration file into the folder for the target you want to add AWS services. This is a json file that details which services you are using. An object is associated with each service. Later on we will discuss how this object can be used to control code generation. 
+
+```json
+{
+    "services": { 
+        "s3": {},
+        "iam": {}
+    },
+}
+```
+
+Code generation needs source model files to run. 
+- The region endpoint definition file [endpoints.json](https://aws-toolkit-endpoints.s3.amazonaws.com/endpoints.json). This file isn't totally necessary but if your service has custom endpoints you will need access to it.
 - The model file for the service you want to use. You can find these in the [aws/api-models-aws](https://github.com/aws/api-models-aws/tree/main/models) repository. 
 
-The Build Plugin will search for the `endpoints.json` first in the root of your target and then the root of your project. The model file should be added to your target. Unless you are using a new region endpoint or new functionality from a service you shouldn't need to update these again.
+Both of these should be placed in your target folder. The easiest way to add these to your project is to run the command plugin `download-aws-models`.
 
-If your target only includes AWS Smithy model files in it, you need to add a dummy empty Swift file to the folder. Otherwise the Swift Package Manager will warn you have no source files for your target and not build the target. 
+```sh
+swift package plugin download-aws-models
+```
 
-Now when you build your target
+If your target only includes AWS Smithy model files in it, you need to add a dummy empty Swift file to the folder. Otherwise the Swift Package Manager will warn that you have no source files for your target and not build the target. 
+
+Now you can build your project.
+
 ```
 swift build
 ```
-The build plugin will put the generated Swift code in `.build/plugins/outputs/<package name>/<target name>/SotoCodeGeneratorPlugin/GeneratedSources` and will include it in the list of Swift files for that target.
+
+The build plugin will put the generated Swift code in a sub-folder `.build/plugins/outputs/` and will include it in the list of Swift files for that target.
 
 ### Missing Code
 
@@ -44,7 +61,7 @@ If you are dependent on extension code from Soto (eg S3 multipart upload, STS/Co
 
 ## Config file
 
-You can add a configuration file `soto.config.json` to your project to control the Swift code generation. 
+It was mentioned above that the configuration file `soto.config.json` can control the Swift code generation. 
 
 Many of the services have a lot of operations which you may never use. If you are working in a low memory environment (eg an AWS Lambda or an iOS app)and only use `s3.getObject` why include code for the other 94 S3 operations in your code base. The configuration file can be used to filter the operations you generate code for. The following `soto.config.json` will only output code for `getObject`.
 
