@@ -71,35 +71,17 @@ public struct SotoCodeGen {
         )
 
         try await withThrowingTaskGroup(of: Void.self) { group in
-            for file in modelFiles {
+            let initialCount = min(32, modelFiles.count)
+            for index in 0..<initialCount {
                 group.addTask {
-                    do {
-                        let model: SotoSmithy.Model
-                        if self.command.smithy {
-                            model = try self.loadSmithy(filename: file)
-                        } else {
-                            model = try self.loadJSONAST(filename: file)
-                        }
-                        // get service filename without path and extension
-                        let filename =
-                            file
-                            .split(separator: "/", omittingEmptySubsequences: true).last!
-                        let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
-                        let filter = config.services?[filenameWithoutExtension]?.operations
-                        let service = try AwsService(
-                            model,
-                            endpoints: endpoints,
-                            filter: filter,
-                            outputHTMLComments: self.command.htmlComments,
-                            logger: self.logger
-                        )
-
-                        if self.command.output {
-                            try self.generateFiles(with: service, config: config)
-                        }
-                    } catch {
-                        self.logger.error("\(file): \(error)")
-                        exit(1)
+                    try await generateFiles(for: modelFiles[index], endpoints: endpoints, config: config)
+                }
+            }
+            if initialCount < modelFiles.count {
+                try await group.next()
+                for index in initialCount..<modelFiles.count {
+                    group.addTask {
+                        try await generateFiles(for: modelFiles[index], endpoints: endpoints, config: config)
                     }
                 }
             }
@@ -108,6 +90,37 @@ public struct SotoCodeGen {
 
         if modelFiles.count > 1 {
             self.logger.info("Code Generation took \(Int(-startTime.timeIntervalSinceNow)) seconds")
+        }
+    }
+
+    func generateFiles(for file: String, endpoints: Endpoints, config: ConfigFile) async throws {
+        do {
+            let model: SotoSmithy.Model
+            if self.command.smithy {
+                model = try self.loadSmithy(filename: file)
+            } else {
+                model = try self.loadJSONAST(filename: file)
+            }
+            // get service filename without path and extension
+            let filename =
+                file
+                .split(separator: "/", omittingEmptySubsequences: true).last!
+            let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
+            let filter = config.services?[filenameWithoutExtension]?.operations
+            let service = try AwsService(
+                model,
+                endpoints: endpoints,
+                filter: filter,
+                outputHTMLComments: self.command.htmlComments,
+                logger: self.logger
+            )
+
+            if self.command.output {
+                try self.generateFiles(with: service, config: config)
+            }
+        } catch {
+            self.logger.error("\(file): \(error)")
+            exit(1)
         }
     }
 
