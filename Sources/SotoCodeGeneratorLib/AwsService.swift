@@ -270,6 +270,7 @@ struct AwsService {
                 name: member.key,
                 shapeName: inputShapeId.shapeName,
                 typeIsUnion: false,
+                isInputShape: true,
                 isOutputShape: false
             )
             contexts.append(memberContext)

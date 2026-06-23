@@ -320,6 +320,7 @@ extension AwsService {
                 name: member.key,
                 shapeName: shapeName,
                 typeIsUnion: typeIsUnion,
+                isInputShape: isInputShape,
                 isOutputShape: isOutputShape
             )
             contexts.members.append(memberContext)
@@ -351,6 +352,7 @@ extension AwsService {
         name: String,
         shapeName: String,
         typeIsUnion: Bool,
+        isInputShape: Bool,
         isOutputShape: Bool
     ) -> MemberContext {
         var required =
@@ -358,7 +360,13 @@ extension AwsService {
             || ((member.hasTrait(type: HttpPayloadTrait.self) || member.hasTrait(type: EventPayloadTrait.self)) && isOutputShape)
         let idempotencyToken = member.hasTrait(type: IdempotencyTokenTrait.self)
         let deprecated = member.hasTrait(type: DeprecatedTrait.self)
-        precondition((required && deprecated) == false, "Member cannot be required and deprecated")
+        if required && deprecated {
+            // if something is required and deprecated this is an error. We cannot get around this for
+            // input objects as they need an initializer, but output objects it isn't really an issue
+            // as we don't use the output object initializers
+            precondition(isInputShape == false, "Member cannot be required and deprecated")
+            required = false
+        }
 
         let defaultValue: String?
         if member.hasTrait(type: ClientOptionalTrait.self) {
