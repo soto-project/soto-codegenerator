@@ -120,6 +120,9 @@ extension Model {
             // service name change
             "com.amazonaws.iotdeviceadvisor#IotSenateService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IoTDeviceAdvisor") }
         ],
+        "IoTSiteWise": [
+            "com.amazonaws.iotsitewise#ListActionsResponse$nextToken": RemoveTraitPatch(trait: RequiredTrait.self)
+        ],
         "Ivs": [
             // service name change
             "com.amazonaws.ivs#AmazonInteractiveVideoService": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "IVS") }
