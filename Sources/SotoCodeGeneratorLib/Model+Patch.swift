@@ -32,6 +32,9 @@ extension Model {
             "com.amazonaws.amplify#App$environmentVariables": RemoveTraitPatch(trait: RequiredTrait.self),
             "com.amazonaws.amplify#App$repository": RemoveTraitPatch(trait: RequiredTrait.self),
         ],
+        "BedrockAgentCoreControl": [
+            "com.amazonaws.bedrockagentcorecontrol#MemoryStrategy$namespaces": RemoveTraitPatch(trait: RequiredTrait.self)
+        ],
         "BedrockAgentRuntime": [
             // https://github.com/soto-project/soto/issues/744
             "com.amazonaws.bedrockagentruntime#FlowOutputEvent$nodeType": RemoveTraitPatch(trait: RequiredTrait.self)
@@ -79,6 +82,9 @@ extension Model {
                 trait.with(sdkId: "CodeStarNotifications")
             }
         ],
+        "DevOpsAgent": [
+            "com.amazonaws.devopsagent#RegisteredMCPServerSigV4Details$roleArn": RemoveTraitPatch(trait: RequiredTrait.self)
+        ],
         "DynamoDB": [
             // Make TransactWriteItem an enum with associated values
             "com.amazonaws.dynamodb#TransactWriteItem": EditShapePatch { (shape: StructureShape) in
@@ -103,6 +109,9 @@ extension Model {
         "Fis": [
             // service name change
             "com.amazonaws.fis#FaultInjectionSimulator": EditTraitPatch { trait -> AwsServiceTrait in trait.with(sdkId: "FIS") }
+        ],
+        "GuardDuty": [
+            "com.amazonaws.guardduty#MemberDataSourceConfiguration$DataSources": RemoveTraitPatch(trait: RequiredTrait.self)
         ],
         "IAM": [
             // Missing Enum value

@@ -10,7 +10,7 @@ let package = Package(
         .plugin(name: "SotoModelDownloaderPlugin", targets: ["SotoModelDownloaderPlugin"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.4.7"),
+        .package(url: "https://github.com/soto-project/soto-smithy.git", from: "0.4.10"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.0.0"),
         .package(url: "https://github.com/hummingbird-project/swift-mustache.git", from: "2.0.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.4.0"),
