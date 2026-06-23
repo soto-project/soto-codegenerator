@@ -320,14 +320,23 @@ struct AwsService {
 
     /// get service protocol from service
     static func getServiceProtocol(_ service: ServiceShape) throws -> AwsServiceProtocol {
-        if let traits = service.traits {
-            for trait in traits {
-                if let protocolTrait = trait as? AwsServiceProtocol {
-                    return protocolTrait
-                }
-            }
+        guard let traits = service.traits else {
+            throw Error(reason: "No service protocol trait")
         }
-        throw Error(reason: "No service protocol trait")
+        let serviceTraits = traits.compactMap { $0 as? AwsServiceProtocol }
+        // prefer JSON protocols over other
+        if let restJson1 = serviceTraits.first(where: { $0 is AwsProtocolsRestJson1Trait }) {
+            return restJson1
+        } else if let json1_1 = serviceTraits.first(where: { $0 is AwsProtocolsAwsJson1_1Trait }) {
+            return json1_1
+        } else if let json1_0 = serviceTraits.first(where: { $0 is AwsProtocolsAwsJson1_0Trait }) {
+            return json1_0
+        }
+        guard let trait = serviceTraits.first else {
+            throw Error(reason: "No service protocol trait")
+        }
+        return trait
+
     }
 
     /// Get list operations service uses. Slightly more complex than just asking for all the operation shapes in the fle. Instead to do
