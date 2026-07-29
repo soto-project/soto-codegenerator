@@ -101,7 +101,11 @@ extension MemberShape {
         let memberShape = model.shape(for: self.target)!
         if memberShape is StringShape {
             if memberShape.hasTrait(type: EnumTrait.self) { return self.target.shapeName.toSwiftClassCase() }
-            return "String"
+            if self.hasTrait(type: HttpPayloadTrait.self) {
+                return "AWSHTTPBody"  // If String is marked as a payload that treat it as a raw buffer
+            } else {
+                return "String"
+            }
         } else if memberShape is BlobShape {
             if self.hasTrait(type: HttpPayloadTrait.self) {
                 return "AWSHTTPBody"
