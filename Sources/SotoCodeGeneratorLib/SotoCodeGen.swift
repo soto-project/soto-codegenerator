@@ -107,16 +107,20 @@ public struct SotoCodeGen {
                 .split(separator: "/", omittingEmptySubsequences: true).last!
             let filenameWithoutExtension = String(filename[..<(filename.lastIndex(of: ".") ?? filename.endIndex)])
             let filter = config.services?[filenameWithoutExtension]?.operations
-            let service = try AwsService(
-                model,
-                endpoints: endpoints,
-                filter: filter,
-                outputHTMLComments: self.command.htmlComments,
-                logger: self.logger
-            )
+            do {
+                let service = try AwsService(
+                    model,
+                    endpoints: endpoints,
+                    filter: filter,
+                    outputHTMLComments: self.command.htmlComments,
+                    logger: self.logger
+                )
 
-            if self.command.output {
-                try self.generateFiles(with: service, config: config)
+                if self.command.output {
+                    try self.generateFiles(with: service, config: config)
+                }
+            } catch is AwsService.NoProtocolError {
+                self.logger.info("\(file): Has no recognisable service protocol trait")
             }
         } catch {
             self.logger.error("\(file): \(error)")

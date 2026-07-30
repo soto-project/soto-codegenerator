@@ -333,7 +333,7 @@ struct AwsService {
             return json1_0
         }
         guard let trait = serviceTraits.first else {
-            throw Error(reason: "No service protocol trait")
+            throw NoProtocolError()
         }
         return trait
 
@@ -788,8 +788,14 @@ struct AwsService {
 protocol EncodingPropertiesContext {}
 
 extension AwsService {
-    struct Error: Swift.Error {
+    struct Error: Swift.Error, CustomStringConvertible {
         let reason: String
+
+        var description: String { self.reason }
+    }
+
+    struct NoProtocolError: Swift.Error, CustomStringConvertible {
+        var description: String { "No service protocol trait" }
     }
 
     struct TaskLocalParameters {
