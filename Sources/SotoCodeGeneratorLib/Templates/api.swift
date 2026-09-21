@@ -57,7 +57,7 @@ extension Templates {
             ///     - region: Region of server you want to communicate with. This will override the partition parameter.
         {{/regionalized}}
             ///     - partition: AWS partition where service resides, standard (.aws), china (.awscn), government (.awsusgov).
-            ///     - endpoint: Custom endpoint URL to use instead of standard AWS servers
+            ///     - endpoint: Custom endpoint URL. If nil, uses `{{endpointEnvironmentVariable}}`, then `AWS_ENDPOINT_URL`, then the default AWS endpoint.
         {{^middlewareClass}}
             ///     - middleware: Middleware chain used to edit requests before they are sent and responses before they are decoded 
         {{/middlewareClass}}
@@ -98,7 +98,7 @@ extension Templates {
         {{/signingName}}
                     serviceProtocol: {{protocol}},
                     apiVersion: "{{apiVersion}}",
-                    endpoint: endpoint,
+                    endpoint: endpoint ?? ProcessInfo.processInfo.environment["{{endpointEnvironmentVariable}}"],
         {{#first(serviceEndpoints)}}
                     serviceEndpoints: Self.serviceEndpoints,
         {{/first(serviceEndpoints)}}
@@ -137,7 +137,7 @@ extension Templates {
             ///     - region: Region of server you want to communicate with. This will override the partition parameter.
         {{/regionalized}}
             ///     - partition: AWS partition where service resides, standard (.aws), china (.awscn), government (.awsusgov).
-            ///     - endpoint: Custom endpoint URL to use instead of standard AWS servers
+            ///     - endpoint: Custom endpoint URL. If nil, uses `{{endpointEnvironmentVariable}}`, then `AWS_ENDPOINT_URL`, then the default AWS endpoint.
             ///     - middleware: Middleware chain used to edit requests before they are sent and responses before they are decoded 
             ///     - timeout: Timeout value for HTTP requests
             ///     - byteBufferAllocator: Allocator for ByteBuffers
@@ -174,7 +174,7 @@ extension Templates {
         {{/signingName}}
                     serviceProtocol: {{protocol}},
                     apiVersion: "{{apiVersion}}",
-                    endpoint: endpoint,
+                    endpoint: endpoint ?? ProcessInfo.processInfo.environment["{{endpointEnvironmentVariable}}"],
         {{#first(serviceEndpoints)}}
                     serviceEndpoints: Self.serviceEndpoints,
         {{/first(serviceEndpoints)}}
