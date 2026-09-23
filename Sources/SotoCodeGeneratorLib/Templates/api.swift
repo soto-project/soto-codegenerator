@@ -57,7 +57,7 @@ extension Templates {
             ///     - region: Region of server you want to communicate with. This will override the partition parameter.
         {{/regionalized}}
             ///     - partition: AWS partition where service resides, standard (.aws), china (.awscn), government (.awsusgov).
-            ///     - endpoint: Custom endpoint URL. If nil, uses `{{endpointEnvironmentVariable}}`, then `AWS_ENDPOINT_URL`, then the default AWS endpoint.
+            ///     - endpoint: Custom endpoint URL to use instead of environment overrides or standard AWS servers
         {{^middlewareClass}}
             ///     - middleware: Middleware chain used to edit requests before they are sent and responses before they are decoded 
         {{/middlewareClass}}
@@ -92,13 +92,14 @@ extension Templates {
                     amzTarget: "{{.}}",
         {{/amzTarget}}
                     serviceName: "{{name}}",
+                    sdkId: "{{sdkId}}",
                     serviceIdentifier: "{{endpointPrefix}}",
         {{#signingName}}
                     signingName: "{{.}}",
         {{/signingName}}
                     serviceProtocol: {{protocol}},
                     apiVersion: "{{apiVersion}}",
-                    endpoint: endpoint ?? ProcessInfo.processInfo.environment["{{endpointEnvironmentVariable}}"],
+                    endpoint: endpoint,
         {{#first(serviceEndpoints)}}
                     serviceEndpoints: Self.serviceEndpoints,
         {{/first(serviceEndpoints)}}
@@ -137,7 +138,7 @@ extension Templates {
             ///     - region: Region of server you want to communicate with. This will override the partition parameter.
         {{/regionalized}}
             ///     - partition: AWS partition where service resides, standard (.aws), china (.awscn), government (.awsusgov).
-            ///     - endpoint: Custom endpoint URL. If nil, uses `{{endpointEnvironmentVariable}}`, then `AWS_ENDPOINT_URL`, then the default AWS endpoint.
+            ///     - endpoint: Custom endpoint URL to use instead of environment overrides or standard AWS servers
             ///     - middleware: Middleware chain used to edit requests before they are sent and responses before they are decoded 
             ///     - timeout: Timeout value for HTTP requests
             ///     - byteBufferAllocator: Allocator for ByteBuffers
@@ -168,13 +169,14 @@ extension Templates {
                     amzTarget: "{{.}}",
         {{/amzTarget}}
                     serviceName: "{{name}}",
+                    sdkId: "{{sdkId}}",
                     serviceIdentifier: "{{endpointPrefix}}",
         {{#signingName}}
                     signingName: "{{.}}",
         {{/signingName}}
                     serviceProtocol: {{protocol}},
                     apiVersion: "{{apiVersion}}",
-                    endpoint: endpoint ?? ProcessInfo.processInfo.environment["{{endpointEnvironmentVariable}}"],
+                    endpoint: endpoint,
         {{#first(serviceEndpoints)}}
                     serviceEndpoints: Self.serviceEndpoints,
         {{/first(serviceEndpoints)}}
