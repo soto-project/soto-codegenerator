@@ -22,6 +22,7 @@ struct AwsService {
     let model: Model
     let serviceName: String
     let serviceEndpointPrefix: String
+    let sdkId: String
     let serviceId: ShapeId
     let service: ServiceShape
     let serviceProtocolTrait: AwsServiceProtocol
@@ -36,6 +37,8 @@ struct AwsService {
         self.model = model
         self.serviceId = service.key
         self.service = service.value
+        // Preserve the AWS SDK ID before patches rename it for generated Swift types.
+        self.sdkId = try Self.getTrait(from: service.value, trait: AwsServiceTrait.self, id: service.key).sdkId
         var serviceName = try Self.getServiceName(service.value, id: service.key)
         try model.patch(serviceName: serviceName)
         serviceName = try Self.getServiceName(service.value, id: service.key)
@@ -107,6 +110,7 @@ struct AwsService {
         context["name"] = self.serviceName
         context["description"] = self.processDocs(from: service)
         context["endpointPrefix"] = self.serviceEndpointPrefix
+        context["sdkId"] = self.sdkId
         if let authSigV4 = authSigV4, authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
         }

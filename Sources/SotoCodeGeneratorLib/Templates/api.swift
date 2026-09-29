@@ -57,7 +57,7 @@ extension Templates {
             ///     - region: Region of server you want to communicate with. This will override the partition parameter.
         {{/regionalized}}
             ///     - partition: AWS partition where service resides, standard (.aws), china (.awscn), government (.awsusgov).
-            ///     - endpoint: Custom endpoint URL to use instead of standard AWS servers
+            ///     - endpoint: Custom endpoint URL to use instead of environment overrides or standard AWS servers
         {{^middlewareClass}}
             ///     - middleware: Middleware chain used to edit requests before they are sent and responses before they are decoded 
         {{/middlewareClass}}
@@ -92,6 +92,7 @@ extension Templates {
                     amzTarget: "{{.}}",
         {{/amzTarget}}
                     serviceName: "{{name}}",
+                    sdkId: "{{sdkId}}",
                     serviceIdentifier: "{{endpointPrefix}}",
         {{#signingName}}
                     signingName: "{{.}}",
@@ -137,7 +138,7 @@ extension Templates {
             ///     - region: Region of server you want to communicate with. This will override the partition parameter.
         {{/regionalized}}
             ///     - partition: AWS partition where service resides, standard (.aws), china (.awscn), government (.awsusgov).
-            ///     - endpoint: Custom endpoint URL to use instead of standard AWS servers
+            ///     - endpoint: Custom endpoint URL to use instead of environment overrides or standard AWS servers
             ///     - middleware: Middleware chain used to edit requests before they are sent and responses before they are decoded 
             ///     - timeout: Timeout value for HTTP requests
             ///     - byteBufferAllocator: Allocator for ByteBuffers
@@ -168,6 +169,7 @@ extension Templates {
                     amzTarget: "{{.}}",
         {{/amzTarget}}
                     serviceName: "{{name}}",
+                    sdkId: "{{sdkId}}",
                     serviceIdentifier: "{{endpointPrefix}}",
         {{#signingName}}
                     signingName: "{{.}}",
