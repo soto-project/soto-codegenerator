@@ -17,12 +17,14 @@ extension Templates {
         {{%CONTENT_TYPE:TEXT}}
         {{>header}}
 
+        import HTTPTypes
+        @_exported import SotoCore
+
         #if canImport(FoundationEssentials)
         import FoundationEssentials
         #else
         import Foundation
         #endif
-        @_exported import SotoCore
 
         {{#middlewareFramework}}
         import {{ . }}
