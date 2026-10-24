@@ -87,7 +87,7 @@ extension AwsService {
             documentation: processDocs(from: shape),
             stringValues: .init(values: valueContexts),
             intValues: nil,
-            isExtensible: shape.hasTrait(type: SotoExtensibleEnumTrait.self)
+            isExtensible: true  //shape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
     }
 
@@ -126,7 +126,7 @@ extension AwsService {
             documentation: processDocs(from: enumShape),
             stringValues: .init(values: valueContexts.sorted { $0.case < $1.case }),
             intValues: nil,
-            isExtensible: enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
+            isExtensible: true  //enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
     }
 
@@ -164,7 +164,7 @@ extension AwsService {
             documentation: processDocs(from: enumShape),
             stringValues: nil,
             intValues: .init(values: valueContexts.sorted { $0.case < $1.case }),
-            isExtensible: enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
+            isExtensible: true  //enumShape.hasTrait(type: SotoExtensibleEnumTrait.self)
         )
     }
 
