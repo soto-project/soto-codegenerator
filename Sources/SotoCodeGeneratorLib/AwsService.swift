@@ -249,7 +249,7 @@ struct AwsService {
             outputShape: outputShapeTarget?.shapeName,
             name: operationName.shapeName,
             path: httpTrait?.uri ?? "/",
-            httpMethod: httpTrait?.method ?? "POST",
+            httpMethod: httpTrait?.method.lowercased() ?? "post",
             hostPrefix: endpointTrait?.hostPrefix,
             deprecated: deprecatedTrait?.message,
             streaming: streaming ? "ByteBuffer" : nil,
@@ -446,12 +446,12 @@ struct AwsService {
     func getMiddleware(for service: ServiceShape) -> String? {
         switch self.serviceName {
         case "APIGateway":
-            return "AWSEditHeadersMiddleware(.add(name: \"accept\", value: \"application/json\"))"
+            return "AWSEditHeadersMiddleware(.add(name: .accept, value: \"application/json\"))"
         case "Glacier":
             return """
                 AWSMiddlewareStack {
-                                AWSEditHeadersMiddleware(.add(name: \"x-amz-glacier-version\", value: \"\(service.version ?? "2012-06-01")\"))
-                                TreeHashMiddleware(header: \"x-amz-sha256-tree-hash\")
+                                AWSEditHeadersMiddleware(.add(name: HTTPField.Name(\"x-amz-glacier-version\")!, value: \"\(service.version ?? "2012-06-01")\"))
+                                TreeHashMiddleware(header: HTTPField.Name(\"x-amz-sha256-tree-hash\")!)
                             }
                 """
         case "S3":
