@@ -18,6 +18,8 @@ extension Templates {
         {{>header}}
 
         import HTTPTypes
+        import Logging
+        import NIOCore
         @_exported import SotoCore
 
         #if canImport(FoundationEssentials)
