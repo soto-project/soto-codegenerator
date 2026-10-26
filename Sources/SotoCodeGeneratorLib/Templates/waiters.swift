@@ -31,7 +31,7 @@ extension Templates {
             @inlinable
             {{scope}} func waitUntil{{waiterName}}(
                 _ input: {{operation.inputShape}},
-                maxWaitTime: TimeAmount? = nil,
+                maxWaitTime: Swift.Duration? = nil,
                 logger: Logger = AWSClient.loggingDisabled
             ) async throws {
                 let waiter = AWSClient.Waiter<{{operation.inputShape}}, _>(
