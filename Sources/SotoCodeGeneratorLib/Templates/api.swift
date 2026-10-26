@@ -78,7 +78,7 @@ extension Templates {
         {{^middlewareClass}}
                 middleware: AWSMiddlewareProtocol? = nil,
         {{/middlewareClass}}
-                timeout: TimeAmount? = nil,
+                timeout: Swift.Duration? = nil,
                 byteBufferAllocator: ByteBufferAllocator = ByteBufferAllocator(),
                 options: AWSServiceConfig.Options = []
             ) {
@@ -155,7 +155,7 @@ extension Templates {
                 partition: AWSPartition = .aws,
                 endpoint: String? = nil,
                 middleware: some AWSMiddlewareProtocol,
-                timeout: TimeAmount? = nil,
+                timeout: Swift.Duration? = nil,
                 byteBufferAllocator: ByteBufferAllocator = ByteBufferAllocator(),
                 options: AWSServiceConfig.Options = []
             ) {
