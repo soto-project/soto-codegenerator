@@ -164,7 +164,7 @@ struct AwsService {
 
     /// Generate the context information for outputting the error enums
     func generateErrorContext() throws -> [String: Any] {
-        let errorShapes = try model.select(from: "structure [trait|error]")
+        let errorShapes = model.select(type: StructureShape.self).filter { $0.value.hasTrait(type: ErrorTrait.self) }
         guard errorShapes.count > 0 else { return [:] }
         let isQueryProtocol = self.service.hasTrait(type: AwsProtocolsAwsQueryTrait.self)
 
@@ -173,16 +173,26 @@ struct AwsService {
         context["errorName"] = self.serviceName + "ErrorType"
 
         var errorContexts: [ErrorContext] = []
+        var withAssociatedValues: Bool = false
         for error in errorShapes {
             let queryError = isQueryProtocol ? error.value.trait(type: AwsProtocolsAwsQueryErrorTrait.self) : nil
             let name: String = queryError?.code ?? error.key.shapeName
+            let associatedType: String?
+            if error.value.hasTrait(type: SotoErrorShapeTrait.self) {
+                associatedType = error.key.shapeName
+                withAssociatedValues = true
+            } else {
+                associatedType = nil
+            }
             let errorContext = ErrorContext(
                 enum: error.key.shapeName.toSwiftVariableCase(),
                 string: name,
+                associatedType: associatedType,
                 comment: self.processDocs(from: error.value)
             )
             errorContexts.append(errorContext)
         }
+        context["withAssociatedValues"] = withAssociatedValues
         errorContexts.sort { $0.enum < $1.enum }
         if errorContexts.count > 0 {
             context["errors"] = errorContexts
@@ -555,8 +565,6 @@ struct AwsService {
                         case let shape as StructureShape:
                             guard let members = shape.members, members.count > 0 else { continue }
                             if members.count == 1 && members.keys.first?.lowercased() == "message" { continue }
-                        case is UnionShape:
-                            break
                         default:
                             continue
                         }
@@ -564,6 +572,23 @@ struct AwsService {
                     }
                     addTrait(to: error.target, trait: SotoOutputShapeTrait())
                 }
+            }
+        }
+
+        if let errors = self.service.errors {
+            for error in errors {
+                if let shape = model.shape(for: error.target) {
+                    // Only add error trait to errors with more properties than just a message
+                    switch shape {
+                    case let shape as StructureShape:
+                        guard let members = shape.members, members.count > 0 else { continue }
+                        if members.count == 1 && members.keys.first?.lowercased() == "message" { continue }
+                    default:
+                        continue
+                    }
+                    shape.add(trait: SotoErrorShapeTrait())
+                }
+                addTrait(to: error.target, trait: SotoOutputShapeTrait())
             }
         }
     }
@@ -870,6 +895,7 @@ extension AwsService {
     struct ErrorContext {
         let `enum`: String
         let string: String
+        let associatedType: String?
         let comment: [String.SubSequence]
     }
 
