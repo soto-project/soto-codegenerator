@@ -65,7 +65,7 @@ extension Templates {
                 default:
         {{/withAssociatedValues}}
         {{^withAssociatedValues}}
-                if let code = Code(rawValue: errorCode.code) {
+                if let code = Code(rawValue: responseError.errorCode) {
                     self.error = code
                 } else {
         {{/withAssociatedValues}}
