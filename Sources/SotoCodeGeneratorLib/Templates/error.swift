@@ -18,59 +18,76 @@ extension Templates {
         // MARK: - Errors
 
         /// Error enum for {{name}}
-        {{scope}} struct {{errorName}}: AWSErrorType {
-            enum Code: String {
+        {{#withAssociatedValues}}
+        {{scope}} struct {{errorName}}: AWSErrorType, Decodable {
+            @nonexhaustive
+            {{scope}} enum Code: Sendable {
         {{#errors}}
+        {{#comment}}
+                {{>comment}}
+        {{/comment}}
+                case {{enum}}{{#associatedType}}({{name}}.{{.}}){{/associatedType}}
+        {{/errors}}
+            }
+        {{/withAssociatedValues}}
+        {{^withAssociatedValues}}
+        {{scope}} struct {{errorName}}: AWSErrorType, Decodable {
+            @nonexhaustive
+            {{scope}} enum Code: String, Sendable, Equatable {
+        {{#errors}}
+        {{#comment}}
+                {{>comment}}
+        {{/comment}}
                 case {{enum}} = "{{string}}"
         {{/errors}}
             }
+        {{/withAssociatedValues}}
 
-            private let error: Code
-            {{scope}} let context: AWSErrorContext?
+            {{scope}} let error: Code
+            {{scope}} let message: String?
+            {{scope}} let response: HTTPResponse?
 
-            /// initialize {{name}}
-            {{scope}} init?(errorCode: String, context: AWSErrorContext) {
-                guard let error = Code(rawValue: errorCode) else { return nil }
-                self.error = error
-                self.context = context
-            }
-
-            internal init(_ error: Code) {
-                self.error = error
-                self.context = nil
-            }
-
-            /// return error code string
-            {{scope}} var errorCode: String { self.error.rawValue }
-
+            {{scope}} init(from decoder: any Decoder) throws {
+                let singleValueContainer = try decoder.singleValueContainer()
+                let responseError = try singleValueContainer.decode(AWSResponseError.self)
+        {{#withAssociatedValues}}
+                switch responseError.errorCode {
         {{#errors}}
-        {{#comment}}
-            {{>comment}}
-        {{/comment}}
-            {{scope}} static var {{enum}}: Self { .init(.{{enum}}) }
+        {{#associatedType}}
+                case "{{string}}":
+                    let context = try singleValueContainer.decode({{name}}.{{.}}.self)
+                    self.error = .{{enum}}(context)
+        {{/associatedType}}
+        {{^associatedType}}
+                case "{{string}}": self.error = .{{enum}}
+        {{/associatedType}}
         {{/errors}}
-        }
-
-        {{#first(errorMap)}}
-        extension {{errorName}}: AWSServiceErrorType {
-            {{scope}} static let errorCodeMap: [String: AWSErrorShape.Type] = [
-        {{#errorMap}}
-                "{{code}}": {{name}}.{{error}}.self{{^last()}},{{/last()}}
-        {{/errorMap}}
-            ]
-        }
-
-        {{/first(errorMap)}}
-        extension {{errorName}}: Equatable {
-            {{scope}} static func == (lhs: {{errorName}}, rhs: {{errorName}}) -> Bool {
-                lhs.error == rhs.error
+                default:
+        {{/withAssociatedValues}}
+        {{^withAssociatedValues}}
+                if let code = Code(rawValue: responseError.errorCode) {
+                    self.error = code
+                } else {
+        {{/withAssociatedValues}}
+                    throw responseError
+                }
+                self.message = responseError.message
+                self.response = responseError.response
             }
-        }
 
-        extension {{errorName}}: CustomStringConvertible {
-            {{scope}} var description: String {
-                return "\(self.error.rawValue): \(self.message ?? "")"
+        {{#withAssociatedValues}}
+            /// return error code string
+            {{scope}} var errorCode: String {
+                switch error {
+        {{#errors}}
+                case .{{enum}}: "{{string}}"
+        {{/errors}}
+                }
             }
+        {{/withAssociatedValues}}
+        {{^withAssociatedValues}}
+            {{scope}} var errorCode: String { self.error.rawValue }
+        {{/withAssociatedValues}}
         }
 
         """#
