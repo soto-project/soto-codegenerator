@@ -59,6 +59,7 @@ struct AwsService {
             self.operations = operations
         }
 
+        //self.reduceErrorShapes(model)
         self.markInputOutputShapes(model)
         // this is a breaking change (maybe for v8)
         // self.removeEmptyInputs(model)
@@ -575,6 +576,7 @@ struct AwsService {
             }
         }
 
+        // Flag errors from service shape
         if let errors = self.service.errors {
             for error in errors {
                 if let shape = model.shape(for: error.target) {
