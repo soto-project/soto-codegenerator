@@ -49,9 +49,9 @@ extension Templates {
 
             {{scope}} init(from decoder: any Decoder) throws {
                 let singleValueContainer = try decoder.singleValueContainer()
-                let errorCode = try singleValueContainer.decode(AWSErrorCode.self)
+                let responseError = try singleValueContainer.decode(AWSResponseError.self)
         {{#withAssociatedValues}}
-                switch errorCode.code {
+                switch responseError.errorCode {
         {{#errors}}
         {{#associatedType}}
                 case "{{string}}":
@@ -71,8 +71,8 @@ extension Templates {
         {{/withAssociatedValues}}
                     throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Unrecognised error code"))
                 }
-                self.message = try singleValueContainer.decode(AWSErrorMessage.self).message
-                self.response = (decoder.userInfo[.awsResponse]! as! ResponseDecodingContainer).response.response
+                self.message = responseError.message
+                self.response = responseError.response
             }
 
         {{#withAssociatedValues}}
