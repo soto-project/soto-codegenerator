@@ -198,17 +198,6 @@ struct AwsService {
         if errorContexts.count > 0 {
             context["errors"] = errorContexts
         }
-
-        var errorMapContexts = errorShapes.compactMap { shape -> ErrorMapContext? in
-            guard shape.value.hasTrait(type: SotoErrorShapeTrait.self) else { return nil }
-            let queryError = isQueryProtocol ? shape.value.trait(type: AwsProtocolsAwsQueryErrorTrait.self) : nil
-            let errorCode: String = queryError?.code ?? shape.key.shapeName
-            return ErrorMapContext(code: errorCode, error: shape.key.shapeName)
-        }
-        errorMapContexts.sort { $0.code < $1.code }
-        if errorMapContexts.count > 0 {
-            context["errorMap"] = errorMapContexts
-        }
         return context
     }
 
