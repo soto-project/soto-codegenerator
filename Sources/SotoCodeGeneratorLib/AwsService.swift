@@ -59,7 +59,7 @@ struct AwsService {
             self.operations = operations
         }
 
-        //self.reduceErrorShapes(model)
+        self.reduceErrorShapes(model)
         self.markInputOutputShapes(model)
         // this is a breaking change (maybe for v8)
         // self.removeEmptyInputs(model)
@@ -519,6 +519,17 @@ struct AwsService {
         return hasRecursiveOwnReference(shape, count: 0)
     }
 
+    /// Remove message, error code members from error shapes as they are not needed
+    func reduceErrorShapes(_ model: Model) {
+        let errorShapes = model.select(type: StructureShape.self).filter { $0.value.hasTrait(type: ErrorTrait.self) }
+        let membersToRemove: Set<String> = ["message", "Message", "errorCode", "ErrorCode"]
+        for error in errorShapes {
+            if let members = error.value.members {
+                error.value.members = members.filter { !membersToRemove.contains($0.key) }
+            }
+        }
+    }
+
     /// mark up model with Soto traits for input and output shapes
     func markInputOutputShapes(_ model: Model) {
         func addTrait<T: StaticTrait>(to shapeId: ShapeId, trait: T) {
@@ -565,7 +576,6 @@ struct AwsService {
                         switch shape {
                         case let shape as StructureShape:
                             guard let members = shape.members, members.count > 0 else { continue }
-                            if members.count == 1 && members.keys.first?.lowercased() == "message" { continue }
                         default:
                             continue
                         }
