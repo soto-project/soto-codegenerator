@@ -60,8 +60,7 @@ struct AwsService {
         }
 
         self.markInputOutputShapes(model)
-        // this is a breaking change (maybe for v8)
-        // self.removeEmptyInputs(model)
+        self.removeEmptyInputs(model)
     }
 
     /// Return service name from API
@@ -573,12 +572,10 @@ struct AwsService {
             if let input = operation.value.input {
                 if let shape = model.shape(for: input.target) {
                     if let structureShape = shape as? StructureShape {
-                        if let members = structureShape.members {
-                            if members.count == 0 {
-                                operation.value.input = nil
-                            }
-                        } else {
+                        guard let members = structureShape.members, members.count > 0 else {
                             operation.value.input = nil
+                            structureShape.remove(trait: SotoInputShapeTrait.self)
+                            continue
                         }
                     }
                 }
