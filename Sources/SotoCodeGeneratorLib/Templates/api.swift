@@ -324,7 +324,7 @@ extension Templates {
             @Sendable 
             @usableFromInline 
             func getEndpoint(logger: Logger) async throws -> AWSEndpoints {
-                let response = try await self.describeEndpoints(.init(), logger: logger)
+                let response = try await self.describeEndpoints(logger: logger)
                 return .init(endpoints: response.endpoints.map {
                     .init(address: "https://\($0.address)", cachePeriodInMinutes: $0.cachePeriodInMinutes)
                 })
