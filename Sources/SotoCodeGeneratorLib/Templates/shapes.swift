@@ -17,6 +17,10 @@ extension Templates {
         {{%CONTENT_TYPE:TEXT}}
         {{>header}}
 
+        {{#errors}}
+        public import HTTPTypes
+        {{/errors}}
+
         #if canImport(FoundationEssentials)
         import FoundationEssentials
         #else
