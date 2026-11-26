@@ -600,9 +600,10 @@ struct AwsService {
     }
 
     /// RPC v2 ignores the HTTP binding traits and serializes every member in the body under its own name.
-    /// Remove the traits that would move a member into a header, query, path or raw payload, so the
-    /// shape generation treats all members as plain body members. `hostLabel` is kept as the endpoint
-    /// prefix still needs it.
+    /// Remove the traits that would move a member into a header, query, path or raw payload, and the
+    /// ones that rename a member or pick a timestamp format (`jsonName`, `xmlName`, `xmlFlattened`,
+    /// `xmlAttribute`, `timestampFormat`), so the shape generation treats all members as plain body
+    /// members. `hostLabel` is kept as the endpoint prefix still needs it.
     func removeHTTPBindingTraits(_ model: Model) {
         let bindingTraits: [StaticTrait.Type] = [
             HttpHeaderTrait.self,

@@ -48,7 +48,7 @@ struct RpcV2CborTests {
                 "example.cbor#CborTest": {
                   "type": "service",
                   "version": "2020-01-01",
-                  "operations": [{"target": "example.cbor#GetThing"}],
+                  "operations": [{"target": "example.cbor#GetThing"}, {"target": "example.cbor#PutThing"}],
                   "traits": { \(serviceTraits) }
                 },
                 "example.cbor#GetThing": {
@@ -56,6 +56,24 @@ struct RpcV2CborTests {
                   "input": {"target": "example.cbor#GetThingInput"},
                   "output": {"target": "example.cbor#GetThingOutput"},
                   "traits": {"smithy.api#http": {"method": "GET", "uri": "/things/{thingId}", "code": 200}}
+                },
+                "example.cbor#PutThing": {
+                  "type": "operation",
+                  "input": {"target": "example.cbor#PutThingInput"},
+                  "traits": {
+                    "smithy.api#http": {"method": "PUT", "uri": "/", "code": 200},
+                    "smithy.api#endpoint": {"hostPrefix": "{accountId}."}
+                  }
+                },
+                "example.cbor#PutThingInput": {
+                  "type": "structure",
+                  "members": {
+                    "accountId": {
+                      "target": "smithy.api#String",
+                      "traits": {"smithy.api#required": {}, "smithy.api#hostLabel": {}}
+                    },
+                    "value": {"target": "smithy.api#String"}
+                  }
                 },
                 "example.cbor#GetThingInput": {
                   "type": "structure",
@@ -115,6 +133,14 @@ struct RpcV2CborTests {
         )
     }
 
+    /// The generated source of one structure, from its declaration up to the next declaration
+    private static func section(of structure: String, in source: String) throws -> String {
+        let start = try #require(source.range(of: "struct \(structure):"))
+        let rest = source[start.lowerBound...].dropFirst()
+        let end = rest.range(of: "public struct ")?.lowerBound ?? rest.endIndex
+        return String(source[start.lowerBound..<end])
+    }
+
     private static func render(_ service: AwsService) throws -> (api: String, shapes: String) {
         let library = try Templates.createLibrary()
         let api = try #require(library.render(try service.generateServiceContext(), withTemplate: "api"))
@@ -160,7 +186,17 @@ struct RpcV2CborTests {
         #expect(!shapes.contains("request.encodePath"))
         #expect(!shapes.contains("X-Trace"))
         // all members are plain Codable so the synthesized encode(to:) writes them all
-        #expect(!shapes.contains("func encode(to encoder: Encoder)"))
+        #expect(!(try Self.section(of: "GetThingInput", in: shapes)).contains("func encode(to encoder: Encoder)"))
+    }
+
+    @Test("a hostLabel member feeds the endpoint prefix and is also written to the body")
+    func hostLabel() throws {
+        let output = try Self.render(try Self.service(protocolTraits: ["smithy.protocols#rpcv2Cbor"]))
+        let shape = try Self.section(of: "PutThingInput", in: output.shapes)
+        #expect(shape.contains("case accountId = \"accountId\""))
+        #expect(shape.contains("try container.encode(self.accountId, forKey: .accountId)"))
+        #expect(shape.contains("request.encodeHostPrefix(self.accountId, key: \"accountId\")"))
+        #expect(output.api.contains("hostPrefix: \"{accountId}.\""))
     }
 
     @Test("every output member is read from the body")
