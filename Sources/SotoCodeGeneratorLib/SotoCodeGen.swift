@@ -67,7 +67,8 @@ public struct SotoCodeGen {
         Smithy.registerAWSTraits()
         Smithy.registerTraitTypes(
             SotoInputShapeTrait.self,
-            SotoOutputShapeTrait.self
+            SotoOutputShapeTrait.self,
+            SmithyProtocolsRpcv2CborTrait.self
         )
 
         try await withThrowingTaskGroup(of: Void.self) { group in

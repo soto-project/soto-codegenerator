@@ -30,6 +30,13 @@ protocol ProtocolAliasTrait: StaticTrait {
 protocol AwsServiceProtocol: SotoOutput {
     var nameTrait: ProtocolAliasTrait.Type { get }
     var requiresCollectionCoders: Bool { get }
+    /// Swift expression for the `serviceProtocol` parameter of the generated service config.
+    /// - Parameter serviceShapeName: Name of the Smithy service shape, without its namespace
+    func output(serviceShapeName: String) -> String
+}
+
+extension AwsServiceProtocol {
+    func output(serviceShapeName: String) -> String { self.output }
 }
 
 // MARK: Alias traits
@@ -78,6 +85,15 @@ extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
     var output: String { ".restxml" }
     var nameTrait: ProtocolAliasTrait.Type { XmlNameTrait.self }
     var requiresCollectionCoders: Bool { true }
+}
+
+extension SmithyProtocolsRpcv2CborTrait: AwsServiceProtocol {
+    /// RPC v2 builds the request path from the service shape name, so use `output(serviceShapeName:)`
+    var output: String { ".rpcv2Cbor" }
+    func output(serviceShapeName: String) -> String { ".rpcv2Cbor(serviceName: \"\(serviceShapeName)\")" }
+    /// RPC v2 ignores `jsonName` and `xmlName`, member names are used as they are
+    var nameTrait: ProtocolAliasTrait.Type { JsonNameTrait.self }
+    var requiresCollectionCoders: Bool { false }
 }
 
 // MARK: Shape types

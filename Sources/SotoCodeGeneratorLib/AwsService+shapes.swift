@@ -257,11 +257,11 @@ extension AwsService {
             shape.hasTrait(type: SotoResponseShapeTrait.self) || shape.hasTrait(type: SotoRequestShapeTrait.self)
             || shape.hasTrait(type: SotoErrorShapeTrait.self)
         // Has elements that require some form of custom encoding/decoding
-        let hasCustomCodableElements = contexts.members.contains { $0.memberCoding.isCodable == false }
+        let hasCustomCodableElements = contexts.members.contains { $0.memberCoding.isCodable == false || $0.memberCoding.inHostPrefix != nil }
         if hasCustomCodableElements || typeIsUnion {
             // Has elements that require a custom container
             let hasNonDecodableElements = contexts.members.contains {
-                $0.memberCoding.isCodable == false && $0.memberCoding.isPayload == false
+                ($0.memberCoding.isCodable == false && $0.memberCoding.isPayload == false) || $0.memberCoding.inHostPrefix != nil
             }
             let singleValueContainer = contexts.members.contains {
                 $0.memberCoding.isPayload == true
@@ -446,7 +446,10 @@ extension AwsService {
         if member.hasTrait(type: HostLabelTrait.self), !isOutputShape {
             let aliasTrait = member.trait(named: serviceProtocolTrait.nameTrait.staticName) as? ProtocolAliasTrait
             memberCodableContext.inHostPrefix = aliasTrait?.alias ?? name
-            memberCodableContext.isCodable = false
+            // RPC v2 also serializes host label members in the body
+            if !(serviceProtocolTrait is SmithyProtocolsRpcv2CborTrait) {
+                memberCodableContext.isCodable = false
+            }
         }
         return MemberContext(
             variable: name.toSwiftVariableCase(),
@@ -546,6 +549,9 @@ extension AwsService {
                 return "\(codingWrapper)<DictionaryCoder<\(self.encodingName(name)), \(map.key.output(model)), \(map.value.output(model))>>"
             }
         case let timestamp as TimestampShape:
+            // RPC v2 CBOR always encodes timestamps as epoch seconds with CBOR tag 1, which is the
+            // default Date encoding of the CBOR coders
+            if serviceProtocolTrait is SmithyProtocolsRpcv2CborTrait { return nil }
             if let formatTrait = timestamp.trait(type: TimestampFormatTrait.self) {
                 switch formatTrait.value {
                 case .datetime:
