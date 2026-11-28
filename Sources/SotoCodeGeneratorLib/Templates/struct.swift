@@ -96,10 +96,10 @@ extension Templates {
 
                 {{scope}} init(from decoder: Decoder) throws {
         {{#shapeCoding.requiresResponse}}
-                    let response = decoder.userInfo[.awsResponse]! as! ResponseDecodingContainer
+                    let response = try decoder.requireAWSResponseContainer()
         {{/shapeCoding.requiresResponse}}
         {{#shapeCoding.requiresEvent}}
-                    let response = decoder.userInfo[.awsEvent]! as! EventDecodingContainer
+                    let response = try decoder.requireAWSEventContainer()
         {{/shapeCoding.requiresEvent}}
         {{#shapeCoding.singleValueContainer}}
                     let container = try decoder.singleValueContainer()
@@ -131,7 +131,7 @@ extension Templates {
 
                 {{scope}} func encode(to encoder: Encoder) throws {
         {{#shapeCoding.requiresResponse}}
-                    let request = encoder.userInfo[.awsRequest]! as! RequestEncodingContainer
+                    let request = try encoder.requireAWSRequestContainer()
         {{/shapeCoding.requiresResponse}}
         {{#shapeCoding.singleValueContainer}}
                     var container = encoder.singleValueContainer()

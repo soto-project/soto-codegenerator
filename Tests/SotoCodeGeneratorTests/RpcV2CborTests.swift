@@ -199,6 +199,14 @@ struct RpcV2CborTests {
         #expect(output.api.contains("hostPrefix: \"{accountId}.\""))
     }
 
+    @Test("a shape finds the request container through the encoder accessor, not userInfo")
+    func requestContainerAccessor() throws {
+        let output = try Self.render(try Self.service(protocolTraits: ["smithy.protocols#rpcv2Cbor"]))
+        let shape = try Self.section(of: "PutThingInput", in: output.shapes)
+        #expect(shape.contains("let request = try encoder.requireAWSRequestContainer()"))
+        #expect(!output.shapes.contains("userInfo"))
+    }
+
     @Test("every output member is read from the body")
     func outputShape() throws {
         let output = try Self.render(try Self.service(protocolTraits: ["smithy.protocols#rpcv2Cbor"]))
