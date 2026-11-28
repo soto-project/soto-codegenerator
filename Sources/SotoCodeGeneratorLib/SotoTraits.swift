@@ -16,6 +16,13 @@
 
 import SotoSmithy
 
+/// `smithy.protocols#rpcv2Cbor` service trait. Smithy RPC v2 with CBOR payloads. The trait's `http` and
+/// `eventStreamHttp` members are not used.
+struct SmithyProtocolsRpcv2CborTrait: StaticTrait {
+    static let staticName: ShapeId = "smithy.protocols#rpcv2Cbor"
+    var selector: Selector { TypeSelector<ServiceShape>() }
+}
+
 struct SotoInputShapeTrait: StaticTrait {
     static let staticName: ShapeId = "soto.api#inputShape"
 }

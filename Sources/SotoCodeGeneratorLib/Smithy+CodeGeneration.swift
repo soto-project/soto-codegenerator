@@ -80,6 +80,13 @@ extension AwsProtocolsRestXmlTrait: AwsServiceProtocol {
     var requiresCollectionCoders: Bool { true }
 }
 
+extension SmithyProtocolsRpcv2CborTrait: AwsServiceProtocol {
+    var output: String { ".rpcv2Cbor" }
+    /// RPC v2 ignores `jsonName` and `xmlName`, member names are used as they are
+    var nameTrait: ProtocolAliasTrait.Type { JsonNameTrait.self }
+    var requiresCollectionCoders: Bool { false }
+}
+
 // MARK: Shape types
 
 extension BooleanShape: SotoOutput { var output: String { "Bool" } }

@@ -59,6 +59,9 @@ struct AwsService {
             self.operations = operations
         }
 
+        if self.serviceProtocolTrait is SmithyProtocolsRpcv2CborTrait {
+            self.removeHTTPBindingTraits(model)
+        }
         self.reduceErrorShapes(model)
         self.markInputOutputShapes(model)
         self.removeEmptyInputs(model)
@@ -116,7 +119,10 @@ struct AwsService {
         }
         context["protocol"] = self.serviceProtocolTrait.output
         context["apiVersion"] = service.version
-        if self.serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || self.serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait {
+        // awsJson sends the service shape name in X-Amz-Target, RPC v2 puts it in the request path
+        if self.serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || self.serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait
+            || self.serviceProtocolTrait is SmithyProtocolsRpcv2CborTrait
+        {
             context["amzTarget"] = serviceId.shapeName
         }
         if !self.model.select(with: TraitSelector<ErrorTrait>()).isEmpty {
@@ -222,6 +228,8 @@ struct AwsService {
         streaming: Bool
     ) throws -> OperationContext {
         let httpTrait = operation.trait(type: HttpTrait.self)
+        // RPC v2 always sends a POST. The path is built by SotoCore from the service and operation names
+        let usesHTTPBindings = !(self.serviceProtocolTrait is SmithyProtocolsRpcv2CborTrait)
         let deprecatedTrait = operation.trait(type: DeprecatedTrait.self)
         let endpointTrait = operation.trait(type: EndpointTrait.self)
         let requireEndpointDiscovery = operation.trait(type: AwsClientDiscoveredEndpointTrait.self)?.required
@@ -247,8 +255,8 @@ struct AwsService {
             inputShape: inputShapeTarget?.shapeName,
             outputShape: outputShapeTarget?.shapeName,
             name: operationName.shapeName,
-            path: httpTrait?.uri ?? "/",
-            httpMethod: httpTrait?.method.lowercased() ?? "post",
+            path: usesHTTPBindings ? httpTrait?.uri ?? "/" : "/",
+            httpMethod: usesHTTPBindings ? httpTrait?.method.lowercased() ?? "post" : "post",
             hostPrefix: endpointTrait?.hostPrefix,
             deprecated: deprecatedTrait?.message,
             streaming: streaming ? "ByteBuffer" : nil,
@@ -335,7 +343,8 @@ struct AwsService {
         } else if let json1_0 = serviceTraits.first(where: { $0 is AwsProtocolsAwsJson1_0Trait }) {
             return json1_0
         }
-        guard let trait = serviceTraits.first else {
+        // rpcv2Cbor is only used when the service supports no other protocol
+        guard let trait = serviceTraits.first(where: { !($0 is SmithyProtocolsRpcv2CborTrait) }) ?? serviceTraits.first else {
             throw NoProtocolError()
         }
         return trait
@@ -593,6 +602,36 @@ struct AwsService {
         }
     }
 
+    /// RPC v2 ignores the HTTP binding traits and serializes every member in the body under its own name.
+    /// Remove the traits that would move a member into a header, query, path or raw payload, and the
+    /// ones that rename a member or pick a timestamp format (`jsonName`, `xmlName`, `xmlFlattened`,
+    /// `xmlAttribute`, `timestampFormat`), so the shape generation treats all members as plain body
+    /// members. `hostLabel` is kept as the endpoint prefix still needs it.
+    func removeHTTPBindingTraits(_ model: Model) {
+        let bindingTraits: [StaticTrait.Type] = [
+            HttpHeaderTrait.self,
+            HttpPrefixHeadersTrait.self,
+            HttpQueryTrait.self,
+            HttpQueryParamsTrait.self,
+            HttpLabelTrait.self,
+            HttpPayloadTrait.self,
+            HttpResponseCodeTrait.self,
+            JsonNameTrait.self,
+            XmlNameTrait.self,
+            XmlFlattenedTrait.self,
+            XmlAttributeTrait.self,
+            TimestampFormatTrait.self,
+        ]
+        for shape in model.shapes.values {
+            guard let collection = shape as? CollectionShape, let members = collection.members else { continue }
+            for member in members.values {
+                for trait in bindingTraits {
+                    member.remove(trait: trait)
+                }
+            }
+        }
+    }
+
     func removeEmptyInputs(_ model: Model) {
         for operation in self.operations {
             if let input = operation.value.input {
@@ -614,7 +653,7 @@ struct AwsService {
     func removeRequiredTraitFromOutputCollections(_ model: Model) {
         guard
             self.serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || self.serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait
-                || self.serviceProtocolTrait is AwsProtocolsRestJson1Trait
+                || self.serviceProtocolTrait is AwsProtocolsRestJson1Trait || self.serviceProtocolTrait is SmithyProtocolsRpcv2CborTrait
         else { return }
 
         for shape in model.shapes {
