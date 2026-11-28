@@ -154,11 +154,11 @@ struct RpcV2CborTests {
         #expect(service.serviceProtocolTrait is SmithyProtocolsRpcv2CborTrait)
     }
 
-    @Test("service config gets the service shape name without the namespace")
+    @Test("service config holds the service shape name, without the namespace, in amzTarget")
     func serviceConfig() throws {
         let output = try Self.render(try Self.service(protocolTraits: ["smithy.protocols#rpcv2Cbor"]))
-        #expect(output.api.contains("serviceProtocol: .rpcv2Cbor(serviceName: \"CborTest\")"))
-        #expect(!output.api.contains("amzTarget"))
+        #expect(output.api.contains("serviceProtocol: .rpcv2Cbor,"))
+        #expect(output.api.contains("amzTarget: \"CborTest\""))
     }
 
     @Test("operations are POST to the root path whatever the http trait says")
@@ -203,7 +203,7 @@ struct RpcV2CborTests {
     func requestContainerAccessor() throws {
         let output = try Self.render(try Self.service(protocolTraits: ["smithy.protocols#rpcv2Cbor"]))
         let shape = try Self.section(of: "PutThingInput", in: output.shapes)
-        #expect(shape.contains("let request = try encoder.requireAWSRequestContainer()"))
+        #expect(shape.contains("let request = encoder.awsRequestContainer"))
         #expect(!output.shapes.contains("userInfo"))
     }
 

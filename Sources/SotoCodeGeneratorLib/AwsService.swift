@@ -117,9 +117,12 @@ struct AwsService {
         if let authSigV4 = authSigV4, authSigV4.name != self.serviceEndpointPrefix {
             context["signingName"] = authSigV4.name
         }
-        context["protocol"] = self.serviceProtocolTrait.output(serviceShapeName: serviceId.shapeName)
+        context["protocol"] = self.serviceProtocolTrait.output
         context["apiVersion"] = service.version
-        if self.serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || self.serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait {
+        // awsJson sends the service shape name in X-Amz-Target, RPC v2 puts it in the request path
+        if self.serviceProtocolTrait is AwsProtocolsAwsJson1_0Trait || self.serviceProtocolTrait is AwsProtocolsAwsJson1_1Trait
+            || self.serviceProtocolTrait is SmithyProtocolsRpcv2CborTrait
+        {
             context["amzTarget"] = serviceId.shapeName
         }
         if !self.model.select(with: TraitSelector<ErrorTrait>()).isEmpty {
